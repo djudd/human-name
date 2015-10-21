@@ -1,0 +1,5 @@
+[package]
+
+name = "human_name"
+version = "0.0.1"
+authors = ["David Judd <david@academia.edu>"]
