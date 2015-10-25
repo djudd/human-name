@@ -1,3 +1,6 @@
+extern crate human_name;
+
 fn main() {
-    println!("Hello, world!");
+    let name = human_name::Name::new("Emma Goldman").unwrap();
+    println!("{}", name.display());
 }
