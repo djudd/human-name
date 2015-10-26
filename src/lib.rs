@@ -4,20 +4,14 @@ extern crate regex;
 extern crate lazy_static;
 
 mod suffix;
-
-use std::option;
-use regex::Regex;
+mod nickname;
+mod title;
 
 pub struct Name {
   raw: String,
   pub given_name: String,
   pub surname: String,
   pub middle_names: String,
-}
-
-fn is_nickname(word: &str) -> bool {
-    // TODO
-    false
 }
 
 impl Name {
@@ -27,16 +21,37 @@ impl Name {
         // Strip suffixes and nicknames, and then flip remaining words around
         // (remaining) comma (for formats like "Smith, John"; but suffixes may
         // also contain commas, e.g. "John Smith, esq.")
-        for part in name.rsplit(',') {
-            // TODO Skip suffix check for first part
-            // TODO Skip nickname check for first & last words
-            if !suffix::is_suffix(part) {
-                for word in part.split_whitespace() {
-                    if !is_nickname(word) {
-                        words.push(word);
+        let mut parts = name.rsplit(',').peekable();
+        loop {
+            match parts.next() {
+                Some(part) => {
+                    let is_first_part = parts.peek().is_none();
+                    if is_first_part || !suffix::is_suffix(part) {
+                        for word in part.split_whitespace() {
+                            if !nickname::is_nickname(word) {
+                                words.push(word);
+                            }
+                        }
                     }
                 }
+                None => { break }
             }
+        }
+    
+        // Check for non-comma-separated suffix
+        if words.len() > 1 && suffix::is_suffix(words.last().unwrap()) {
+            words.pop();
+        }
+
+        // Check for title as prefix
+        let mut prefix_len = words.len() - 1;
+        while prefix_len > 0 {
+            let possible_title = words[0..prefix_len].to_vec();
+            if title::is_title(possible_title) {
+                words = words[prefix_len..].to_vec();
+                break;
+            }
+            prefix_len -= 1;
         }
 
         // We need at least a first and last name, or we can't tell which we have
