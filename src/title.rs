@@ -426,17 +426,19 @@ lazy_static! {
     };
 }
 
-pub fn is_title(words: Vec<&str>) -> bool {
+pub fn is_title(words: &[&str]) -> bool {
     if words.is_empty() {
         return false;
     }
 
-    for word in words.iter() {
+    for word in words {
         for part in word.split('.') {
             // Allow any word with 1 or 2 characters as part of a title...
-            let key: &str = &part.to_lowercase();
-            if part.len() >= 3 && !TITLE_PARTS.contains(key) {
-                return false; 
+            if part.len() >= 3 {
+                let key: &str = &part.to_lowercase();
+                if !TITLE_PARTS.contains(key) {
+                    return false;
+                }
             }
         }
     }

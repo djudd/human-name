@@ -46,9 +46,10 @@ impl Name {
         // Check for title as prefix
         let mut prefix_len = words.len() - 1;
         while prefix_len > 0 {
-            let possible_title = words[0..prefix_len].to_vec();
-            if title::is_title(possible_title) {
-                words = words[prefix_len..].to_vec();
+            if title::is_title(&words[0..prefix_len]) {
+                for _ in 0..prefix_len {
+                    words.remove(0);
+                }
                 break;
             }
             prefix_len -= 1;
