@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::iter::Iterator;
 
 static TWO_CHAR_TITLES: [&'static str; 4] = [
     "mr",

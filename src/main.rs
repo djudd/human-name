@@ -12,10 +12,15 @@ fn main() {
         "Deputy Secretary of State Emma Goldman",
         "Dr. Emma Goldman",
         "Em Goldman",
+        "Goldman, Em",
+        "Emma de la Goldman",
+        "Emma May Goldman",
+        "Emma Van Goldman",
+        "Emma Goldman y Rodriguez",
     ];
 
     for name in names.iter() {
         let name = human_name::Name::parse(name).unwrap();
-        println!("{}", name.display());
+        println!("{} [{}, {}]", name.display(), name.surname, name.given_name.unwrap());
     }
 }
