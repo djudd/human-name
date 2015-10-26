@@ -70,7 +70,7 @@ impl Name {
             prefix_len -= 1;
         }
 
-        let words_len = words.len();
+        let words_len = words.len(); // From here this won't change; we've removed all the cruft
         if words_len < 2 {
             // We need at least a first and last name, or we can't tell which we have
             return None;

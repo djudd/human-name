@@ -11,6 +11,7 @@ fn main() {
         "Goldman, Emma",
         "Deputy Secretary of State Emma Goldman",
         "Dr. Emma Goldman",
+        "EM Goldman",
         "Em Goldman",
         "Goldman, Em",
         "Emma de la Goldman",

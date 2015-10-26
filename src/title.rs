@@ -428,30 +428,55 @@ lazy_static! {
     };
 }
 
-pub fn is_title(words: &[&str]) -> bool {
-    if words.is_empty() {
-        return false;
+fn is_title_part(word: &str) -> bool {
+    let key: &str = &word.to_lowercase();
+    TITLE_PARTS.contains(key)
+}
+
+fn might_be_title_part(word: &str) -> bool {
+    if word.len() < 3 {
+        // Allow any word with 1 or 2 characters as part of a title (but see below)
+        return true;
     }
 
-    for word in words {
-        for part in word.split('.') {
-            // Allow any word with 1 or 2 characters as part of a title...
-            if part.len() >= 3 {
-                let key: &str = &part.to_lowercase();
-                if !TITLE_PARTS.contains(key) {
+    match word.find(".") {
+        Some(index) => {
+            // Allow any period-terminated abbrevation as part of a title
+            // (but not necessarily if there are intermediate periods, because
+            // those might indicate this is a sequence of initials)
+            if index == word.len() - 1 {
+                true
+            }
+            else {
+                word.split('.').all( |s| s.len() < 3 || is_title_part(s) )
+            }
+        }
+        None => {
+            is_title_part(word)
+        }
+    }
+}
+
+pub fn is_title(words: &[&str]) -> bool {
+    match words.last() {
+        Some(word) => {
+            // Don't allow 1 or 2-character words as the whole or final piece of
+            // a title, except a set of very-common two-character title abbreviations,
+            // because otherwise we are more likely dealing with initials
+            if word.len() == 1 {
+                return false;
+            }
+            else if word.len() == 2 {
+                let key: &str = &word.to_lowercase();
+                if !TWO_CHAR_TITLES.contains(&key) {
                     return false;
                 }
             }
         }
+        None => {
+            return false;
+        }
     }
 
-    // ... but don't allow 1 or 2-character words as the whole or final piece of
-    // a title, except a set of very-common two-character title abbreviations,
-    // because otherwise we are more likely dealing with initials
-    let last = words.last().unwrap();
-    if last.len() < 3 && (last.len() == 1 || !TWO_CHAR_TITLES.contains(last)) {
-        return false;
-    }
-
-    true
+    words.iter().all( |word| might_be_title_part(word) )
 }
