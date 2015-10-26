@@ -60,8 +60,6 @@ impl Name {
             return None;
         }
 
-        // TODO Check if last word is suffix
-
         let parsed = Name {
             raw: name.to_string(),
             given_name: words[0].to_string(),
