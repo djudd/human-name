@@ -421,6 +421,9 @@ lazy_static! {
             "wo4",
             "wo5",
             "woodman",
+            "and",
+            "the",
+            "und",
         ].iter().cloned().collect();
         s
     };
