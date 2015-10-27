@@ -5,15 +5,10 @@ const VOWELS: [char; 12] = ['a','e','i','o','u','y','A','E','I','O','U','Y'];
 // other than initials), but forbids two neighboring non-periods.
 fn is_period_separated(word: &str) -> bool {
     let mut chars = word.chars().peekable();
-    let mut any_alphabetic = false;
 
     loop {
         match chars.next() {
             Some(c) => {
-                if !any_alphabetic {
-                    any_alphabetic = c.is_alphabetic();
-                }
-
                 match chars.peek() {
                     Some(nc) => {
                         if (c != '.') && (*nc != '.') {
@@ -27,12 +22,12 @@ fn is_period_separated(word: &str) -> bool {
         }
     }
 
-    any_alphabetic
+    true
 }
 
 pub fn is_initials(word: &str, use_capitalization: bool) -> bool {
     if word.len() == 1 {
-        return word.chars().nth(0).unwrap().is_alphabetic();
+        return true;
     }
     else if is_period_separated(word) {
         return true;
@@ -47,6 +42,9 @@ pub fn is_initials(word: &str, use_capitalization: bool) -> bool {
         // The context tells us capitalization isn't meaningful here, so do our
         // best to distinguish initials from short given-names by checking for vowels
         // and non-alphabetic characters
+        //
+        // TODO We should de-accent before the vowel-check, and/or determine
+        // that the string is all-ASCII
         word.len() < 4 && word.chars().all(|c| !c.is_alphabetic() || !VOWELS.contains(&c))
     }
 }
