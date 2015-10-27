@@ -7,6 +7,7 @@ mod suffix;
 mod nickname;
 mod title;
 mod surname;
+mod initials;
 
 pub struct Name {
   pub given_name: Option<String>,
@@ -16,8 +17,8 @@ pub struct Name {
   pub middle_initials: Option<String>,
 }
 
-fn first_char(s: &str) -> char {
-    s.chars().nth(0).unwrap()
+fn first_alphabetical_char(s: &str) -> Option<char> {
+    s.chars().find( |c| c.is_alphabetic() )
 }
 
 impl Name {
@@ -43,7 +44,7 @@ impl Name {
 
                     if is_first_part || !suffix::is_suffix(part) {
                         for word in part.split_whitespace() {
-                            if !nickname::is_nickname(word) {
+                            if !first_alphabetical_char(word).is_none() && !nickname::is_nickname(word) {
                                 words.push(word);
                             }
                         }
@@ -52,7 +53,7 @@ impl Name {
                 None => { break }
             }
         }
-    
+        
         // Check for non-comma-separated suffix
         if words.len() > 1 && suffix::is_suffix(words.last().unwrap()) {
             words.pop();
@@ -70,29 +71,60 @@ impl Name {
             prefix_len -= 1;
         }
 
-        let words_len = words.len(); // From here this won't change; we've removed all the cruft
-        if words_len < 2 {
+        if words.len() < 2 {
             // We need at least a first and last name, or we can't tell which we have
             return None;
         }
 
-        if surname_index <= 0 || surname_index >= words_len {
+        // TODO Special case 2-word-remaining names to avoid initializing vectors
+
+        if surname_index <= 0 || surname_index >= words.len() {
             // We didn't get the surname from the formatting (e.g. "Smith, John"),
             // so we have to guess it
             surname_index = surname::find_surname_index(&words);
         }
 
-        let has_middle_names = words_len - surname_index > 1;
+        let has_lowercase = words.iter().any( |w| w.chars().any( |c| c.is_lowercase() ) );
+        let has_uppercase = words.iter().any( |w| w.chars().any( |c| c.is_uppercase() ) );
+        let mixed_case = has_lowercase && has_uppercase;
+
+        let first_initial = first_alphabetical_char(words[0])
+            .unwrap()
+            .to_uppercase()
+            .next()
+            .unwrap();
+
+        // Take the remaining words, and strip out the initials (if present; 
+        // only allow one block of initials) and the first name (if present),
+        // and whatever's left are the middle names
+        let mut middle_initials: String = "".to_string();
+        let mut given_name = None;
+        let mut middle_names: Vec<&str> = Vec::new();
+
+        for (i, word) in words[0..surname_index].iter().enumerate() {
+            if initials::is_initials(word, mixed_case) {
+                let start = if i == 0 { 1 } else { 0 };
+                if word.len() > start {
+                    middle_initials.extend(
+                        word[start..]
+                            .chars()
+                            .filter( |c| c.is_alphabetic() )
+                            .filter_map( |w| w.to_uppercase().next() ));
+                }
+            } else if given_name.is_none() {
+                given_name = Some(word.to_string());
+            } else {
+                middle_names.push(word);
+                middle_initials.push(first_alphabetical_char(word).unwrap());
+            }
+        }
+
         let parsed = Name {
-            first_initial: first_char(words[0]),
-            given_name: Some(words[0].to_string()),
+            first_initial: first_initial,
+            given_name: given_name,
             surname: words[surname_index..].join(" "),
-            middle_names: if has_middle_names {
-                Some(words[1..surname_index].join(" "))
-            } else { None },
-            middle_initials: if has_middle_names {
-                Some(words[1..surname_index].iter().map(|w| first_char(w)).collect())
-            } else { None },
+            middle_names: if middle_names.is_empty() { None } else { Some(middle_names.join(" ")) },
+            middle_initials: if middle_initials.is_empty() { None } else { Some(middle_initials) },
         };
         return Some(parsed);
     }

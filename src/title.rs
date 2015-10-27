@@ -457,20 +457,30 @@ fn might_be_title_part(word: &str) -> bool {
     }
 }
 
+fn might_be_last_title_part(word: &str) -> bool {
+    // Don't allow 1 or 2-character words as the whole or final piece of
+    // a title, except a set of very-common two-character title abbreviations,
+    // because otherwise we are more likely dealing with initials
+    if word.len() == 1 {
+        false
+    }
+    else if word.len() == 2 {
+        let key: &str = &word.to_lowercase();
+        TWO_CHAR_TITLES.contains(&key)
+    }
+    else if might_be_title_part(word) {
+        !word.contains('.') || might_be_last_title_part(word.split('.').last().unwrap())
+    } 
+    else {
+        false
+    }
+}
+
 pub fn is_title(words: &[&str]) -> bool {
     match words.last() {
         Some(word) => {
-            // Don't allow 1 or 2-character words as the whole or final piece of
-            // a title, except a set of very-common two-character title abbreviations,
-            // because otherwise we are more likely dealing with initials
-            if word.len() == 1 {
-                return false;
-            }
-            else if word.len() == 2 {
-                let key: &str = &word.to_lowercase();
-                if !TWO_CHAR_TITLES.contains(&key) {
-                    return false;
-                }
+            if !might_be_last_title_part(word) {
+                return false
             }
         }
         None => {
@@ -478,5 +488,10 @@ pub fn is_title(words: &[&str]) -> bool {
         }
     }
 
-    words.iter().all( |word| might_be_title_part(word) )
+    if words.len() > 1 {
+        words[0..words.len()-1].iter().all( |word| might_be_title_part(word) )
+    }
+    else {
+        true
+    }
 }
