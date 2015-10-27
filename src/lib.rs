@@ -125,7 +125,7 @@ impl Name {
             if given_name.is_none() || mixed_case {
                 given_name
             } else {
-                Some(namecase::namecase(&given_name.unwrap()))
+                Some(namecase::namecase(&given_name.unwrap(), false))
             };
 
         let middle_names = 
@@ -134,7 +134,7 @@ impl Name {
             } else if mixed_case { 
                 Some(middle_names.join(" ")) 
             } else {
-                Some(namecase::namecase_and_join(&middle_names[0..]))
+                Some(namecase::namecase_and_join(&middle_names[0..], false))
             };
 
         let middle_initials = 
@@ -148,7 +148,7 @@ impl Name {
             if mixed_case {
                 words[surname_index..].join(" ")
             } else {
-                namecase::namecase_and_join(&words[surname_index..])
+                namecase::namecase_and_join(&words[surname_index..], true)
             };
 
         Some(Name {

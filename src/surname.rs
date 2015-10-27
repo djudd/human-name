@@ -27,6 +27,7 @@ lazy_static! {
             "santa",
             "st",
             "ste",
+            "ter",
             "van",
             "vel",
             "von",

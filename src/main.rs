@@ -29,6 +29,9 @@ fn main() {
         "E M M GOLDMAN",
         "E. Emma Goldman",
         "Emma M. Goldman",
+        "Emma MacGoldman",
+        "Emma Machlin",
+        "Van Jones",
     ];
 
     for raw in names.iter() {
