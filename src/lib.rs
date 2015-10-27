@@ -76,13 +76,7 @@ impl Name {
             return None;
         }
 
-        // TODO Special case 2-word-remaining names to avoid initializing vectors
-
-        if surname_index <= 0 || surname_index >= words.len() {
-            // We didn't get the surname from the formatting (e.g. "Smith, John"),
-            // so we have to guess it
-            surname_index = surname::find_surname_index(&words);
-        }
+        // TODO Benchmark & special casing 2-word-remaining names to avoid initializing vectors
 
         let has_lowercase = words.iter().any( |w| w.chars().any( |c| c.is_lowercase() ) );
         let has_uppercase = words.iter().any( |w| w.chars().any( |c| c.is_uppercase() ) );
@@ -97,9 +91,15 @@ impl Name {
         // Take the remaining words, and strip out the initials (if present; 
         // only allow one block of initials) and the first name (if present),
         // and whatever's left are the middle names
-        let mut middle_initials: String = "".to_string();
         let mut given_name = None;
         let mut middle_names: Vec<&str> = Vec::new();
+        let mut middle_initials = String::new();
+        
+        if surname_index <= 0 || surname_index >= words.len() {
+            // We didn't get the surname from the formatting (e.g. "Smith, John"),
+            // so we have to guess it
+            surname_index = surname::find_surname_index(&words);
+        }
 
         for (i, word) in words[0..surname_index].iter().enumerate() {
             if initials::is_initials(word, mixed_case) {
