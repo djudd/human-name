@@ -7,3 +7,4 @@ authors = ["David Judd <david@academia.edu>"]
 [dependencies]
 regex = "0.1.*"
 lazy_static = "0.1.*"
+itertools = "0.4.*"

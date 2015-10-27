@@ -1,4 +1,5 @@
 extern crate regex;
+extern crate itertools;
 
 #[macro_use]
 extern crate lazy_static;
@@ -8,6 +9,7 @@ mod nickname;
 mod title;
 mod surname;
 mod initials;
+mod namecase;
 
 pub struct Name {
   pub given_name: Option<String>,
@@ -119,14 +121,43 @@ impl Name {
             }
         }
 
-        let parsed = Name {
+        let given_name = 
+            if given_name.is_none() || mixed_case {
+                given_name
+            } else {
+                Some(namecase::namecase(&given_name.unwrap()))
+            };
+
+        let middle_names = 
+            if middle_names.is_empty() { 
+                None 
+            } else if mixed_case { 
+                Some(middle_names.join(" ")) 
+            } else {
+                Some(namecase::namecase_and_join(&middle_names[0..]))
+            };
+
+        let middle_initials = 
+            if middle_initials.is_empty() { 
+                None 
+            } else {
+                Some(middle_initials) 
+            };
+
+        let surname = 
+            if mixed_case {
+                words[surname_index..].join(" ")
+            } else {
+                namecase::namecase_and_join(&words[surname_index..])
+            };
+
+        Some(Name {
             first_initial: first_initial,
             given_name: given_name,
-            surname: words[surname_index..].join(" "),
-            middle_names: if middle_names.is_empty() { None } else { Some(middle_names.join(" ")) },
-            middle_initials: if middle_initials.is_empty() { None } else { Some(middle_initials) },
-        };
-        return Some(parsed);
+            surname: surname,
+            middle_names: middle_names,
+            middle_initials: middle_initials,
+        })
     }
 
     pub fn display(&self) -> String {
