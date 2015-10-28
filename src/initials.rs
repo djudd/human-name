@@ -1,6 +1,4 @@
-use std::ascii::AsciiExt;
-
-const VOWELS: [char; 12] = ['a','e','i','o','u','y','A','E','I','O','U','Y'];
+use super::namelike;
 
 // Fairly lax check, which allows initial or trailing periods, or neither,
 // and allows double periods (as likely to be typos as to indicate something 
@@ -47,6 +45,6 @@ pub fn is_initials(word: &str, use_capitalization: bool) -> bool {
         // The context tells us capitalization isn't meaningful here, so do our
         // best to distinguish initials from short given-names by checking for vowels
         // and non-alphabetic characters
-        word.chars().all(|c| !c.is_alphabetic() || (c.is_ascii() && !VOWELS.contains(&c)))
+        namelike::is_unlikely_name(&word)
     }
 }

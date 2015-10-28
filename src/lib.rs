@@ -4,12 +4,16 @@ extern crate itertools;
 #[macro_use]
 extern crate lazy_static;
 
+mod utils;
 mod suffix;
 mod nickname;
 mod title;
 mod surname;
 mod initials;
 mod namecase;
+mod namelike;
+
+use utils::*;
 
 pub struct Name {
   pub given_name: Option<String>,
@@ -19,54 +23,100 @@ pub struct Name {
   pub middle_initials: Option<String>,
 }
 
-fn first_alphabetical_char(s: &str) -> Option<char> {
-    s.chars().find( |c| c.is_alphabetic() )
-}
 
 impl Name {
     pub fn parse(name: &str) -> Option<Name> {
+        if first_alphabetical_char(name).is_none() {
+            return None
+        }
+
+        let mixed_case = is_mixed_case(name);
+
         let mut words: Vec<&str> = Vec::new();
         let mut surname_index = 0;
 
         // Strip suffixes and nicknames, and then flip remaining words around
         // (remaining) comma (for formats like "Smith, John"; but suffixes may
         // also contain commas, e.g. "John Smith, esq.")
-        let mut parts = name.rsplit(",").peekable();
-        loop {
-            match parts.next() {
-                Some(part) => {
-                    let is_first_part = parts.peek().is_none();
+        for (i, part) in name.split(",").enumerate() {
+            if i > 1 {
+                // Anything after the second comma is a suffix
+                break;
+            }
+            else if i == 0 || words.is_empty() {
+                // We're in the surname part (if the format is "Smith, John"),
+                // or the only actual name part (if the format is "John Smith,
+                // esq." or just "John Smith")
+                words.extend(
+                    part
+                        .split_whitespace()
+                        .filter( |w| !first_alphabetical_char(w).is_none() )
+                        .filter( |w| !nickname::is_nickname(w) ));
+            }
+            else {
+                // We already processed one comma-separated part, which may
+                // have been the surname, or the full name
+                let mut given_middle_or_suffix_words: Vec<&str> = part
+                    .split_whitespace()
+                    .filter( |w| !first_alphabetical_char(w).is_none() )
+                    .filter( |w| !nickname::is_nickname(w) )
+                    .collect();
 
-                    // If we decided any words after a comma aren't a suffix,
-                    // that means the part before, which we're about to process,
-                    // is the surname
-                    if is_first_part && !words.is_empty() {
-                        surname_index = words.len();
-                    }
+                while !given_middle_or_suffix_words.is_empty() {
+                    let word = given_middle_or_suffix_words.pop().unwrap();
 
-                    if is_first_part || !suffix::is_suffix(part) {
-                        for word in part.split_whitespace() {
-                            if !first_alphabetical_char(word).is_none() && !nickname::is_nickname(word) {
-                                words.push(word);
-                            }
-                        }
+                    let is_suffix = suffix::is_suffix(word);
+
+                    // Preserve parseability: don't strip an apparent suffix
+                    // that might still be part of the name, if it would take
+                    // the name below 2 words
+                    let keep_it_anyway =
+                        is_suffix &&
+                        given_middle_or_suffix_words.len() + words.len() < 2 &&
+                        namelike::may_be_name_or_initials(word, mixed_case);
+
+                    if !is_suffix || keep_it_anyway {
+                        words.insert(0, word)
                     }
                 }
-                None => { break }
             }
         }
-        
-        // Check for non-comma-separated suffix
-        if words.len() > 1 && suffix::is_suffix(words.last().unwrap()) {
+
+        // Strip non-comma-separated suffixes
+        while !words.is_empty() {
+            if !suffix::is_suffix(words.last().unwrap()) {
+                break
+            }
+
+            // Preserve parseability: don't strip an apparent suffix
+            // that might still be part of the name, if it would take
+            // the name below 2 words
+            let keep_it_anyway = words.len() <= 2 &&
+                namelike::may_be_name_or_initials(words.last().unwrap(), mixed_case);
+            if keep_it_anyway {
+                break;
+            }
+
             words.pop();
         }
 
-        // Check for title as prefix
+        // Check for title as prefix (e.g. "Dr. John Smith" or "Right Hon. John Smith")
         let mut prefix_len = words.len() - 1;
         while prefix_len > 0 {
             if title::is_title(&words[0..prefix_len]) {
                 for _ in 0..prefix_len {
-                    words.remove(0);
+                    // Preserve parseability: don't strip an apparent title part
+                    // that might still be part of the name, if it would take
+                    // the name below 2 words
+                    let keep_it_anyway = words.len() <= 2 &&
+                        namelike::may_be_name_or_initials(words[0], mixed_case);
+
+                    if !keep_it_anyway {
+                        words.remove(0);
+                        if surname_index > 0 {
+                            surname_index -= 1;
+                        }
+                    }
                 }
                 break;
             }
@@ -78,11 +128,7 @@ impl Name {
             return None;
         }
 
-        // TODO Benchmark & special casing 2-word-remaining names to avoid initializing vectors
-
-        let has_lowercase = words.iter().any( |w| w.chars().any( |c| c.is_lowercase() ) );
-        let has_uppercase = words.iter().any( |w| w.chars().any( |c| c.is_uppercase() ) );
-        let mixed_case = has_lowercase && has_uppercase;
+        // TODO Benchmark special casing 2-word-remaining names to avoid initializing vectors
 
         let first_initial = first_alphabetical_char(words[0])
             .unwrap()
@@ -90,13 +136,13 @@ impl Name {
             .next()
             .unwrap();
 
-        // Take the remaining words, and strip out the initials (if present; 
+        // Take the remaining words, and strip out the initials (if present;
         // only allow one block of initials) and the first name (if present),
         // and whatever's left are the middle names
         let mut given_name = None;
         let mut middle_names: Vec<&str> = Vec::new();
         let mut middle_initials = String::new();
-        
+
         if surname_index <= 0 || surname_index >= words.len() {
             // We didn't get the surname from the formatting (e.g. "Smith, John"),
             // so we have to guess it
@@ -117,34 +163,39 @@ impl Name {
                 given_name = Some(word.to_string());
             } else {
                 middle_names.push(word);
-                middle_initials.push(first_alphabetical_char(word).unwrap());
+                middle_initials.push(
+                    first_alphabetical_char(word)
+                        .unwrap()
+                        .to_uppercase()
+                        .next()
+                        .unwrap());
             }
         }
 
-        let given_name = 
+        let given_name =
             if given_name.is_none() || mixed_case {
                 given_name
             } else {
                 Some(namecase::namecase(&given_name.unwrap(), false))
             };
 
-        let middle_names = 
-            if middle_names.is_empty() { 
-                None 
-            } else if mixed_case { 
-                Some(middle_names.join(" ")) 
+        let middle_names =
+            if middle_names.is_empty() {
+                None
+            } else if mixed_case {
+                Some(middle_names.join(" "))
             } else {
                 Some(namecase::namecase_and_join(&middle_names[0..], false))
             };
 
-        let middle_initials = 
-            if middle_initials.is_empty() { 
-                None 
+        let middle_initials =
+            if middle_initials.is_empty() {
+                None
             } else {
-                Some(middle_initials) 
+                Some(middle_initials)
             };
 
-        let surname = 
+        let surname =
             if mixed_case {
                 words[surname_index..].join(" ")
             } else {
