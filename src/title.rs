@@ -103,6 +103,7 @@ lazy_static! {
             "civil",
             "clerk",
             "cmd",
+            "cmdr",
             "cmsaf",
             "cmsgt",
             "co-chair",
@@ -118,6 +119,8 @@ lazy_static! {
             "corporal",
             "corporate",
             "councillor",
+            "count",
+            "countess",
             "courtier",
             "cpl",
             "cpo",
@@ -180,6 +183,7 @@ lazy_static! {
             "flt",
             "foreign",
             "forester",
+            "frau",
             "friar",
             "gen",
             "general",
@@ -197,6 +201,7 @@ lazy_static! {
             "hajji",
             "headman",
             "her",
+            "herr",
             "hereditary",
             "high",
             "his",
@@ -470,7 +475,7 @@ fn might_be_last_title_part(word: &str) -> bool {
     }
     else if might_be_title_part(word) {
         !word.contains('.') || might_be_last_title_part(word.split('.').last().unwrap())
-    } 
+    }
     else {
         false
     }

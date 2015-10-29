@@ -120,7 +120,6 @@ Doe, Rev. John A. Jr.|Doe|John||J|A
 Rt. Hon. Paul E. Mary|Mary|Paul||P|E
 Lord God Almighty|Almighty|God||G|
 vai la|La|Vai||V|
-johnny y|Y|Johnny||J|
 Andrews, M.D.|Andrews|||M|D
 Andrews, MD|Andrews|||M|D
 ANDREWS, MD|Andrews|||M|D
@@ -253,3 +252,17 @@ O'Malley, Björn Jr|O'Malley|Björn||B|
 O'Malley, C. Björn|O'Malley|Björn||C|
 O'Malley, C. Björn III|O'Malley|Björn||C|
 O'Malley y Muñoz, C. Björn Roger III|O'Malley y Muñoz|Björn|Roger|C|R
+Ichiro Suzuki|Suzuki|Ichiro||I|
+鈴 木|木|||鈴|
+Yukihiro 'Matz' Matsumoto|Matsumoto|Yukihiro||Y|
+Yukihiro "Matz" Matsumoto|Matsumoto|Yukihiro||Y|
+Mr. Yukihiro "Matz" Matsumoto|Matsumoto|Yukihiro||Y|
+Yukihiro "Matz" Matsumoto Jr.|Matsumoto|Yukihiro||Y|
+Poe, Edgar A.|Poe|Edgar||E|A
+Herr Edgar A. Poe|Poe|Edgar||E|A
+Frau Edgar A. Poe|Poe|Edgar||E|A
+Mrs. Edgar A. Poe|Poe|Edgar||E|A
+Ken Griffey Jr.|Griffey|Ken||K|
+#Griffey, Jr., Ken|Griffey|Ken||K|
+Griffey, Ken, Jr.|Griffey|Ken||K|
+Bernado Franecki Ph.D.|Franecki|Bernado||B|

@@ -1,7 +1,7 @@
-use super::namelike;
+use super::utils;
 
 // Fairly lax check, which allows initial or trailing periods, or neither,
-// and allows double periods (as likely to be typos as to indicate something 
+// and allows double periods (as likely to be typos as to indicate something
 // other than initials), but forbids two neighboring non-periods.
 fn is_period_separated(word: &str) -> bool {
     let mut chars = word.chars().peekable();
@@ -43,8 +43,8 @@ pub fn is_initials(word: &str, use_capitalization: bool) -> bool {
     }
     else {
         // The context tells us capitalization isn't meaningful here, so do our
-        // best to distinguish initials from short given-names by checking for vowels
-        // and non-alphabetic characters
-        namelike::is_unlikely_name(&word)
+        // best to distinguish initials from short given-names by checking for
+        // vowels
+        utils::is_missing_vowels(&word)
     }
 }

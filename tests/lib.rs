@@ -69,7 +69,6 @@ fn parsing() {
     stderr_newline();
 }
 
-/*
 #[test]
 fn unparseable() {
     let f = File::open("tests/unparseable-names.txt").ok().unwrap();
@@ -81,11 +80,12 @@ fn unparseable() {
         let line = line.ok().unwrap();
 
         if line.starts_with("#") { continue }
-        assert!(human_name::Name::parse(&line).is_none(), "'Parsed' junk name: '{}'", line);
 
-        writeln!(&mut std::io::stderr(), "Correctly discarded '{}'", line);
+        let result = human_name::Name::parse(&line);
+        assert!(result.is_none(), "'Parsed' junk name: '{}' as '{}'", line, result.unwrap().display());
+
+        writeln!(&mut std::io::stderr(), "Correctly discarded '{}'", line).ok().unwrap();
     }
 
     stderr_newline();
 }
-*/

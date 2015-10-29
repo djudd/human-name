@@ -13,7 +13,9 @@ mod initials;
 mod namecase;
 mod namelike;
 
+use itertools::Itertools;
 use utils::*;
+use namecase::namecase;
 
 pub struct Name {
   pub given_name: Option<String>,
@@ -21,6 +23,11 @@ pub struct Name {
   pub middle_names: Option<String>,
   pub first_initial: char,
   pub middle_initials: Option<String>,
+}
+
+
+fn may_be_name_or_initials(word: &str, use_capitalization: bool) -> bool {
+    initials::is_initials(word, use_capitalization) || namelike::is_name(word)
 }
 
 
@@ -73,7 +80,7 @@ impl Name {
                     let keep_it_anyway =
                         is_suffix &&
                         given_middle_or_suffix_words.len() + words.len() < 2 &&
-                        namelike::may_be_name_or_initials(word, mixed_case);
+                        may_be_name_or_initials(word, mixed_case);
 
                     if !is_suffix || keep_it_anyway {
                         words.insert(0, word)
@@ -92,7 +99,7 @@ impl Name {
             // that might still be part of the name, if it would take
             // the name below 2 words
             let keep_it_anyway = words.len() <= 2 &&
-                namelike::may_be_name_or_initials(words.last().unwrap(), mixed_case);
+                may_be_name_or_initials(words.last().unwrap(), mixed_case);
             if keep_it_anyway {
                 break;
             }
@@ -109,7 +116,7 @@ impl Name {
                     // that might still be part of the name, if it would take
                     // the name below 2 words
                     let keep_it_anyway = words.len() <= 2 &&
-                        namelike::may_be_name_or_initials(words[0], mixed_case);
+                        may_be_name_or_initials(words[0], mixed_case);
 
                     if !keep_it_anyway {
                         words.remove(0);
@@ -149,13 +156,18 @@ impl Name {
             surname_index = surname::find_surname_index(&words);
         }
 
+        if words[surname_index..].iter().all( |w| !namelike::is_name(w) ) {
+            return None;
+        }
+
         for (i, word) in words[0..surname_index].iter().enumerate() {
             if initials::is_initials(word, mixed_case) {
                 let start = if i == 0 { 1 } else { 0 };
                 if word.len() > start {
                     middle_initials.extend(
-                        word[start..]
+                        word
                             .chars()
+                            .skip(start)
                             .filter( |c| c.is_alphabetic() )
                             .filter_map( |w| w.to_uppercase().next() ));
                 }
@@ -176,7 +188,7 @@ impl Name {
             if given_name.is_none() || mixed_case {
                 given_name
             } else {
-                Some(namecase::namecase(&given_name.unwrap(), false))
+                Some(namecase(&given_name.unwrap(), false))
             };
 
         let middle_names =
@@ -185,7 +197,7 @@ impl Name {
             } else if mixed_case {
                 Some(middle_names.join(" "))
             } else {
-                Some(namecase::namecase_and_join(&middle_names[0..], false))
+                Some(middle_names.iter().map( |w| namecase(w, false) ).join(" "))
             };
 
         let middle_initials =
@@ -197,9 +209,14 @@ impl Name {
 
         let surname =
             if mixed_case {
-                words[surname_index..].join(" ")
+                words[surname_index..].iter().join(" ")
             } else {
-                namecase::namecase_and_join(&words[surname_index..], true)
+                let last_surname_word_ix = words.len() - surname_index - 1;
+                words[surname_index..]
+                    .iter()
+                    .enumerate()
+                    .map( |(i, w)| namecase(w, i < last_surname_word_ix) )
+                    .join(" ")
             };
 
         Some(Name {

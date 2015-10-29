@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use std::collections::HashSet;
 use super::utils::capitalize;
 
@@ -64,12 +63,4 @@ pub fn namecase(word: &str, might_be_particle: bool) -> String {
         // Normal case
         result
     }
-}
-
-pub fn namecase_and_join(words: &[&str], might_include_particle: bool) -> String {
-    words
-        .iter()
-        .enumerate()
-        .map( |(i,w)| namecase(w, might_include_particle && i < words.len()-1) )
-        .join(" ")
 }
