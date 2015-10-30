@@ -160,7 +160,7 @@ Benjamin ("Ben") Franklin|Franklin|Benjamin||B|
 Brian O'Connor|O'Connor|Brian||B|
 BRIAN O'CONNOR|O'Connor|Brian||B|
 La'tanya O'Connor|O'Connor|La'tanya||L|
-LA'TANYA O'CONNOR|O'Connor|La'tanya||L|
+LA'TANYA O'CONNOR|O'Connor|La'Tanya||L|
 Mari' Aube'|Aube'|Mari'||M|
 John Jones (Google Docs)|Jones|John||J|
 John Jones (Google|Jones|John||J|
@@ -222,6 +222,10 @@ lt. gen. john a. kenneth doe iv|Doe|John|Kenneth|J|AK
 donovan mcnabb-smith|McNabb-Smith|Donovan||D|
 scott e. werner|Werner|Scott||S|E
 Shirley Maclaine|Maclaine|Shirley||S|
+shirley maclaine|MacLaine|Shirley||S|
+manny machado|Machado|Manny||M|
+brandon macmurdo|MacMurdo|Brandon||B|
+megan maccullach|MacCullach|Megan||M|
 matthëus schmidt|Schmidt|Matthëus||M|
 RONALD MACDONALD|MacDonald|Ronald||R|
 RONALD MCDONALD|McDonald|Ronald||R|
@@ -271,3 +275,4 @@ Ken Griffey Jr.|Griffey|Ken||K|
 #Griffey, Jr., Ken|Griffey|Ken||K|
 Griffey, Ken, Jr.|Griffey|Ken||K|
 Bernado Franecki Ph.D.|Franecki|Bernado||B|
+Andrew Ng|Ng|Andrew||A|

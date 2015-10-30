@@ -25,10 +25,6 @@ pub struct Name {
 }
 
 
-fn may_be_name_or_initials(word: &str, use_capitalization: bool) -> bool {
-    initials::is_initials(word, use_capitalization) || namelike::is_name(word)
-}
-
 // Strip suffixes and titles, and find the start of the surname.
 // These tasks are intrinsically connected because commas may indicate
 // either a sort-ordered surname ("Smith, John") or a suffix ("John Smith, esq")
@@ -73,7 +69,7 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<&str>, usi
                 let keep_it_anyway =
                     is_suffix &&
                     given_middle_or_suffix_words.len() + words.len() < 2 &&
-                    may_be_name_or_initials(word, mixed_case);
+                    (initials::is_initials(word, mixed_case) || namelike::is_name(word, false));
 
                 if !is_suffix || keep_it_anyway {
                     surname_index += 1;
@@ -85,17 +81,20 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<&str>, usi
 
     // Strip non-comma-separated suffixes (e.g. "John Smith Jr.")
     while !words.is_empty() {
-        if !suffix::is_suffix(words.last().unwrap()) {
-            break
-        }
+        {
+            let word = words.last().unwrap();
+            if !suffix::is_suffix(word) {
+                break
+            }
 
-        // Preserve parseability: don't strip an apparent suffix
-        // that might still be part of the name, if it would take
-        // the name below 2 words
-        let keep_it_anyway = words.len() <= 2 &&
-            may_be_name_or_initials(words.last().unwrap(), mixed_case);
-        if keep_it_anyway {
-            break;
+            // Preserve parseability: don't strip an apparent suffix
+            // that might still be part of the name, if it would take
+            // the name below 2 words
+            let keep_it_anyway = words.len() <= 2 &&
+                (initials::is_initials(word, mixed_case) || namelike::is_name(word, true));
+            if keep_it_anyway {
+                break
+            }
         }
 
         words.pop();
@@ -106,11 +105,16 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<&str>, usi
     while prefix_len > 0 {
         if title::is_title(&words[0..prefix_len]) {
             for _ in 0..prefix_len {
+                let word = words[0];
+
                 // Preserve parseability: don't strip an apparent title part
                 // that might still be part of the name, if it would take
                 // the name below 2 words
+                //
+                // However, only allow initials, not namelike strings; nothing
+                // we'll recognize as a title is a likely given name
                 let keep_it_anyway = words.len() <= 2 &&
-                    may_be_name_or_initials(words[0], mixed_case);
+                    initials::is_initials(word, mixed_case);
 
                 if !keep_it_anyway {
                     words.remove(0);
@@ -119,7 +123,8 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<&str>, usi
                     }
                 }
             }
-            break;
+
+            break
         }
         prefix_len -= 1;
     }
@@ -164,7 +169,7 @@ impl Name {
         let mut middle_names: Vec<&str> = Vec::new();
         let mut middle_initials = String::new();
 
-        if words[surname_index..].iter().all( |w| !namelike::is_name(w) ) {
+        if words[surname_index..].iter().all( |w| !namelike::is_name(w, true) ) {
             return None;
         }
 

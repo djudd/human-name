@@ -30,8 +30,7 @@ pub fn capitalize(word: &str) -> String {
             c.to_lowercase().next()
         };
 
-        // TODO character class rather than hardcoded apostrophe
-        capitalize_next = !c.is_alphanumeric() && c != '\'';
+        capitalize_next = !c.is_alphanumeric();
 
         result
     }).collect()

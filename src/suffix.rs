@@ -6,7 +6,6 @@ lazy_static! {
             "esq",
             "esquire",
             "attorney-at-law",
-            "attorney at law",
             "jr",
             "jnr",
             "sr",

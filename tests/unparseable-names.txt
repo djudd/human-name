@@ -2,8 +2,13 @@ Alice
 Bo
 Smith
 Smith Jr.
+Smith, Jr.
+Smith, Ph.D
 Dr. Smith
 Mr. Andrews
+Sir Ben
+Lord Allen
+Queen Elizabeth
 vt gh
 ABC
 a b c
@@ -20,3 +25,4 @@ foo@bar.com
 Dr. King, Jr.
 johnny y
 鈴
+
