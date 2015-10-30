@@ -162,7 +162,8 @@ BRIAN O'CONNOR|O'Connor|Brian||B|
 La'tanya O'Connor|O'Connor|La'tanya||L|
 LA'TANYA O'CONNOR|O'Connor|La'tanya||L|
 Mari' Aube'|Aube'|Mari'||M|
-#John Jones (Google Docs)|Jones|John||J|
+John Jones (Google Docs)|Jones|John||J|
+John Jones (Google|Jones|John||J|
 Juan del Sur|del Sur|Juan||J|
 pennie von bergen wessels|von Bergen Wessels|Pennie||P|
 pennie von bergen wessels iii|von Bergen Wessels|Pennie||P|
@@ -211,6 +212,9 @@ Ahmad ben Husain|ben Husain|Ahmad||A|
 Ben Johnson|Johnson|Ben||B|
 Ben Alex Johnson|Johnson|Ben|Alex|B|A
 #Alex Ben Johnson|Johnson|Alex|Ben|A|B
+Johnson, Alex Ben|Johnson|Alex|Ben|A|B
+johnson, alex ben|Johnson|Alex|Ben|A|B
+alex ben johnson|Ben Johnson|Alex||A|
 Jane Doctor|Doctor|Jane||J|
 J. Smith, PhD|Smith|||J|
 juan q. xavier velasquez y garcia iii|Velasquez y Garcia|Juan|Xavier|J|QX
@@ -229,7 +233,7 @@ Björn O'Malley-Muñoz|O'Malley-Muñoz|Björn||B|
 Björn C. O'Malley|O'Malley|Björn||B|C
 Björn "Bill" O'Malley|O'Malley|Björn||B|
 Björn ("Bill") O'Malley|O'Malley|Björn||B|
-#Björn ("Wild Bill") O'Malley|O'Malley|Björn||B|
+Björn ("Wild Bill") O'Malley|O'Malley|Björn||B|
 Björn (Bill) O'Malley|O'Malley|Björn||B|
 Björn 'Bill' O'Malley|O'Malley|Björn||B|
 Björn C O'Malley|O'Malley|Björn||B|C
@@ -254,6 +258,7 @@ O'Malley, C. Björn III|O'Malley|Björn||C|
 O'Malley y Muñoz, C. Björn Roger III|O'Malley y Muñoz|Björn|Roger|C|R
 Ichiro Suzuki|Suzuki|Ichiro||I|
 鈴 木|木|||鈴|
+中 (π)华|华|||中|
 Yukihiro 'Matz' Matsumoto|Matsumoto|Yukihiro||Y|
 Yukihiro "Matz" Matsumoto|Matsumoto|Yukihiro||Y|
 Mr. Yukihiro "Matz" Matsumoto|Matsumoto|Yukihiro||Y|

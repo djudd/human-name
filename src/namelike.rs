@@ -1,5 +1,7 @@
 use super::utils;
 
+// TODO Exceptions like Ng
+
 pub fn is_name(word: &str) -> bool {
     if word.len() < 2 {
         false

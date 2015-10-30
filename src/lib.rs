@@ -1,4 +1,3 @@
-extern crate regex;
 extern crate itertools;
 
 #[macro_use]
@@ -30,6 +29,110 @@ fn may_be_name_or_initials(word: &str, use_capitalization: bool) -> bool {
     initials::is_initials(word, use_capitalization) || namelike::is_name(word)
 }
 
+// Strip suffixes and titles, and find the start of the surname.
+// These tasks are intrinsically connected because commas may indicate
+// either a sort-ordered surname ("Smith, John") or a suffix ("John Smith, esq")
+//
+// This is where the meat of the parsing takes place
+fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<&str>, usize) {
+    let mut words: Vec<&str> = Vec::new();
+    let mut surname_index = 0;
+
+    // Strip suffixes and then flip remaining words around (remaining) comma
+    for (i, part) in name.split(",").enumerate() {
+        if i > 1 {
+            // Anything after the second comma is a suffix
+            break;
+        }
+        else if i == 0 || words.is_empty() {
+            // We're in the surname part (if the format is "Smith, John"),
+            // or the only actual name part (if the format is "John Smith,
+            // esq." or just "John Smith")
+            words.extend(
+                part
+                    .split_whitespace()
+                    .filter( |w| !first_alphabetical_char(w).is_none() ));
+        }
+        else {
+            // We already processed one comma-separated part, which may
+            // have been the surname (if this is the given name), or the full
+            // name (if this is a suffix)
+            let mut given_middle_or_suffix_words: Vec<&str> = part
+                .split_whitespace()
+                .filter( |w| !first_alphabetical_char(w).is_none() )
+                .collect();
+
+            while !given_middle_or_suffix_words.is_empty() {
+                let word = given_middle_or_suffix_words.pop().unwrap();
+
+                let is_suffix = suffix::is_suffix(word);
+
+                // Preserve parseability: don't strip an apparent suffix
+                // that might still be part of the name, if it would take
+                // the name below 2 words
+                let keep_it_anyway =
+                    is_suffix &&
+                    given_middle_or_suffix_words.len() + words.len() < 2 &&
+                    may_be_name_or_initials(word, mixed_case);
+
+                if !is_suffix || keep_it_anyway {
+                    surname_index += 1;
+                    words.insert(0, word)
+                }
+            }
+        }
+    }
+
+    // Strip non-comma-separated suffixes (e.g. "John Smith Jr.")
+    while !words.is_empty() {
+        if !suffix::is_suffix(words.last().unwrap()) {
+            break
+        }
+
+        // Preserve parseability: don't strip an apparent suffix
+        // that might still be part of the name, if it would take
+        // the name below 2 words
+        let keep_it_anyway = words.len() <= 2 &&
+            may_be_name_or_initials(words.last().unwrap(), mixed_case);
+        if keep_it_anyway {
+            break;
+        }
+
+        words.pop();
+    }
+
+    // Check for title as prefix (e.g. "Dr. John Smith" or "Right Hon. John Smith")
+    let mut prefix_len = words.len() - 1;
+    while prefix_len > 0 {
+        if title::is_title(&words[0..prefix_len]) {
+            for _ in 0..prefix_len {
+                // Preserve parseability: don't strip an apparent title part
+                // that might still be part of the name, if it would take
+                // the name below 2 words
+                let keep_it_anyway = words.len() <= 2 &&
+                    may_be_name_or_initials(words[0], mixed_case);
+
+                if !keep_it_anyway {
+                    words.remove(0);
+                    if surname_index > 0 {
+                        surname_index -= 1;
+                    }
+                }
+            }
+            break;
+        }
+        prefix_len -= 1;
+    }
+
+    if words.len() > 1 && (surname_index <= 0 || surname_index >= words.len()) {
+        // We didn't get the surname from the formatting (e.g. "Smith, John"),
+        // so we have to guess it
+        surname_index = surname::find_surname_index(&words);
+    }
+
+    (words, surname_index)
+}
+
 
 impl Name {
     pub fn parse(name: &str) -> Option<Name> {
@@ -38,104 +141,13 @@ impl Name {
         }
 
         let mixed_case = is_mixed_case(name);
-
-        let mut words: Vec<&str> = Vec::new();
-        let mut surname_index = 0;
-
-        // Strip suffixes and nicknames, and then flip remaining words around
-        // (remaining) comma (for formats like "Smith, John"; but suffixes may
-        // also contain commas, e.g. "John Smith, esq.")
-        for (i, part) in name.split(",").enumerate() {
-            if i > 1 {
-                // Anything after the second comma is a suffix
-                break;
-            }
-            else if i == 0 || words.is_empty() {
-                // We're in the surname part (if the format is "Smith, John"),
-                // or the only actual name part (if the format is "John Smith,
-                // esq." or just "John Smith")
-                words.extend(
-                    part
-                        .split_whitespace()
-                        .filter( |w| !first_alphabetical_char(w).is_none() )
-                        .filter( |w| !nickname::is_nickname(w) ));
-            }
-            else {
-                // We already processed one comma-separated part, which may
-                // have been the surname, or the full name
-                let mut given_middle_or_suffix_words: Vec<&str> = part
-                    .split_whitespace()
-                    .filter( |w| !first_alphabetical_char(w).is_none() )
-                    .filter( |w| !nickname::is_nickname(w) )
-                    .collect();
-
-                while !given_middle_or_suffix_words.is_empty() {
-                    let word = given_middle_or_suffix_words.pop().unwrap();
-
-                    let is_suffix = suffix::is_suffix(word);
-
-                    // Preserve parseability: don't strip an apparent suffix
-                    // that might still be part of the name, if it would take
-                    // the name below 2 words
-                    let keep_it_anyway =
-                        is_suffix &&
-                        given_middle_or_suffix_words.len() + words.len() < 2 &&
-                        may_be_name_or_initials(word, mixed_case);
-
-                    if !is_suffix || keep_it_anyway {
-                        words.insert(0, word)
-                    }
-                }
-            }
-        }
-
-        // Strip non-comma-separated suffixes
-        while !words.is_empty() {
-            if !suffix::is_suffix(words.last().unwrap()) {
-                break
-            }
-
-            // Preserve parseability: don't strip an apparent suffix
-            // that might still be part of the name, if it would take
-            // the name below 2 words
-            let keep_it_anyway = words.len() <= 2 &&
-                may_be_name_or_initials(words.last().unwrap(), mixed_case);
-            if keep_it_anyway {
-                break;
-            }
-
-            words.pop();
-        }
-
-        // Check for title as prefix (e.g. "Dr. John Smith" or "Right Hon. John Smith")
-        let mut prefix_len = words.len() - 1;
-        while prefix_len > 0 {
-            if title::is_title(&words[0..prefix_len]) {
-                for _ in 0..prefix_len {
-                    // Preserve parseability: don't strip an apparent title part
-                    // that might still be part of the name, if it would take
-                    // the name below 2 words
-                    let keep_it_anyway = words.len() <= 2 &&
-                        may_be_name_or_initials(words[0], mixed_case);
-
-                    if !keep_it_anyway {
-                        words.remove(0);
-                        if surname_index > 0 {
-                            surname_index -= 1;
-                        }
-                    }
-                }
-                break;
-            }
-            prefix_len -= 1;
-        }
+        let name = nickname::strip_nickname(name);
+        let (words, surname_index) = name_words_and_surname_index(&name, mixed_case);
 
         if words.len() < 2 {
             // We need at least a first and last name, or we can't tell which we have
             return None;
         }
-
-        // TODO Benchmark special casing 2-word-remaining names to avoid initializing vectors
 
         let first_initial = first_alphabetical_char(words[0])
             .unwrap()
@@ -143,18 +155,14 @@ impl Name {
             .next()
             .unwrap();
 
+        // TODO Benchmark special casing 2-word-remaining names to avoid initializing vectors
+
         // Take the remaining words, and strip out the initials (if present;
         // only allow one block of initials) and the first name (if present),
         // and whatever's left are the middle names
         let mut given_name = None;
         let mut middle_names: Vec<&str> = Vec::new();
         let mut middle_initials = String::new();
-
-        if surname_index <= 0 || surname_index >= words.len() {
-            // We didn't get the surname from the formatting (e.g. "Smith, John"),
-            // so we have to guess it
-            surname_index = surname::find_surname_index(&words);
-        }
 
         if words[surname_index..].iter().all( |w| !namelike::is_name(w) ) {
             return None;

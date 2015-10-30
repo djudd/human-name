@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-lazy_static! { 
+lazy_static! {
     static ref SURNAME_PREFIXES: HashSet<&'static str> = {
         let s: HashSet<&'static str> = [
             "abu",
@@ -38,7 +38,7 @@ lazy_static! {
 
 pub fn find_surname_index(words: &[&str]) -> usize {
     if words.len() < 2 {
-        panic!("find_surname_index on empty list of words");
+        panic!("find_surname_index on list of {} word(s)", words.len());
     } else if words.len() == 2 {
         return 1;
     }
