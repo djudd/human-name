@@ -1,24 +1,47 @@
 use std::borrow::Cow;
+use std::collections::HashMap;
+
+lazy_static! {
+    static ref UNAMBIGUOUS_CLOSE_BY_OPEN: HashMap<char,char> = {
+        let mut m: HashMap<char,char> = HashMap::new();
+        m.insert('(',')');
+        m.insert('[',']');
+        m.insert('<', '>');
+        m.insert('“', '”');
+        m.insert('〝', '〞');
+        m.insert('‹', '›');
+        m.insert('《', '》');
+        m
+    };
+
+    static ref AMBIGUOUS_CLOSE_BY_OPEN: HashMap<char,char> = {
+        let mut m: HashMap<char,char> = HashMap::new();
+        m.insert('\'', '\'');
+        m.insert('"', '"');
+        m.insert('‘', '’');
+        m
+    };
+}
 
 fn expected_close_char_if_opens_nickname(c: char, prev: char) -> Option<char> {
-    if c == '(' {
-        // Treat opening parens as the start of a nickname
+    let close = UNAMBIGUOUS_CLOSE_BY_OPEN.get(&c);
+    if !close.is_none() {
+        // Treat, e.g., opening parens as the start of a nickname
         // regardless of where it occurs
-        // TODO opening parens class
-        //
-        Some(')')
-    } else if c == '"' && prev.is_whitespace() {
-        // Treat quote character as the start of a nickname
-        // only if it occurs after whitespace; otherwise, it
-        // might be in-name puntuation
-        // TODO quote class
-        //
-        Some('"')
-    } else if c == '\'' && prev.is_whitespace() {
-        Some('\'')
-    } else {
-        None
+        return Some(*close.unwrap());
     }
+
+    if prev.is_whitespace() {
+        let close = AMBIGUOUS_CLOSE_BY_OPEN.get(&c);
+        if !close.is_none() {
+            // Treat, e.g., quote character as the start of a nickname
+            // only if it occurs after whitespace; otherwise, it
+            // might be in-name puntuation
+            return Some(*close.unwrap());
+        }
+    }
+
+    None
 }
 
 pub fn second_char_index(s: &str) -> Option<usize> {
@@ -50,7 +73,7 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
         } else if c == expected_close_char {
             match second_char_index(&input[i..]) {
                 Some(j) => {
-                    return Cow::Owned(input[0..nick_start_ix].to_string() + &strip_nickname(&input[i+j..]));
+                    return Cow::Owned(input[0..nick_start_ix].to_string() + " " + &strip_nickname(&input[i+j..]));
                 }
                 None => {
                     return Cow::Borrowed(&input[0..nick_start_ix]);
@@ -75,7 +98,7 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
             // string for actual nicknames, whose opening character we might
             // have missed while looking for the first closing character
             Some(i) => {
-                return Cow::Owned(input[0..nick_start_ix+i].to_string() + &strip_nickname(&input[nick_start_ix+i..]));
+                return Cow::Owned(input[0..nick_start_ix+i].to_string() + " " + &strip_nickname(&input[nick_start_ix+i..]));
             }
             None => {
                 return Cow::Borrowed(input);

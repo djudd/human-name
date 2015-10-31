@@ -7,3 +7,5 @@ authors = ["David Judd <david@academia.edu>"]
 [dependencies]
 lazy_static = "0.1.*"
 itertools = "0.4.*"
+unicode-segmentation = "0.1.*"
+unicode-normalization = "0.1.*"
