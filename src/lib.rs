@@ -34,6 +34,9 @@ pub struct Name {
 // either a sort-ordered surname ("Smith, John") or a suffix ("John Smith, esq")
 //
 // This is where the meat of the parsing takes place
+//
+// TODO Consider a refactoring that uses split_word_bounds(), and might
+// merge nickname removal into the main parse loop
 fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<&str>, usize) {
     let mut words: Vec<&str> = Vec::new();
     let mut surname_index = 0;
