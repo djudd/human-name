@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use super::initials;
 
 lazy_static! {
     static ref SURNAME_PREFIXES: HashSet<&'static str> = {
@@ -36,7 +37,7 @@ lazy_static! {
     };
 }
 
-pub fn find_surname_index(words: &[&str]) -> usize {
+pub fn find_surname_index(words: &[&str], use_capitalization: bool) -> usize {
     if words.len() < 2 {
         panic!("find_surname_index on list of {} word(s)", words.len());
     } else if words.len() == 2 {
@@ -51,11 +52,13 @@ pub fn find_surname_index(words: &[&str]) -> usize {
             // to be an index into the original slice and return
             return i+1;
         }
-        else if i > 0 && (lower == "y" || lower == "e") {
+        else if i > 0 && (i+2) < words.len() && (lower == "y" || lower == "e") {
             // We found what looks like a conjunction in a Spanish or Portuguese
             // style surname (e.g. "Romero y Galdámez" or "Dato e Iradier"), so
             // the previous word was the start of the surname
-            return i;
+            if !initials::is_initials(words[i], use_capitalization) && !initials::is_initials(words[i+2], use_capitalization) {
+                return i;
+            }
         }
     }
 

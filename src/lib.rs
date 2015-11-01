@@ -153,7 +153,7 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<&str>, usi
     if words.len() > 1 && (surname_index <= 0 || surname_index >= words.len()) {
         // We didn't get the surname from the formatting (e.g. "Smith, John"),
         // so we have to guess it
-        surname_index = surname::find_surname_index(&words);
+        surname_index = surname::find_surname_index(&words, mixed_case);
     }
 
     (words, surname_index)

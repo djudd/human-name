@@ -2,48 +2,13 @@ extern crate human_name;
 
 fn main() {
     let names = [
-        /*
-        "Emma Goldman", 
-        "Emma ('Em') Goldman", 
-        "Emma \"anarchy\" Goldman", 
-        "Emma Goldman, M.D.", 
-        "Emma Goldman, esq", 
-        "Emma Goldman Jr.", 
-        "Goldman, Emma",
-        "Deputy Secretary of State Emma Goldman",
-        "Dr. Emma Goldman",
-        "EM Goldman",
-        "Em Goldman",
-        "Goldman, Em",
-        "Emma de la Goldman",
-        "Emma May Goldman",
-        "Emma Van Goldman",
-        "Emma Goldman y Rodriguez",
-        "E.M. Goldman", 
-        "EM GOLDMAN",
-        "MM GOLDMAN",
-        "EM Goldman",
-        "em goldman",
-        "e. goldman",
-        "e goldman",
-        "e. m. m. goldman",
-        "E M M GOLDMAN",
-        "E. Emma Goldman",
-        "Emma M. Goldman",
-        "Emma MacGoldman",
-        "Emma Machlin",
-        "Van Jones",
-        "Jack Ma",
-        */
-        "U.S. District Judge Marc Thomas Treadwell",
+        "Poppy P E L D Donahue"
     ];
-
-
 
     for raw in names.iter() {
         let maybe_name = human_name::Name::parse(raw);
         if maybe_name.is_none() {
-            println!("!! {}", raw); 
+            println!("!! {}", raw);
             continue;
         }
 
