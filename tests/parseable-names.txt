@@ -3,6 +3,7 @@ John Doe|Doe|John||J|
 John Doe, Jr.|Doe|John||J|
 John Doe III|Doe|John||J|
 Doe, John|Doe|John||J|
+.  Doe,    John  !|Doe|John||J|
 Doe, John, Jr.|Doe|John||J|
 Doe, John III|Doe|John||J|
 John A. Doe|Doe|John||J|A

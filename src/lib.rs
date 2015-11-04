@@ -124,6 +124,10 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<&str>, usi
         words.pop();
     }
 
+    if words.is_empty() {
+        return (words, 0);
+    }
+
     // Check for title as prefix (e.g. "Dr. John Smith" or "Right Hon. John Smith")
     let mut prefix_len = words.len() - 1;
     while prefix_len > 0 {
