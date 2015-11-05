@@ -1,6 +1,7 @@
 extern crate itertools;
 extern crate unicode_segmentation;
 extern crate unicode_normalization;
+extern crate rustc_serialize;
 
 #[macro_use]
 extern crate lazy_static;
@@ -20,6 +21,7 @@ use namecase::namecase;
 use unicode_segmentation::UnicodeSegmentation;
 use std::ascii::AsciiExt;
 
+#[derive(RustcDecodable, RustcEncodable)]
 pub struct Name {
   pub given_name: Option<String>,
   pub surname: String,
@@ -27,7 +29,6 @@ pub struct Name {
   pub first_initial: char,
   pub middle_initials: Option<String>,
 }
-
 
 // Strip suffixes and titles, and find the start of the surname.
 // These tasks are intrinsically connected because commas may indicate

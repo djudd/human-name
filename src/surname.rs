@@ -5,6 +5,7 @@ lazy_static! {
     static ref SURNAME_PREFIXES: HashSet<&'static str> = {
         let s: HashSet<&'static str> = [
             "abu",
+            "abd",
             "bar",
             "ben",
             "bon",

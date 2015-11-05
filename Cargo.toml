@@ -1,5 +1,4 @@
 [package]
-
 name = "human_name"
 version = "0.0.1"
 authors = ["David Judd <david@academia.edu>"]
@@ -9,3 +8,4 @@ lazy_static = "0.1.*"
 itertools = "0.4.*"
 unicode-segmentation = "0.1.*"
 unicode-normalization = "0.1.*"
+rustc-serialize = "0.3.*"

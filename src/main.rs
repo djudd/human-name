@@ -2,31 +2,58 @@
 
 extern crate human_name;
 extern crate test;
+extern crate rustc_serialize;
 
-fn debug(names: Vec<&str>) {
-    for raw in names.iter() {
-        let maybe_name = human_name::Name::parse(raw);
-        if maybe_name.is_none() {
-            println!("!! {}", raw);
-            continue;
-        }
+use std::env;
+use std::process;
+use std::io;
+use std::io::BufReader;
+use std::io::prelude::*;
+use rustc_serialize::json;
 
-        let name = maybe_name.unwrap();
-        let first: &str = match name.given_name {
-            Some(ref given) => { given }
-            None => { "[?]" }
-        };
-        let middle: &str = match name.middle_initials {
-            Some(ref initials) => { initials }
-            None => { "[?]" }
-        };
+const USAGE: &'static str = "
+Usage:
+    human_name -
+    human_name <name>
 
-        println!("{} => {} [{}, {}, {}]", raw, name.display(), name.surname, first, middle);
-    }
-}
+If `-` is the argument, human_name will expect input on stdin.
+Otherwise, it will try to parse the arguments as a name.
+";
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
 
+    if args.len() < 2 {
+        writeln!(&mut std::io::stderr(), "{}", USAGE).ok().unwrap();
+        process::exit(64);
+    }
+
+    if args.len() == 2 && args[1] == "-" {
+        let reader = BufReader::new(io::stdin());
+        for line in reader.lines() {
+            match line.ok() {
+                Some(input) => {
+                    let parsed = human_name::Name::parse(&input);
+                    let output = match parsed {
+                        Some(name) => { json::encode(&name).unwrap() },
+                        None => { "".to_string() }
+                    };
+
+                    if !writeln!(&mut io::stdout(), "{}", output).is_ok() {
+                        break
+                    }
+                },
+                None => { break }
+            }
+        }
+    } else {
+        let parsed = human_name::Name::parse(&args[1..].join(" "));
+        if parsed.is_none() {
+            process::exit(1);
+        } else {
+            println!("{}", json::encode(&parsed.unwrap()).unwrap());
+        }
+    }
 }
 
 #[cfg(test)]
