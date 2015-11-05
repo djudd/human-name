@@ -1,47 +1,35 @@
 use std::borrow::Cow;
-use std::collections::HashMap;
-
-lazy_static! {
-    static ref UNAMBIGUOUS_CLOSE_BY_OPEN: HashMap<char,char> = {
-        let mut m: HashMap<char,char> = HashMap::new();
-        m.insert('(',')');
-        m.insert('[',']');
-        m.insert('<', '>');
-        m.insert('“', '”');
-        m.insert('〝', '〞');
-        m.insert('‹', '›');
-        m.insert('《', '》');
-        m
-    };
-
-    static ref AMBIGUOUS_CLOSE_BY_OPEN: HashMap<char,char> = {
-        let mut m: HashMap<char,char> = HashMap::new();
-        m.insert('\'', '\'');
-        m.insert('"', '"');
-        m.insert('‘', '’');
-        m
-    };
-}
 
 fn expected_close_char_if_opens_nickname(c: char, prev: char) -> Option<char> {
-    let close = UNAMBIGUOUS_CLOSE_BY_OPEN.get(&c);
+    let close = match c {
+        '(' => Some(')'),
+        '[' => Some(']'),
+        '<' => Some('>'),
+        '“' => Some('”'),
+        '〝' => Some('〞'),
+        '‹' => Some('›'),
+        _ => None
+    };
+
     if !close.is_none() {
         // Treat, e.g., opening parens as the start of a nickname
         // regardless of where it occurs
-        return Some(*close.unwrap());
+        return close;
     }
 
     if prev.is_whitespace() {
-        let close = AMBIGUOUS_CLOSE_BY_OPEN.get(&c);
-        if !close.is_none() {
-            // Treat, e.g., quote character as the start of a nickname
-            // only if it occurs after whitespace; otherwise, it
-            // might be in-name puntuation
-            return Some(*close.unwrap());
+        // Treat, e.g., quote character as the start of a nickname
+        // only if it occurs after whitespace; otherwise, it
+        // might be in-name puntuation
+        match c {
+            '\'' => Some('\''),
+            '"' => Some('"'),
+            '‘' => Some('’'),
+            _ => None
         }
+    } else {
+        None
     }
-
-    None
 }
 
 pub fn second_char_index(s: &str) -> Option<usize> {
