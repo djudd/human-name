@@ -182,14 +182,12 @@ impl Name {
             // We need at least a first and last name, or we can't tell which we have
             return None;
         }
+        else if words[surname_index..].iter().all( |w| !namelike::is_name(w, true) ) {
+            // Looks like a bad parse, since the surname doesn't make sense
+            return None;
+        }
 
-        let first_initial = first_alphabetical_char(words[0])
-            .unwrap()
-            .to_uppercase()
-            .next()
-            .unwrap();
-
-        // TODO Benchmark special casing 2-word-remaining names to avoid initializing vectors
+        let first_initial = initials::first_initial(words[0]);
 
         // Take the remaining words, and strip out the initials (if present;
         // only allow one block of initials) and the first name (if present),
@@ -198,10 +196,6 @@ impl Name {
         let mut middle_names: Vec<&str> = Vec::new();
         let mut middle_initials = String::new();
 
-        if words[surname_index..].iter().all( |w| !namelike::is_name(w, true) ) {
-            return None;
-        }
-
         for (i, word) in words[0..surname_index].iter().enumerate() {
             if initials::is_initials(word, mixed_case) {
                 let start = if i == 0 { 1 } else { 0 };
@@ -209,20 +203,15 @@ impl Name {
                     middle_initials.extend(
                         word
                             .chars()
-                            .skip(start)
                             .filter( |c| c.is_alphabetic() )
+                            .skip(start)
                             .filter_map( |w| w.to_uppercase().next() ));
                 }
             } else if given_name.is_none() {
                 given_name = Some(word.to_string());
             } else {
                 middle_names.push(word);
-                middle_initials.push(
-                    first_alphabetical_char(word)
-                        .unwrap()
-                        .to_uppercase()
-                        .next()
-                        .unwrap());
+                middle_initials.push(initials::first_initial(word));
             }
         }
 

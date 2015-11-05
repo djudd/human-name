@@ -48,3 +48,11 @@ pub fn is_initials(word: &str, use_capitalization: bool) -> bool {
         utils::is_missing_vowels(&word)
     }
 }
+
+pub fn first_initial(word: &str) -> char {
+    utils::first_alphabetical_char(word)
+        .unwrap()
+        .to_uppercase()
+        .next()
+        .unwrap()
+}
