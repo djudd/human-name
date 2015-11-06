@@ -9,6 +9,13 @@ static VOWELLESS_SURNAMES: [&'static str; 4] = [
     "Hdz",
 ];
 
+static SINGLE_LETTER_CONJUNCTIONS: [&'static str; 4] = [
+    "e",
+    "y",
+    "E",
+    "Y",
+];
+
 static SURNAME_PREFIXES: phf::Set<&'static str> = phf_set! {
     "abu",
     "abd",
@@ -38,6 +45,62 @@ static SURNAME_PREFIXES: phf::Set<&'static str> = phf_set! {
     "van",
     "vel",
     "von",
+    "Abu",
+    "Abd",
+    "Bar",
+    "Ben",
+    "Bon",
+    "Bin",
+    "Da",
+    "Das",
+    "Dal",
+    "De",
+    "Del",
+    "Dela",
+    "Der",
+    "Di",
+    "Dí",
+    "Do",
+    "Dos",
+    "Ibn",
+    "La",
+    "Le",
+    "San",
+    "Santa",
+    "St",
+    "Ste",
+    "Ter",
+    "Van",
+    "Vel",
+    "Von",
+    "ABU",
+    "ABD",
+    "BAR",
+    "BEN",
+    "BON",
+    "BIN",
+    "DA",
+    "DAS",
+    "DAL",
+    "DE",
+    "DEL",
+    "DELA",
+    "DER",
+    "DI",
+    "DÍ",
+    "DO",
+    "DOS",
+    "IBN",
+    "LA",
+    "LE",
+    "SAN",
+    "SANTA",
+    "ST",
+    "STE",
+    "TER",
+    "VAN",
+    "VEL",
+    "VON",
 };
 
 pub fn is_vowelless_surname(word: &str, use_capitalization: bool) -> bool {
@@ -55,20 +118,21 @@ pub fn find_surname_index(words: &[NamePart]) -> usize {
         return 1;
     }
 
-    let iter = words[1..words.len()-1].iter().enumerate();
-    for (i, word) in iter {
-        let lower: &str = &word.word.to_lowercase();
-        if SURNAME_PREFIXES.contains(lower) {
+    for (i, word) in words[1..words.len()-1].iter().enumerate() {
+        if SURNAME_PREFIXES.contains(word.word) {
             // We found the probable start of the surname, so adjust the index
             // to be an index into the original slice and return
             return i+1;
         }
-        else if i > 0 && (i+2) < words.len() && (lower == "y" || lower == "e") {
+    }
+
+    for (i, word) in words[2..words.len()-1].iter().enumerate() {
+        if SINGLE_LETTER_CONJUNCTIONS.contains(&word.word) {
             // We found what looks like a conjunction in a Spanish or Portuguese
             // style surname (e.g. "Romero y Galdámez" or "Dato e Iradier"), so
             // the previous word was the start of the surname
-            if !words[i].is_initials && !words[i+2].is_initials {
-                return i;
+            if !words[i+1].is_initials && !words[i+3].is_initials {
+                return i+1;
             }
         }
     }
