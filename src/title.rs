@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use super::namepart::NamePart;
 
 static TWO_CHAR_TITLES: [&'static str; 4] = [
     "mr",
@@ -481,10 +482,10 @@ fn might_be_last_title_part(word: &str) -> bool {
     }
 }
 
-pub fn is_title(words: &[&str]) -> bool {
+pub fn is_title(words: &[NamePart]) -> bool {
     match words.last() {
         Some(word) => {
-            if !might_be_last_title_part(word) {
+            if !might_be_last_title_part(word.word) {
                 return false
             }
         }
@@ -494,7 +495,7 @@ pub fn is_title(words: &[&str]) -> bool {
     }
 
     if words.len() > 1 {
-        words[0..words.len()-1].iter().all( |word| might_be_title_part(word) )
+        words[0..words.len()-1].iter().all( |word| might_be_title_part(word.word) )
     }
     else {
         true

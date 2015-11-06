@@ -39,3 +39,28 @@ pub fn capitalize(word: &str) -> String {
 pub fn is_missing_vowels(word: &str) -> bool {
     word.chars().all(|c| !c.is_alphabetic() || (c.is_ascii() && !VOWELS.contains(&c)))
 }
+
+// Fairly lax check, which allows initial or trailing periods, or neither,
+// and allows double periods (as likely to be typos as to indicate something
+// other than initials), but forbids two neighboring non-periods.
+pub fn is_period_separated(word: &str) -> bool {
+    let mut chars = word.chars().peekable();
+
+    loop {
+        match chars.next() {
+            Some(c) => {
+                match chars.peek() {
+                    Some(nc) => {
+                        if (c != '.') && (*nc != '.') {
+                            return false;
+                        }
+                    }
+                    None => { break }
+                }
+            }
+            None => { break }
+        }
+    }
+
+    true
+}
