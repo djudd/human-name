@@ -14,11 +14,12 @@ mod surname;
 mod namecase;
 mod namepart;
 
+use std::borrow::Cow;
 use itertools::Itertools;
 use utils::*;
-use namecase::namecase;
 use namepart::NamePart;
 
+// TODO Should these be Cows?
 #[derive(RustcDecodable, RustcEncodable)]
 pub struct Name {
   pub given_name: Option<String>,
@@ -163,7 +164,7 @@ impl Name {
         // only allow one block of initials) and the first name (if present),
         // and whatever's left are the middle names
         let mut given_name: Option<String> = None;
-        let mut middle_names: Vec<&str> = Vec::new();
+        let mut middle_names: Vec<Cow<str>> = Vec::new();
         let mut middle_initials = String::new();
 
         for (i, word) in words[0..surname_index].iter().enumerate() {
@@ -178,27 +179,18 @@ impl Name {
                             .filter_map( |w| w.to_uppercase().next() ));
                 }
             } else if given_name.is_none() {
-                given_name = Some(word.word.to_string());
+                given_name = Some(word.namecase(false).to_string());
             } else {
-                middle_names.push(word.word);
+                middle_names.push(word.namecase(false));
                 middle_initials.push(word.initial());
             }
         }
 
-        let given_name =
-            if given_name.is_none() || mixed_case {
-                given_name
-            } else {
-                Some(namecase(&given_name.unwrap(), false))
-            };
-
         let middle_names =
             if middle_names.is_empty() {
                 None
-            } else if mixed_case {
-                Some(middle_names.join(" "))
             } else {
-                Some(middle_names.iter().map( |w| namecase(w, false) ).join(" "))
+                Some(middle_names.join(" "))
             };
 
         let middle_initials =
@@ -208,17 +200,12 @@ impl Name {
                 Some(middle_initials)
             };
 
-        let surname =
-            if mixed_case {
-                words[surname_index..].iter().map(|w| w.word).join(" ")
-            } else {
-                let last_surname_word_ix = words.len() - surname_index - 1;
-                words[surname_index..]
-                    .iter()
-                    .enumerate()
-                    .map( |(i, w)| namecase(w.word, i < last_surname_word_ix) )
-                    .join(" ")
-            };
+        let last_surname_word_ix = words.len() - surname_index - 1;
+        let surname = words[surname_index..]
+            .iter()
+            .enumerate()
+            .map( |(i, w)| w.namecase(i < last_surname_word_ix) )
+            .join(" ");
 
         Some(Name {
             first_initial: words[0].initial(),
