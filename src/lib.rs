@@ -50,7 +50,6 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
             // We're in the surname part (if the format is "Smith, John"),
             // or the only actual name part (if the format is "John Smith,
             // esq." or just "John Smith")
-
             words.extend(NamePart::all_from_text(part, mixed_case));
         }
         else {
