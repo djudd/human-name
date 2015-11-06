@@ -17,8 +17,6 @@ mod namepart;
 use itertools::Itertools;
 use utils::*;
 use namecase::namecase;
-use unicode_segmentation::UnicodeSegmentation;
-use std::ascii::AsciiExt;
 use namepart::NamePart;
 
 #[derive(RustcDecodable, RustcEncodable)]
@@ -52,36 +50,14 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
             // We're in the surname part (if the format is "Smith, John"),
             // or the only actual name part (if the format is "John Smith,
             // esq." or just "John Smith")
-            for word in part.split_whitespace() {
-                if first_alphabetical_char(word).is_none() {
-                    continue;
-                } else if word.chars().all( |c| !c.is_ascii() ) {
-                    // Trust unicode word boundaries, because we've got nothing better
-                    words.extend(word.unicode_words().map(|w| NamePart::from_word(w, mixed_case)));
-                } else {
-                    // Don't trust unicode word boundaries, because they'll split hyphenated names
-                    // and names with apostrophes
-                    words.push(NamePart::from_word(word, mixed_case));
-                }
-            }
+
+            words.extend(NamePart::all_from_text(part, mixed_case));
         }
         else {
             // We already processed one comma-separated part, which may
             // have been the surname (if this is the given name), or the full
             // name (if this is a suffix)
-            let mut given_middle_or_suffix_words: Vec<NamePart> = Vec::new();
-            for word in part.split_whitespace() {
-                if first_alphabetical_char(word).is_none() {
-                    continue;
-                } else if word.chars().all( |c| !c.is_ascii() ) {
-                    // Trust unicode word boundaries, because we've got nothing better
-                    given_middle_or_suffix_words.extend(word.unicode_words().map(|w| NamePart::from_word(w, mixed_case)));
-                } else {
-                    // Don't trust unicode word boundaries, because they'll split hyphenated names
-                    // and names with apostrophes
-                    given_middle_or_suffix_words.push(NamePart::from_word(word, mixed_case));
-                }
-            }
+            let mut given_middle_or_suffix_words: Vec<NamePart> = NamePart::all_from_text(part, mixed_case).collect();
 
             while !given_middle_or_suffix_words.is_empty() {
                 let word = given_middle_or_suffix_words.pop().unwrap();
@@ -167,7 +143,7 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
 
 impl Name {
     pub fn parse(name: &str) -> Option<Name> {
-        if first_alphabetical_char(name).is_none() {
+        if !name.chars().any(char::is_alphabetic) {
             return None
         }
 

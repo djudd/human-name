@@ -2,10 +2,6 @@ use std::ascii::AsciiExt;
 
 const VOWELS: [char; 12] = ['a','e','i','o','u','y','A','E','I','O','U','Y'];
 
-pub fn first_alphabetical_char(s: &str) -> Option<char> {
-    s.chars().find( |c| c.is_alphabetic() )
-}
-
 pub fn is_mixed_case(s: &str) -> bool {
     let mut has_lowercase = false;
     let mut has_uppercase = false;

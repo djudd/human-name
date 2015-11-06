@@ -1,6 +1,57 @@
 use super::utils;
 use super::surname;
 use std::ascii::AsciiExt;
+use unicode_segmentation::UnicodeSegmentation;
+
+pub struct NameParts<'a> {
+    text: &'a str,
+    use_capitalization: bool,
+}
+
+impl <'a>Iterator for NameParts<'a> {
+    type Item = NamePart<'a>;
+
+    fn next(&mut self) -> Option<NamePart<'a>> {
+        // Skip any leading whitespace
+        match self.text.char_indices().find( |&(_,c)| !c.is_whitespace() ) {
+            Some((i,_)) => {
+                if i > 0 {
+                    self.text = &self.text[i..];
+                }
+            },
+            None => {
+                return None;
+            }
+        };
+
+        // Now look for the next whitespace that remains
+        let next_whitespace = match self.text.char_indices().find( |&(_,c)| c.is_whitespace() ) {
+            Some((i,_)) => i,
+            None => self.text.len()
+        };
+
+        let word = &self.text[0..next_whitespace];
+
+        if !word.chars().any(char::is_alphabetic) {
+            // Not a word, skip it by recursing
+            self.text = &self.text[next_whitespace..];
+            self.next()
+        } else if !word.chars().any( |c| c.is_ascii() ) {
+            // For non-ASCII, we defer to the unicode_segmentation library
+            let (next_word_boundary, subword) = word.split_word_bound_indices().find( |&(_,subword)|
+               subword.chars().any(char::is_alphabetic)
+            ).unwrap();
+            self.text = &self.text[next_word_boundary+subword.len()..];
+            Some(NamePart::from_word(subword, self.use_capitalization))
+        } else {
+            // For ASCII, we split on whitespace only, and handle further
+            // segmenting ourselves
+            self.text = &self.text[next_whitespace..];
+            Some(NamePart::from_word(word, self.use_capitalization))
+        }
+    }
+}
+
 
 pub struct NamePart<'a> {
     pub word: &'a str,
@@ -10,6 +61,13 @@ pub struct NamePart<'a> {
 }
 
 impl <'a>NamePart<'a> {
+
+    pub fn all_from_text(text: &str, use_capitalization: bool) -> NameParts {
+        NameParts {
+            text: text,
+            use_capitalization: use_capitalization,
+        }
+    }
 
     pub fn from_word(word: &str, use_capitalization: bool) -> NamePart {
         let chars = word.chars().count();
@@ -44,7 +102,9 @@ impl <'a>NamePart<'a> {
     }
 
     pub fn initial(&self) -> char {
-        utils::first_alphabetical_char(self.word)
+        self.word
+            .chars()
+            .find(|c| c.is_alphabetic())
             .unwrap()
             .to_uppercase()
             .next()
