@@ -1,4 +1,5 @@
 use phf;
+use std::ascii::AsciiExt;
 use super::namepart::NamePart;
 
 static TWO_CHAR_TITLES: [&'static str; 4] = [
@@ -466,8 +467,7 @@ fn might_be_last_title_part(word: &str) -> bool {
         false
     }
     else if word.len() == 2 {
-        let key: &str = &word.to_lowercase();
-        TWO_CHAR_TITLES.contains(&key)
+        TWO_CHAR_TITLES.iter().any( |title| title.eq_ignore_ascii_case(word) )
     }
     else if might_be_title_part(word) {
         !word.contains('.') || might_be_last_title_part(word.split('.').last().unwrap())
