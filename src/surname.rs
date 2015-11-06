@@ -1,6 +1,13 @@
 use std::collections::HashSet;
-use super::utils;
+use std::ascii::AsciiExt;
 use super::namepart::NamePart;
+
+static VOWELLESS_SURNAMES: [&'static str; 4] = [
+    "Ng",
+    "Lv",
+    "Mtz",
+    "Hdz",
+];
 
 lazy_static! {
     static ref SURNAME_PREFIXES: HashSet<&'static str> = {
@@ -37,25 +44,13 @@ lazy_static! {
         ].iter().cloned().collect();
         s
     };
-
-    // TODO Just use array probably
-    static ref VOWELLESS_SURNAMES: HashSet<&'static str> = {
-        let s: HashSet<&'static str> = [
-            "Ng",
-            "Lv",
-            "Mtz",
-            "Hdz",
-        ].iter().cloned().collect();
-        s
-    };
 }
 
 pub fn is_vowelless_surname(word: &str, use_capitalization: bool) -> bool {
     if use_capitalization {
-        VOWELLESS_SURNAMES.contains(word)
+        VOWELLESS_SURNAMES.contains(&word)
     } else {
-        let key = utils::capitalize(word);
-        VOWELLESS_SURNAMES.contains(&*key)
+        VOWELLESS_SURNAMES.iter().any( |surname| surname.eq_ignore_ascii_case(word) )
     }
 }
 
