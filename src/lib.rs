@@ -1,10 +1,11 @@
+#![feature(plugin)]
+#![plugin(phf_macros)]
+
+extern crate phf;
 extern crate itertools;
 extern crate unicode_segmentation;
 extern crate unicode_normalization;
 extern crate rustc_serialize;
-
-#[macro_use]
-extern crate lazy_static;
 
 mod utils;
 mod suffix;

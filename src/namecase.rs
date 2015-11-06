@@ -1,51 +1,42 @@
-use std::collections::HashSet;
+use phf;
 use super::utils::capitalize;
 
-lazy_static! {
-    // Store capitalized versions because we check after doing the initial,
-    // naive capitalization
+// Store capitalized versions because we check after doing the initial,
+// naive capitalization
 
-    static ref UNCAPITALIZED_PARTICLES: HashSet<&'static str> = {
-        let s: HashSet<&'static str> = [
-            "Da",
-            "Das",
-            "Dal",
-            "De",
-            "Del",
-            "Dela",
-            "Der",
-            "De",
-            "Di",
-            "Dí",
-            "Do",
-            "Dos",
-            "La",
-            "Le",
-            "Ter",
-            "Van",
-            "Vel",
-            "Von",
-            "E",
-            "Y"
-        ].iter().cloned().collect();
-        s
-    };
+static UNCAPITALIZED_PARTICLES: phf::Set<&'static str> = phf_set! {
+    "Da",
+    "Das",
+    "Dal",
+    "De",
+    "Del",
+    "Dela",
+    "Der",
+    "Di",
+    "Dí",
+    "Do",
+    "Dos",
+    "La",
+    "Le",
+    "Ter",
+    "Van",
+    "Vel",
+    "Von",
+    "E",
+    "Y",
+};
 
-    static ref MAC_EXCEPTIONS: HashSet<&'static str> = {
-        let s: HashSet<&'static str> = [
-            "Machin",
-            "Machlin",
-            "Machar",
-            "Mackle",
-            "Macklin",
-            "Mackie",
-            "Macevicius",
-            "Maciulis",
-            "Macias",
-        ].iter().cloned().collect();
-        s
-    };
-}
+static MAC_EXCEPTIONS: phf::Set<&'static str> = phf_set! {
+    "Machin",
+    "Machlin",
+    "Machar",
+    "Mackle",
+    "Macklin",
+    "Mackie",
+    "Macevicius",
+    "Maciulis",
+    "Macias",
+};
 
 fn capitalize_after_mac(word: &str) -> bool {
     if word.len() <= 4 {
@@ -54,7 +45,7 @@ fn capitalize_after_mac(word: &str) -> bool {
         false
     } else if ["a","c","i","z","j"].iter().any( |c| word.ends_with(c)) {
         false
-    } else if MAC_EXCEPTIONS.contains(&word) {
+    } else if MAC_EXCEPTIONS.contains(word) {
         false
     }
     else {

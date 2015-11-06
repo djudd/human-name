@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use phf;
 use std::ascii::AsciiExt;
 use super::namepart::NamePart;
 
@@ -9,42 +9,36 @@ static VOWELLESS_SURNAMES: [&'static str; 4] = [
     "Hdz",
 ];
 
-lazy_static! {
-    static ref SURNAME_PREFIXES: HashSet<&'static str> = {
-        let s: HashSet<&'static str> = [
-            "abu",
-            "abd",
-            "bar",
-            "ben",
-            "bon",
-            "bin",
-            "da",
-            "das",
-            "dal",
-            "de",
-            "del",
-            "dela",
-            "der",
-            "de",
-            "di",
-            "dí",
-            "do",
-            "dos",
-            "ibn",
-            "la",
-            "le",
-            "san",
-            "santa",
-            "st",
-            "ste",
-            "ter",
-            "van",
-            "vel",
-            "von",
-        ].iter().cloned().collect();
-        s
-    };
-}
+static SURNAME_PREFIXES: phf::Set<&'static str> = phf_set! {
+    "abu",
+    "abd",
+    "bar",
+    "ben",
+    "bon",
+    "bin",
+    "da",
+    "das",
+    "dal",
+    "de",
+    "del",
+    "dela",
+    "der",
+    "di",
+    "dí",
+    "do",
+    "dos",
+    "ibn",
+    "la",
+    "le",
+    "san",
+    "santa",
+    "st",
+    "ste",
+    "ter",
+    "van",
+    "vel",
+    "von",
+};
 
 pub fn is_vowelless_surname(word: &str, use_capitalization: bool) -> bool {
     if use_capitalization {
