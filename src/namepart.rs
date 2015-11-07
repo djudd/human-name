@@ -129,7 +129,7 @@ impl <'a>NamePart<'a> {
                     Category::Other
                 }
             } else {
-                if chars <= 4 && trust_capitalization && word.chars().all(|c| !c.is_alphabetic() || c.is_uppercase()) {
+                if chars <= 5 && trust_capitalization && word.chars().all(|c| !c.is_alphabetic() || c.is_uppercase()) {
                     Category::Initials
                 }
                 else {

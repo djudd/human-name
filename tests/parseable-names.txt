@@ -160,7 +160,7 @@ Benjamin "Ben" Franklin|Franklin|Benjamin||B|
 Benjamin ("Ben") Franklin|Franklin|Benjamin||B|
 Brian O'Connor|O'Connor|Brian||B|
 BRIAN O'CONNOR|O'Connor|Brian||B|
-#La'tanya O'Connor|O'Connor|La'tanya||L|
+La'tanya O'Connor|O'Connor|La'tanya||L|
 LA'TANYA O'CONNOR|O'Connor|La'Tanya||L|
 Mari' Aube'|Aube'|Mari'||M|
 John Jones (Google Docs)|Jones|John||J|
@@ -285,11 +285,11 @@ Andrew Ng|Ng|Andrew||A|
 Poppy Petal Emma Liz Deveraux Donahue|Donahue|Poppy|Petal Emma Liz Deveraux|P|PELD
 P. P. E. L. D. Donahue|Donahue|||P|PELD
 p. p. e. l. d. donahue|Donahue|||P|PELD
-#PPELD Donahue|Donahue|||P|PELD
+PPELD Donahue|Donahue|||P|PELD
 PPEL Donahue|Donahue|||P|PEL
 P.P.E.L.D. Donahue|Donahue|||P|PELD
 p.p.e.l.d. donahue|Donahue|||P|PELD
-#pppld donahue|Donahue|||P|PPL
+pppld donahue|Donahue|||P|PPLD
 ppld donahue|Donahue|||P|PLD
 Poppy PELD Donahue|Donahue|Poppy||P|PELD
 Poppy P. E. L. D. Donahue|Donahue|Poppy||P|PELD

@@ -29,7 +29,7 @@ pub fn is_capitalized(word: &str) -> bool {
         }
     }
 
-    word.chars().skip(1).all(char::is_lowercase)
+    word.chars().skip(1).all( |c| c.is_lowercase() || !c.is_alphabetic() )
 }
 
 pub fn capitalize(word: &str) -> String {
