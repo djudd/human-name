@@ -160,7 +160,7 @@ Benjamin "Ben" Franklin|Franklin|Benjamin||B|
 Benjamin ("Ben") Franklin|Franklin|Benjamin||B|
 Brian O'Connor|O'Connor|Brian||B|
 BRIAN O'CONNOR|O'Connor|Brian||B|
-La'tanya O'Connor|O'Connor|La'tanya||L|
+#La'tanya O'Connor|O'Connor|La'tanya||L|
 LA'TANYA O'CONNOR|O'Connor|La'Tanya||L|
 Mari' Aube'|Aube'|Mari'||M|
 John Jones (Google Docs)|Jones|John||J|
@@ -169,7 +169,7 @@ Juan del Sur|del Sur|Juan||J|
 pennie von bergen wessels|von Bergen Wessels|Pennie||P|
 pennie von bergen wessels iii|von Bergen Wessels|Pennie||P|
 pennie von bergen wessels, iii|von Bergen Wessels|Pennie||P|
-von bergen wessels, pennie III|von bergen wessels|pennie||P|
+von bergen wessels, pennie III|von Bergen Wessels|Pennie||P|
 Joe Franklin Jr|Franklin|Joe||J|
 Joe Dentist D.D.S.|Dentist|Joe||J|
 Franklin Washington Jr. M.D.|Washington|Franklin||F|
@@ -209,7 +209,7 @@ Doe, Lt. Gen. John A. Kenneth IV|Doe|John|Kenneth|J|AK
 Lt. Gen. John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK
 #Doe, Rev. John V, Jr.|Doe|John||J|V
 Doe, Rev. John A., V, Jr.|Doe|John||J|A
-Ahmad ben Husain|ben Husain|Ahmad||A|
+Ahmad ben Husain|Ben Husain|Ahmad||A|
 Ben Johnson|Johnson|Ben||B|
 Ben Alex Johnson|Johnson|Ben|Alex|B|A
 #Alex Ben Johnson|Johnson|Alex|Ben|A|B

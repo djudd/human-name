@@ -91,8 +91,7 @@ pub struct NamePart<'a> {
     pub word: &'a str,
     pub chars: usize,
     pub category: Category,
-    pub trust_capitalization: bool,
-    pub location: Location,
+    pub namecased: Cow<'a, str>,
 }
 
 impl <'a>NamePart<'a> {
@@ -138,12 +137,20 @@ impl <'a>NamePart<'a> {
                 }
             };
 
+        let namecased =
+            if trust_capitalization && utils::is_capitalized(word) {
+                Cow::Borrowed(word)
+            }
+            else {
+                let might_be_particle = location == Location::Middle;
+                Cow::Owned(namecase::namecase(word, might_be_particle))
+            };
+
         NamePart {
             word: word,
             chars: chars,
             category: category,
-            trust_capitalization: trust_capitalization,
-            location: location,
+            namecased: namecased,
         }
     }
 
@@ -170,14 +177,6 @@ impl <'a>NamePart<'a> {
     #[inline]
     pub fn is_abbreviation(&self) -> bool {
         self.category == Category::Abbreviation
-    }
-
-    pub fn namecase(&self, might_be_particle: bool) -> Cow<str> {
-        if self.trust_capitalization {
-            Cow::Borrowed(self.word)
-        } else {
-            Cow::Owned(namecase::namecase(self.word, might_be_particle))
-        }
     }
 }
 

@@ -17,6 +17,21 @@ pub fn is_mixed_case(s: &str) -> bool {
     false
 }
 
+pub fn is_capitalized(word: &str) -> bool {
+    match word.chars().nth(0) {
+        Some(c) => {
+            if !c.is_uppercase() {
+                return false;
+            }
+        }
+        None => {
+            return false;
+        }
+    }
+
+    word.chars().skip(1).all(char::is_lowercase)
+}
+
 pub fn capitalize(word: &str) -> String {
     let mut capitalize_next = true;
     word.chars().filter_map( |c| {

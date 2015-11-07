@@ -15,7 +15,6 @@ mod surname;
 mod namecase;
 mod namepart;
 
-use std::borrow::Cow;
 use itertools::Itertools;
 use utils::*;
 use namepart::{NamePart, Location};
@@ -158,7 +157,7 @@ impl Name {
         // only allow one block of initials) and the first name (if present),
         // and whatever's left are the middle names
         let mut given_name: Option<String> = None;
-        let mut middle_names: Vec<Cow<str>> = Vec::new();
+        let mut middle_names: Vec<&str> = Vec::new();
         let mut middle_initials = String::new();
 
         for (i, word) in words[0..surname_index].iter().enumerate() {
@@ -173,9 +172,9 @@ impl Name {
                             .filter_map( |w| w.to_uppercase().next() ));
                 }
             } else if given_name.is_none() {
-                given_name = Some(word.namecase(false).to_string());
+                given_name = Some(word.namecased.to_string());
             } else {
-                middle_names.push(word.namecase(false));
+                middle_names.push(&*word.namecased);
                 middle_initials.push(word.initial());
             }
         }
@@ -194,11 +193,9 @@ impl Name {
                 Some(middle_initials)
             };
 
-        let last_surname_word_ix = words.len() - surname_index - 1;
         let surname = words[surname_index..]
             .iter()
-            .enumerate()
-            .map( |(i, w)| w.namecase(i < last_surname_word_ix) )
+            .map( |w| &*w.namecased )
             .join(" ");
 
         Some(Name {
