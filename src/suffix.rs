@@ -1,4 +1,5 @@
 use phf;
+use namepart::NamePart;
 
 static SUFFIXES: phf::Set<&'static str> = phf_set! {
     "esq",
@@ -107,16 +108,20 @@ static SUFFIXES: phf::Set<&'static str> = phf_set! {
     "vrd",
 };
 
-pub fn is_suffix(part: &str) -> bool {
-    let key: String = part.chars().filter_map( |c: char|
-        if c == '.' || c.is_whitespace() {
-            None
-        } else if c.is_uppercase() {
-            Some(c.to_lowercase().next().unwrap())
-        } else {
-            Some(c)
-        }
-    ).collect();
+pub fn is_suffix(part: &NamePart) -> bool {
+    if part.is_abbreviation() {
+        true
+    } else {
+        let key: String = part.word.chars().filter_map( |c: char|
+            if c == '.' || c.is_whitespace() {
+                None
+            } else if c.is_uppercase() {
+                Some(c.to_lowercase().next().unwrap())
+            } else {
+                Some(c)
+            }
+        ).collect();
 
-    SUFFIXES.contains(&*key)
+        SUFFIXES.contains(&*key)
+    }
 }

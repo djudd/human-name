@@ -131,7 +131,7 @@ pub fn find_surname_index(words: &[NamePart]) -> usize {
             // We found what looks like a conjunction in a Spanish or Portuguese
             // style surname (e.g. "Romero y Galdámez" or "Dato e Iradier"), so
             // the previous word was the start of the surname
-            if !words[i+1].is_initials && !words[i+3].is_initials {
+            if !words[i+1].is_initials() && !words[i+3].is_initials() {
                 return i+1;
             }
         }

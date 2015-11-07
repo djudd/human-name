@@ -435,53 +435,39 @@ fn is_title_part(word: &str) -> bool {
     TITLE_PARTS.contains(key)
 }
 
-fn might_be_title_part(word: &str) -> bool {
-    if word.len() < 3 {
+fn might_be_title_part(word: &NamePart) -> bool {
+    if word.chars < 3 {
         // Allow any word with 1 or 2 characters as part of a title (but see below)
-        return true;
-    }
-
-    match word.find(".") {
-        Some(index) => {
-            // Allow any period-terminated abbrevation as part of a title
-            // (but not necessarily if there are intermediate periods, because
-            // those might indicate this is a sequence of initials)
-            if index == word.len() - 1 {
-                true
-            }
-            else {
-                word.split('.').all( |s| s.len() < 3 || is_title_part(s) )
-            }
-        }
-        None => {
-            is_title_part(word)
-        }
+        true
+    } else if word.is_abbreviation() || word.is_initials() {
+        true
+    } else if is_title_part(word.word) {
+        true
+    } else {
+        false
     }
 }
 
-fn might_be_last_title_part(word: &str) -> bool {
+fn might_be_last_title_part(word: &NamePart) -> bool {
     // Don't allow 1 or 2-character words as the whole or final piece of
     // a title, except a set of very-common two-character title abbreviations,
     // because otherwise we are more likely dealing with initials
-    if word.len() == 1 {
+    if word.chars == 1 {
         false
     }
-    else if word.len() == 2 {
-        TWO_CHAR_TITLES.iter().any( |title| title.eq_ignore_ascii_case(word) )
-    }
-    else if might_be_title_part(word) {
-        !word.contains('.') || might_be_last_title_part(word.split('.').last().unwrap())
+    else if word.chars == 2 {
+        TWO_CHAR_TITLES.iter().any( |title| title.eq_ignore_ascii_case(word.word) )
     }
     else {
-        false
+        might_be_title_part(word)
     }
 }
 
 pub fn is_title(words: &[NamePart]) -> bool {
     match words.last() {
         Some(word) => {
-            if !might_be_last_title_part(word.word) {
-                return false
+            if !might_be_last_title_part(&word) {
+                return false;
             }
         }
         None => {
@@ -490,7 +476,7 @@ pub fn is_title(words: &[NamePart]) -> bool {
     }
 
     if words.len() > 1 {
-        words[0..words.len()-1].iter().all( |word| might_be_title_part(word.word) )
+        words[0..words.len()-1].iter().all( |word| might_be_title_part(&word) )
     }
     else {
         true

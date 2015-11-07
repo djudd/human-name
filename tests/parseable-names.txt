@@ -263,10 +263,10 @@ O'Malley, C. Björn|O'Malley|Björn||C|
 O'Malley, C. Björn III|O'Malley|Björn||C|
 O'Malley y Muñoz, C. Björn Roger III|O'Malley y Muñoz|Björn|Roger|C|R
 Ichiro Suzuki|Suzuki|Ichiro||I|
-鈴 木|木|||鈴|
-鈴木|木|||鈴|
-中(π)华|华|||中|
-中华|华|||中|
+鈴 木|木|鈴||鈴|
+鈴木|木|鈴||鈴|
+中(π)华|华|中||中|
+中华|华|中||中|
 Γαλήνη Σερβόπουλος|Σερβόπουλος|Γαλήνη||Γ|
 عليّ عبد العزيز|العزيز|عليّ|عبد|ع|ع
 Yukihiro 'Matz' Matsumoto|Matsumoto|Yukihiro||Y|

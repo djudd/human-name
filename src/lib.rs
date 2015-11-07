@@ -18,7 +18,7 @@ mod namepart;
 use std::borrow::Cow;
 use itertools::Itertools;
 use utils::*;
-use namepart::NamePart;
+use namepart::{NamePart, Location};
 
 // TODO Should these be Cows?
 #[derive(RustcDecodable, RustcEncodable)]
@@ -35,9 +35,6 @@ pub struct Name {
 // either a sort-ordered surname ("Smith, John") or a suffix ("John Smith, esq")
 //
 // This is where the meat of the parsing takes place
-//
-// TODO Consider a refactoring that uses split_word_bounds(), and might
-// merge nickname removal into the main parse loop
 fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>, usize) {
     let mut words: Vec<NamePart> = Vec::new();
     let mut surname_index = 0;
@@ -52,28 +49,25 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
             // We're in the surname part (if the format is "Smith, John"),
             // or the only actual name part (if the format is "John Smith,
             // esq." or just "John Smith")
-            words.extend(NamePart::all_from_text(part, mixed_case));
+            words.extend(NamePart::all_from_text(part, mixed_case, Location::End));
         }
         else {
             // We already processed one comma-separated part, which may
             // have been the surname (if this is the given name), or the full
             // name (if this is a suffix)
-            let mut given_middle_or_suffix_words: Vec<NamePart> = NamePart::all_from_text(part, mixed_case).collect();
+            let mut given_middle_or_suffix_words: Vec<NamePart> = NamePart::all_from_text(part, mixed_case, Location::Start).collect();
 
             while !given_middle_or_suffix_words.is_empty() {
                 let word = given_middle_or_suffix_words.pop().unwrap();
-
-                let is_suffix = suffix::is_suffix(word.word);
 
                 // Preserve parseability: don't strip an apparent suffix
                 // that might still be part of the name, if it would take
                 // the name below 2 words
                 let keep_it_anyway =
-                    is_suffix &&
                     given_middle_or_suffix_words.len() + words.len() < 2 &&
-                    (word.is_initials || word.is_namelike);
+                    (word.is_initials() || word.is_namelike());
 
-                if !is_suffix || keep_it_anyway {
+                if keep_it_anyway || !suffix::is_suffix(&word) {
                     surname_index += 1;
                     words.insert(0, word)
                 }
@@ -85,16 +79,15 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
     while !words.is_empty() {
         {
             let word = words.last().unwrap();
-            if !suffix::is_suffix(word.word) {
-                break
-            }
 
             // Preserve parseability: don't strip an apparent suffix
             // that might still be part of the name, if it would take
             // the name below 2 words
-            let keep_it_anyway = words.len() <= 2 &&
-                (word.is_initials || word.is_namelike);
-            if keep_it_anyway {
+            //
+            // However, only allow names, not initials; initials should only
+            // be at the end of the input if they are comma-separated
+            let keep_it_anyway = words.len() <= 2 && word.is_namelike();
+            if keep_it_anyway || !suffix::is_suffix(&word) {
                 break
             }
         }
@@ -117,7 +110,7 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
                 //
                 // However, only allow initials, not namelike strings; nothing
                 // we'll recognize as a title is a likely given name
-                let keep_it_anyway = words.len() <= 2 && words[0].is_initials;
+                let keep_it_anyway = words.len() <= 2 && words[0].is_initials();
 
                 if !keep_it_anyway {
                     words.remove(0);
@@ -156,7 +149,7 @@ impl Name {
             // We need at least a first and last name, or we can't tell which we have
             return None;
         }
-        else if words[surname_index..].iter().all( |w| !w.is_namelike ) {
+        else if words[surname_index..].iter().all( |w| !w.is_namelike() ) {
             // Looks like a bad parse, since the surname doesn't make sense
             return None;
         }
@@ -169,7 +162,7 @@ impl Name {
         let mut middle_initials = String::new();
 
         for (i, word) in words[0..surname_index].iter().enumerate() {
-            if word.is_initials {
+            if word.is_initials() {
                 let start = if i == 0 { 1 } else { 0 };
                 if word.chars > start {
                     middle_initials.extend(
