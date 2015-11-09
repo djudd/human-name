@@ -109,6 +109,9 @@ Velasquez y Garcia, Dr. Juan Q. Xavier |Velasquez y Garcia|Juan|Xavier|J|QX
 Velasquez y Garcia, Dr. Juan Q. Xavier, Jr.|Velasquez y Garcia|Juan|Xavier|J|QX
 Velasquez y Garcia, Dr. Juan Q. Xavier III|Velasquez y Garcia|Juan|Xavier|J|QX
 John Doe, CLU, CFP, LUTC|Doe|John||J|
+John Doe CLU CFP LUTC|Doe|John||J|
+John Doe, LUTC, CLU, CFP|Doe|John||J|
+John Doe LUTC CLU CFP|Doe|John||J|
 John P. Doe, CLU, CFP, LUTC|Doe|John||J|P
 John P. Doe-Ray, CLU, CFP, LUTC|Doe-Ray|John||J|P
 Dr. John P. Doe-Ray, CLU, CFP, LUTC|Doe-Ray|John||J|P

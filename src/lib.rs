@@ -123,8 +123,8 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
                 if word.is_namelike() {
                     found_first_name_or_initial = true;
                 } else if word.is_initials() {
-                    // Handle a special case like "Ben Smith, II" or "John E Smith,
-                    // III", where we might have mistakenly classified the whole
+                    // Handle a special case like "Ben Smith, III" or "John E Smith,
+                    // M.D.", where we might have mistakenly classified the whole
                     // first comma-separated part as a surname (due to the "ben"
                     // prefix and "e" conjunction rules respectively)
                     found_first_name_or_initial = words.len() == 1 ||
@@ -166,6 +166,11 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
     // if they are comma-separated, and we already handled that case)
     if words.len() < 2 && !postfixes.is_empty() && postfixes[0].is_namelike() {
         words.push(postfixes.remove(0));
+    }
+
+    // Anything trailing that looks like initials is probably a stray suffix
+    while !words.is_empty() && words.last().unwrap().is_initials() {
+        words.pop();
     }
 
     if words.len() < 2 {
