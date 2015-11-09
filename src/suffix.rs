@@ -1,127 +1,46 @@
 use phf;
 use namepart::NamePart;
 
-static SUFFIXES: phf::Set<&'static str> = phf_set! {
-    "esq",
-    "esquire",
-    "attorney-at-law",
-    "jr",
-    "jnr",
-    "sr",
-    "snr",
+static NUMERIC_SUFFIXES: phf::Set<&'static str> = phf_set! {
     "2",
+    "3",
+    "4",
+    "5",
+    "2nd",
+    "3rd",
+    "4th",
+    "5th",
+    "2RD",
+    "3RD",
+    "4TH",
+    "5TH",
+    "I",
+    "II",
+    "III",
+    "IV",
+    "V",
     "i",
     "ii",
     "iii",
     "iv",
     "v",
-    "ae",
-    "afc",
-    "afm",
-    "arrc",
-    "bart",
-    "bem",
-    "bt",
-    "cb",
-    "cbe",
-    "cfp",
-    "cgc",
-    "cgm",
-    "ch",
-    "chfc",
-    "cie",
-    "clu",
-    "cmg",
-    "cpa",
-    "cpm",
-    "csi",
-    "csm",
-    "cvo",
-    "dbe",
-    "dcb",
-    "dcm",
-    "dcmg",
-    "dcvo",
-    "dds",
-    "dfc",
-    "dfm",
-    "dmd",
-    "do",
-    "dpm",
-    "dsc",
-    "dsm",
-    "dso",
-    "dvm",
-    "ed",
-    "erd",
-    "gbe",
-    "gc",
-    "gcb",
-    "gcie",
-    "gcmg",
-    "gcsi",
-    "gcvo",
-    "gm",
-    "idsm",
-    "iom",
-    "iso",
-    "kbe",
-    "kcb",
-    "kcie",
-    "kcmg",
-    "kcsi",
-    "kcvo",
-    "kg",
-    "kp",
-    "kt",
-    "lg",
-    "lt",
-    "lvo",
-    "ma",
-    "mba",
-    "mbe",
-    "mc",
-    "md",
-    "mm",
-    "mp",
-    "msm",
-    "mvo",
-    "obe",
-    "obi",
-    "om",
-    "phd",
-    "phr",
-    "pmp",
-    "qam",
-    "qc",
-    "qfsm",
-    "qgm",
-    "qpm",
-    "rd",
-    "rrc",
-    "rvm",
-    "sgm",
-    "td",
-    "ud",
-    "vc",
-    "vd",
-    "vrd",
+};
+
+static ABBREVIATION_SUFFIXES: phf::Set<&'static str> = phf_set! {
+    "Jr",
+    "Jnr",
+    "Sr",
+    "Snr",
 };
 
 pub fn is_suffix(part: &NamePart) -> bool {
-    if part.is_abbreviation() {
-        true
-    } else {
-        let key: String = part.word.chars().filter_map( |c: char|
-            if c == '.' || c.is_whitespace() {
-                None
-            } else if c.is_uppercase() {
-                Some(c.to_lowercase().next().unwrap())
-            } else {
-                Some(c)
-            }
-        ).collect();
+    let namecased = &*part.namecased;
 
-        SUFFIXES.contains(&*key)
+    if part.is_namelike() || part.is_initials() {
+        NUMERIC_SUFFIXES.contains(part.word) || ABBREVIATION_SUFFIXES.contains(namecased)
+    } else if part.is_abbreviation() {
+        ABBREVIATION_SUFFIXES.contains(&namecased[0..namecased.len()-1])
+    } else {
+        false
     }
 }

@@ -10,7 +10,7 @@ John A. Doe|Doe|John||J|A
 John A. Doe, Jr.|Doe|John||J|A
 Doe, John A.|Doe|John||J|A
 Doe, John A., Jr.|Doe|John||J|A
-Doe, John A, III|Doe|John||J|A
+Doe, John A III|Doe|John||J|A
 John A. Kenneth Doe|Doe|John|Kenneth|J|AK
 John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK
 John A. Kenneth Doe III|Doe|John|Kenneth|J|AK
@@ -140,6 +140,7 @@ John E Smith|Smith|John||J|E
 john e. smith|Smith|John||J|E
 e j smith|Smith|||E|J
 John e Smith|Smith|John||J|E
+John E Smith, III|Smith|John||J|E
 John e Smith, III|Smith|John||J|E
 John e Smith III|Smith|John||J|E
 Smith, John e, III, Jr|Smith|John||J|E
@@ -177,7 +178,7 @@ Washington Jr. M.D., Franklin|Washington|Franklin||F|
 Washington, Franklin Jr. M.D.|Washington|Franklin||F|
 Kenneth Clarke Q.C.|Clarke|Kenneth||K|
 Clarke, Kenneth, Q.C. M.P.|Clarke|Kenneth||K|
-Clarke, Kenneth Q.C., M.P.|Clarke|Kenneth||K|
+Clarke, Kenneth Q.C., M.P.|Clarke|Kenneth||K|QC
 John Doe jr., MD|Doe|John||J|
 Doe, John jr., MD|Doe|John||J|
 Doe,John|Doe|John||J|
@@ -278,7 +279,7 @@ Herr Edgar A. Poe|Poe|Edgar||E|A
 Frau Edgar A. Poe|Poe|Edgar||E|A
 Mrs. Edgar A. Poe|Poe|Edgar||E|A
 Ken Griffey Jr.|Griffey|Ken||K|
-#Griffey, Jr., Ken|Griffey|Ken||K|
+Griffey, Jr., Ken|Griffey|Ken||K|
 Griffey, Ken, Jr.|Griffey|Ken||K|
 Bernado Franecki Ph.D.|Franecki|Bernado||B|
 Andrew Ng|Ng|Andrew||A|

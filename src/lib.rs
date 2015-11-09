@@ -1,3 +1,4 @@
+#![feature(drain)]
 #![feature(plugin)]
 #![plugin(phf_macros)]
 
@@ -19,7 +20,6 @@ use itertools::Itertools;
 use utils::*;
 use namepart::{NamePart, Location};
 
-// TODO Should these be Cows?
 #[derive(RustcDecodable, RustcEncodable)]
 pub struct Name {
   pub given_name: Option<String>,
@@ -36,98 +36,151 @@ pub struct Name {
 // This is where the meat of the parsing takes place
 fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>, usize) {
     let mut words: Vec<NamePart> = Vec::new();
+    let mut postfixes: Vec<NamePart> = Vec::new();
     let mut surname_index = 0;
+    let mut found_first_name_or_initial = false;
 
-    // Strip suffixes and then flip remaining words around (remaining) comma
+    // Separate comma-separated titles and suffixes, then flip remaining words
+    // around remaining comma, if any
     for (i, part) in name.split(",").enumerate() {
-        if i > 1 && words.len() > 1 {
-            // Anything after the second comma is a suffix
-            break;
-        }
-        else if i == 0 || words.is_empty() {
+        if i == 0 || words.is_empty() {
             // We're in the surname part (if the format is "Smith, John"),
             // or the only actual name part (if the format is "John Smith,
             // esq." or just "John Smith")
             words.extend(NamePart::all_from_text(part, mixed_case, Location::End));
+            if words.is_empty() { continue }
+
+            // Check for title as prefix (e.g. "Dr. John Smith" or "Right Hon.
+            // John Smith"); finding a prefix title means the next word is a
+            // first name or initial (we don't support "Dr. Smith, John")
+            let mut prefix_len = words.len() - 1;
+            while prefix_len > 0 && !found_first_name_or_initial {
+                found_first_name_or_initial = {
+                    let next_word = &words[prefix_len];
+                    if words.len() - prefix_len <= 1 && words[prefix_len-1].is_initials() {
+                        false
+                    }
+                    else {
+                        // If there is only one word after the prefix, e.g. "DR SMITH",
+                        // given prefix of "DR", we treat ambiguous strings like "DR"
+                        // as more likely to be initials than a title (there are no
+                        // similarly ambiguous given names among our title word list)
+                        (next_word.is_namelike() || next_word.is_initials()) &&
+                            title::is_prefix_title(&words[0..prefix_len])
+                    }
+                };
+
+                if found_first_name_or_initial {
+                    words.drain(0..prefix_len);
+                }
+
+                prefix_len -= 1;
+            }
+
+            // Strip non-comma-separated titles & suffixes (e.g. "John Smith Jr.")
+            let postfix_position = words.iter().skip(1).position( |word|
+                suffix::is_suffix(&word) || title::is_postfix_title(&word)
+            );
+            if postfix_position.is_some() {
+                let range = (postfix_position.unwrap() + 1)..words.len(); // Off-by-one since we skipped the first word
+                postfixes.extend(words.drain(range));
+            }
+
+            if !found_first_name_or_initial {
+                found_first_name_or_initial = surname::find_surname_index(&*words) > 0;
+            }
+        }
+        else if found_first_name_or_initial {
+            // We already found the full name, so this is a comma-separated
+            // postfix title or suffix
+            postfixes.extend(NamePart::all_from_text(part, mixed_case, Location::End));
         }
         else {
             // We already processed one comma-separated part, which may
             // have been the surname (if this is the given name), or the full
-            // name (if this is a suffix)
-            let mut given_middle_or_suffix_words: Vec<NamePart> = NamePart::all_from_text(part, mixed_case, Location::Start).collect();
+            // name (if this is a suffix or title)
+            let mut given_middle_or_postfix_words: Vec<NamePart> =
+                NamePart::all_from_text(part, mixed_case, Location::Start).collect();
+            if given_middle_or_postfix_words.is_empty() { continue }
 
-            while !given_middle_or_suffix_words.is_empty() {
-                let word = given_middle_or_suffix_words.pop().unwrap();
+            // Check for (unusual) formats like "Smith, Dr. John M."
+            if !found_first_name_or_initial && given_middle_or_postfix_words.len() > 1 {
+                let mut prefix_len = given_middle_or_postfix_words.len() - 1;
+                while prefix_len > 0 && !found_first_name_or_initial {
+                    found_first_name_or_initial = {
+                        let next_word = &given_middle_or_postfix_words[prefix_len];
+                        (next_word.is_namelike() || next_word.is_initials()) &&
+                            title::is_prefix_title(&given_middle_or_postfix_words[0..prefix_len])
+                    };
 
-                // Preserve parseability: don't strip an apparent suffix
-                // that might still be part of the name, if it would take
-                // the name below 2 words
-                let keep_it_anyway =
-                    given_middle_or_suffix_words.len() + words.len() < 2 &&
-                    (word.is_initials() || word.is_namelike());
+                    if found_first_name_or_initial {
+                        given_middle_or_postfix_words.drain(0..prefix_len);
+                    }
 
-                if keep_it_anyway || !suffix::is_suffix(&word) {
-                    surname_index += 1;
-                    words.insert(0, word)
+                    prefix_len -= 1;
                 }
             }
-        }
-    }
 
-    // Strip non-comma-separated suffixes (e.g. "John Smith Jr.")
-    while !words.is_empty() {
-        {
-            let word = words.last().unwrap();
+            // Check for (more common) formats like "Smith, John" or "Smith, J. M."
+            if !found_first_name_or_initial {
+                let word = given_middle_or_postfix_words.first().unwrap();
+                if word.is_namelike() {
+                    found_first_name_or_initial = true;
+                } else if word.is_initials() {
+                    // Handle a special case like "Ben Smith, II" or "John E Smith,
+                    // III", where we might have mistakenly classified the whole
+                    // first comma-separated part as a surname (due to the "ben"
+                    // prefix and "e" conjunction rules respectively)
+                    found_first_name_or_initial = words.len() == 1 ||
+                        given_middle_or_postfix_words.iter().any( |word|
+                            !suffix::is_suffix(word) && !title::is_postfix_title(word)
+                        );
+                }
+            }
 
-            // Preserve parseability: don't strip an apparent suffix
-            // that might still be part of the name, if it would take
-            // the name below 2 words
-            //
-            // However, only allow names, not initials; initials should only
-            // be at the end of the input if they are comma-separated
-            let keep_it_anyway = words.len() <= 2 && word.is_namelike();
-            if keep_it_anyway || !suffix::is_suffix(&word) {
-                break
+            // Now we've decided: either this is the given name or first initial,
+            // in which case we put it in front, or it's a suffix or title
+            if found_first_name_or_initial {
+                // Check for (unusual) formats like "Smith, Dr. John Jr." (but
+                // only look for suffixes or abbreviations, anything title-like
+                // that might be a name or initials is more likely the latter)
+                let postfix_position = given_middle_or_postfix_words.iter().position( |word|
+                    word.is_abbreviation() || suffix::is_suffix(&word)
+                );
+
+                if postfix_position.is_some() {
+                    let range = postfix_position.unwrap()..given_middle_or_postfix_words.len();
+                    postfixes.extend(given_middle_or_postfix_words.drain(range));
+                }
+
+                let surname_words = words;
+                words = given_middle_or_postfix_words;
+                surname_index = words.len();
+                words.extend(surname_words);
+            }
+            else {
+                postfixes.extend(given_middle_or_postfix_words);
             }
         }
-
-        words.pop();
     }
 
-    if words.is_empty() {
+    // If there are two or fewer words, e.g. "JOHN MA", we treat
+    // ambiguous strings like "MA" as surnames rather than titles
+    // (not initials, which should only be at the end of the input
+    // if they are comma-separated, and we already handled that case)
+    if words.len() < 2 && !postfixes.is_empty() && postfixes[0].is_namelike() {
+        words.push(postfixes.remove(0));
+    }
+
+    if words.len() < 2 {
+        // Failed parse
         return (words, 0);
     }
 
-    // Check for title as prefix (e.g. "Dr. John Smith" or "Right Hon. John Smith")
-    let mut prefix_len = words.len() - 1;
-    while prefix_len > 0 {
-        if title::is_title(&words[0..prefix_len]) {
-            for _ in 0..prefix_len {
-                // Preserve parseability: don't strip an apparent title part
-                // that might still be part of the name, if it would take
-                // the name below 2 words
-                //
-                // However, only allow initials, not namelike strings; nothing
-                // we'll recognize as a title is a likely given name
-                let keep_it_anyway = words.len() <= 2 && words[0].is_initials();
-
-                if !keep_it_anyway {
-                    words.remove(0);
-                    if surname_index > 0 {
-                        surname_index -= 1;
-                    }
-                }
-            }
-
-            break
-        }
-        prefix_len -= 1;
-    }
-
-    if words.len() > 1 && (surname_index <= 0 || surname_index >= words.len()) {
+    if surname_index <= 0 || surname_index >= words.len() {
         // We didn't get the surname from the formatting (e.g. "Smith, John"),
         // so we have to guess it
-        surname_index = surname::find_surname_index(&words);
+        surname_index = surname::find_surname_index(&words[1..]) + 1;
     }
 
     (words, surname_index)
