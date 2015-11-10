@@ -9,6 +9,7 @@ fn expected_close_char_if_opens_nickname(c: char, follows_whitespace: bool) -> O
         '“' => Some(('”', false)),
         '〝' => Some(('〞', false)),
         '‹' => Some(('›', false)),
+        '«' => Some(('»', false)),
         _ => None
     };
 
