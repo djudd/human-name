@@ -35,7 +35,7 @@ fn strip_postfixes_and_find_suffix<'a>(words: &mut Vec<NamePart<'a>>, include_fi
             false
         }
         else {
-            word.is_abbreviation() || suffix::is_suffix(&word)
+            suffix::is_suffix(&word) || title::is_postfix_title(&word)
         }
     );
 
@@ -112,7 +112,7 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
                     // prefix and "e" conjunction rules respectively)
                     found_first_name_or_initial = words.len() == 1 ||
                         given_middle_or_postfix_words.iter().any( |word|
-                            !suffix::is_suffix(word) && !title::is_postfix_title(word)
+                            !suffix::is_suffix(&word) && !title::is_postfix_title(&word)
                         );
                 }
             }

@@ -112,6 +112,10 @@ John Doe, CLU, CFP, LUTC|Doe|John||J|
 John Doe CLU CFP LUTC|Doe|John||J|
 John Doe, LUTC, CLU, CFP|Doe|John||J|
 John Doe LUTC CLU CFP|Doe|John||J|
+John Doe Esq.|Doe|John||J|
+John Doe, Esquire|Doe|John||J|
+John Esquire|Esquire|John||J|
+John Doe Phd|Doe|John||J|
 John P. Doe, CLU, CFP, LUTC|Doe|John||J|P
 John P. Doe-Ray, CLU, CFP, LUTC|Doe-Ray|John||J|P
 Dr. John P. Doe-Ray, CLU, CFP, LUTC|Doe-Ray|John||J|P
@@ -127,6 +131,8 @@ vai la|La|Vai||V|
 Andrews, M.D.|Andrews|||M|D
 Andrews, MD|Andrews|||M|D
 ANDREWS, MD|Andrews|||M|D
+M.D. ANDREWS, MD|Andrews|||M|D
+MD ANDREWS MD|Andrews|||M|D
 Smith, M.R.|Smith|||M|R
 Smith, MR|Smith|||M|R
 SMITH, MR|Smith|||M|R

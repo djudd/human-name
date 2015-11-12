@@ -434,97 +434,6 @@ static POSTFIX_TITLES: phf::Set<&'static str> = phf_set! {
     "Esq",
     "Esquire",
     "Attorney-at-law",
-    "Ae",
-    "Afc",
-    "Afm",
-    "Arrc",
-    "Bart",
-    "Bem",
-    "Bt",
-    "Cb",
-    "Cbe",
-    "Cfp",
-    "Cgc",
-    "Cgm",
-    "Ch",
-    "Chfc",
-    "Cie",
-    "Clu",
-    "Cmg",
-    "Cpa",
-    "Cpm",
-    "Csi",
-    "Csm",
-    "Cvo",
-    "Dbe",
-    "Dcb",
-    "Dcm",
-    "Dcmg",
-    "Dcvo",
-    "Dds",
-    "Dfc",
-    "Dfm",
-    "Dmd",
-    "Do",
-    "Dpm",
-    "Dsc",
-    "Dsm",
-    "Dso",
-    "Dvm",
-    "Ed",
-    "Erd",
-    "Gbe",
-    "Gc",
-    "Gcb",
-    "Gcie",
-    "Gcmg",
-    "Gcsi",
-    "Gcvo",
-    "Gm",
-    "Idsm",
-    "Iom",
-    "Iso",
-    "Kbe",
-    "Kcb",
-    "Kcie",
-    "Kcmg",
-    "Kcsi",
-    "Kcvo",
-    "Kg",
-    "Kp",
-    "Kt",
-    "Lg",
-    "Lt",
-    "Lvo",
-    "Ma",
-    "Mba",
-    "Mbe",
-    "Mc",
-    "Md",
-    "Mm",
-    "Mp",
-    "Msm",
-    "Mvo",
-    "Obe",
-    "Obi",
-    "Om",
-    "Phd",
-    "Phr",
-    "Pmp",
-    "Qam",
-    "Qc",
-    "Qfsm",
-    "Qgm",
-    "Qpm",
-    "Rd",
-    "Rrc",
-    "Rvm",
-    "Sgm",
-    "Td",
-    "Ud",
-    "Vc",
-    "Vd",
-    "Vrd",
 };
 
 fn might_be_title_part(word: &NamePart) -> bool {
@@ -578,21 +487,9 @@ pub fn is_postfix_title(word: &NamePart) -> bool {
         POSTFIX_TITLES.contains(&*word.namecased)
     }
     else if word.is_initials() {
-        let key: String = word.word.chars().enumerate().filter_map( |(i,c)|
-            if c.is_alphabetic() {
-                if i == 0  {
-                    c.to_uppercase().next()
-                }
-                else {
-                    c.to_lowercase().next()
-                }
-            }
-            else {
-                None
-            }
-        ).collect();
-        POSTFIX_TITLES.contains(&*key)
-    } else {
+        false
+    }
+    else {
         true
     }
 }
