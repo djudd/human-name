@@ -100,11 +100,7 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
                 found_first_name_or_initial = stripped_anything;
             }
 
-            // Check for (more common) formats like "Smith, John" or "Smith, J. M.",
-            // as well as a special case like "Ben Smith, III" or "John E Smith, M.D.",
-            // where we might have mistakenly classified the whole first comma-separated
-            // part as a surname (due to the "ben" prefix and "e" conjunction rules
-            // respectively)
+            // Check for (more common) formats like "Smith, John" or "Smith, J. M."
             if !found_first_name_or_initial {
                 found_first_name_or_initial =
                     given_middle_or_postfix_words.iter().any( |word|

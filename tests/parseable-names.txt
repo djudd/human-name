@@ -197,6 +197,9 @@ JACK MA|Ma|Jack||J|
 Jack Ma Jr|Ma|Jack||J|
 Ma III, Jack Jr|Ma|Jack||J|
 Amy E Maid|Maid|Amy||A|E
+Amy E Maid, Jr.|Maid|Amy||A|E
+#Amy E Maid, MD|Maid|Amy||A|E
+Amy E. Maid, M.D.|Maid|Amy||A|E
 Dr. Martin Luther King Jr.|King|Martin|Luther|M|L
 Duke Martin Luther King, Jr.|King|Martin|Luther|M|L
 John King|King|John||J|
@@ -218,9 +221,11 @@ Lt. Gen. John A. Kenneth Doe IV|Doe|John|Kenneth|J|AK
 Doe, Lt. Gen. John A. Kenneth IV|Doe|John|Kenneth|J|AK
 Lt. Gen. John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK
 #Doe, Rev. John V, Jr.|Doe|John||J|V
+Doe, Rev. John V., Jr.|Doe|John||J|V
 Doe, Rev. John A., V, Jr.|Doe|John||J|A
 Ahmad ben Husain|Ben Husain|Ahmad||A|
 Ben Johnson|Johnson|Ben||B|
+Ben Johnson, III|Johnson|Ben||B|
 Ben Alex Johnson|Johnson|Ben|Alex|B|A
 #Alex Ben Johnson|Johnson|Alex|Ben|A|B
 Johnson, Alex Ben|Johnson|Alex|Ben|A|B
