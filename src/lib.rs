@@ -29,6 +29,22 @@ pub struct Name {
   pub middle_initials: Option<String>,
 }
 
+fn strip_postfixes_and_find_suffix<'a>(words: &mut Vec<NamePart<'a>>, include_first_word: bool, postfixes: &mut Vec<NamePart<'a>>) { // -> Option<NamePart> {
+    let postfix_position = words.iter().enumerate().position( |(i, word)|
+        if i == 0 && !include_first_word {
+            false
+        }
+        else {
+            word.is_abbreviation() || suffix::is_suffix(&word)
+        }
+    );
+
+    if postfix_position.is_some() {
+        let range = postfix_position.unwrap()..words.len();
+        postfixes.extend(words.drain(range));
+    }
+}
+
 // Strip suffixes and titles, and find the start of the surname.
 // These tasks are intrinsically connected because commas may indicate
 // either a sort-ordered surname ("Smith, John") or a suffix ("John Smith, esq")
@@ -54,17 +70,12 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
             // John Smith"); finding a prefix title means the next word is a
             // first name or initial (we don't support "Dr. Smith, John")
             if words.len() > 1 {
-                found_first_name_or_initial = title::strip_prefix_title(&mut words, true);
+                let stripped_anything = title::strip_prefix_title(&mut words, true);
+                found_first_name_or_initial = stripped_anything;
             }
 
             // Strip non-comma-separated titles & suffixes (e.g. "John Smith Jr.")
-            let postfix_position = words.iter().skip(1).position( |word|
-                suffix::is_suffix(&word) || title::is_postfix_title(&word)
-            );
-            if postfix_position.is_some() {
-                let range = (postfix_position.unwrap() + 1)..words.len(); // Off-by-one since we skipped the first word
-                postfixes.extend(words.drain(range));
-            }
+            strip_postfixes_and_find_suffix(&mut words, false, &mut postfixes);
 
             if !found_first_name_or_initial {
                 found_first_name_or_initial = surname::find_surname_index(&*words) > 0;
@@ -85,7 +96,8 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
 
             // Check for (unusual) formats like "Smith, Dr. John M."
             if !found_first_name_or_initial && given_middle_or_postfix_words.len() > 1 {
-                found_first_name_or_initial = title::strip_prefix_title(&mut given_middle_or_postfix_words, false);
+                let stripped_anything = title::strip_prefix_title(&mut given_middle_or_postfix_words, false);
+                found_first_name_or_initial = stripped_anything;
             }
 
             // Check for (more common) formats like "Smith, John" or "Smith, J. M."
@@ -108,17 +120,8 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
             // Now we've decided: either this is the given name or first initial,
             // in which case we put it in front, or it's a suffix or title
             if found_first_name_or_initial {
-                // Check for (unusual) formats like "Smith, Dr. John Jr." (but
-                // only look for suffixes or abbreviations, anything title-like
-                // that might be a name or initials is more likely the latter)
-                let postfix_position = given_middle_or_postfix_words.iter().position( |word|
-                    word.is_abbreviation() || suffix::is_suffix(&word)
-                );
-
-                if postfix_position.is_some() {
-                    let range = postfix_position.unwrap()..given_middle_or_postfix_words.len();
-                    postfixes.extend(given_middle_or_postfix_words.drain(range));
-                }
+                // Check for (unusual) formats like "Smith, John Jr."
+                strip_postfixes_and_find_suffix(&mut given_middle_or_postfix_words, true, &mut postfixes);
 
                 let surname_words = words;
                 words = given_middle_or_postfix_words;
