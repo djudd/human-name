@@ -1,316 +1,316 @@
 # format: test case | surname | given name | middle names | first initial | middle initials
-John Doe|Doe|John||J|
-John Doe, Jr.|Doe|John||J|
-John Doe III|Doe|John||J|
-Doe, John|Doe|John||J|
-.  Doe,    John  !|Doe|John||J|
-Doe, John, Jr.|Doe|John||J|
-Doe, John III|Doe|John||J|
-John A. Doe|Doe|John||J|A
-John A. Doe, Jr.|Doe|John||J|A
-Doe, John A.|Doe|John||J|A
-Doe, John A., Jr.|Doe|John||J|A
-Doe, John A III|Doe|John||J|A
-John A. Kenneth Doe|Doe|John|Kenneth|J|AK
-John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK
-John A. Kenneth Doe III|Doe|John|Kenneth|J|AK
-Doe, John A. Kenneth|Doe|John|Kenneth|J|AK
-Doe, John A. Kenneth, Jr.|Doe|John|Kenneth|J|AK
-Doe, John A. Kenneth III|Doe|John|Kenneth|J|AK
-Dr. John Doe|Doe|John||J|
-Dr. John Doe, Jr.|Doe|John||J|
-Dr. John Doe III|Doe|John||J|
-Dr. John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK
-Doe, Dr. John|Doe|John||J|
-Doe, Dr. John, Jr.|Doe|John||J|
-Doe, Dr. John III|Doe|John||J|
-Dr. John A. Doe|Doe|John||J|A
-Dr. John A. Doe, Jr.|Doe|John||J|A
-Dr. John A. Doe III|Doe|John||J|A
-Doe, Dr. John A.|Doe|John||J|A
-Doe, Dr. John A. Jr.|Doe|John||J|A
-Doe, Dr. John A. III|Doe|John||J|A
-Dr. John A. Kenneth Doe|Doe|John|Kenneth|J|AK
-Dr. John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK
-Dr. John A. Kenneth Doe III|Doe|John|Kenneth|J|AK
-Doe, Dr. John A. Kenneth|Doe|John|Kenneth|J|AK
-Doe, Dr. John A. Kenneth Jr.|Doe|John|Kenneth|J|AK
-Doe, Dr. John A. Kenneth III|Doe|John|Kenneth|J|AK
+John Doe|Doe|John||J||
+John Doe, Jr.|Doe|John||J||Jr.
+John Doe III|Doe|John||J||III
+Doe, John|Doe|John||J||
+.  Doe,    John  !|Doe|John||J||
+Doe, John, Jr.|Doe|John||J||Jr.
+Doe, John III|Doe|John||J||III
+John A. Doe|Doe|John||J|A|
+John A. Doe, Jr.|Doe|John||J|A|Jr.
+Doe, John A.|Doe|John||J|A|
+Doe, John A., Jr.|Doe|John||J|A|Jr.
+Doe, John A III|Doe|John||J|A|III
+John A. Kenneth Doe|Doe|John|Kenneth|J|AK|
+John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK|Jr.
+John A. Kenneth Doe III|Doe|John|Kenneth|J|AK|III
+Doe, John A. Kenneth|Doe|John|Kenneth|J|AK|
+Doe, John A. Kenneth, Jr.|Doe|John|Kenneth|J|AK|Jr.
+Doe, John A. Kenneth III|Doe|John|Kenneth|J|AK|III
+Dr. John Doe|Doe|John||J||
+Dr. John Doe, Jr.|Doe|John||J||Jr.
+Dr. John Doe III|Doe|John||J||III
+Dr. John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK|Jr.
+Doe, Dr. John|Doe|John||J||
+Doe, Dr. John, Jr.|Doe|John||J||Jr.
+Doe, Dr. John III|Doe|John||J||III
+Dr. John A. Doe|Doe|John||J|A|
+Dr. John A. Doe, Jr.|Doe|John||J|A|Jr.
+Dr. John A. Doe III|Doe|John||J|A|III
+Doe, Dr. John A.|Doe|John||J|A|
+Doe, Dr. John A. Jr.|Doe|John||J|A|Jr.
+Doe, Dr. John A. III|Doe|John||J|A|III
+Dr. John A. Kenneth Doe|Doe|John|Kenneth|J|AK|
+Dr. John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK|Jr.
+Dr. John A. Kenneth Doe III|Doe|John|Kenneth|J|AK|III
+Doe, Dr. John A. Kenneth|Doe|John|Kenneth|J|AK|
+Doe, Dr. John A. Kenneth Jr.|Doe|John|Kenneth|J|AK|Jr.
+Doe, Dr. John A. Kenneth III|Doe|John|Kenneth|J|AK|III
 Juan de la Vega|de la Vega|Juan||J||
-Juan de la Vega, Jr.|de la Vega|Juan||J||
-Juan de la Vega III|de la Vega|Juan||J||
+Juan de la Vega, Jr.|de la Vega|Juan||J||Jr.
+Juan de la Vega III|de la Vega|Juan||J||III
 de la Vega, Juan|de la Vega|Juan||J||
-de la Vega, Juan, Jr.|de la Vega|Juan||J||
-de la Vega, Juan III|de la Vega|Juan||J||
+de la Vega, Juan, Jr.|de la Vega|Juan||J||Jr.
+de la Vega, Juan III|de la Vega|Juan||J||III
 Dr. Juan de la Vega|de la Vega|Juan||J||
-Dr. Juan de la Vega, Jr.|de la Vega|Juan||J||
-Dr. Juan de la Vega III|de la Vega|Juan||J||
+Dr. Juan de la Vega, Jr.|de la Vega|Juan||J||Jr.
+Dr. Juan de la Vega III|de la Vega|Juan||J||III
 de la Vega, Dr. Juan|de la Vega|Juan||J||
-de la Vega, Dr. Juan, Jr.|de la Vega|Juan||J||
-de la Vega, Dr. Juan III|de la Vega|Juan||J||
+de la Vega, Dr. Juan, Jr.|de la Vega|Juan||J||Jr.
+de la Vega, Dr. Juan III|de la Vega|Juan||J||III
 de la Véña, Jüan|de la Véña|Jüan||J||
-Juan Velasquez y Garcia|Velasquez y Garcia|Juan||J|
-Juan Velasquez y Garcia, Jr.|Velasquez y Garcia|Juan||J|
-Juan Velasquez y Garcia III|Velasquez y Garcia|Juan||J|
-Velasquez y Garcia, Juan, Jr.|Velasquez y Garcia|Juan||J|
-Velasquez y Garcia, Juan III|Velasquez y Garcia|Juan||J|
-Dr. Juan Velasquez y Garcia|Velasquez y Garcia|Juan||J|
-Dr. Juan Velasquez y Garcia, Jr.|Velasquez y Garcia|Juan||J|
-Dr. Juan Velasquez y Garcia III|Velasquez y Garcia|Juan||J|
-Velasquez y Garcia, Dr. Juan|Velasquez y Garcia|Juan||J|
-Velasquez y Garcia, Dr. Juan, Jr.|Velasquez y Garcia|Juan||J|
-Velasquez y Garcia, Dr. Juan III|Velasquez y Garcia|Juan||J|
-Juan Q. de la Vega|de la Vega|Juan||J|Q
-Juan Q. de la Vega, Jr.|de la Vega|Juan||J|Q
-Juan Q. de la Vega III|de la Vega|Juan||J|Q
-de la Vega, Juan Q.|de la Vega|Juan||J|Q
-de la Vega, Juan Q., Jr.|de la Vega|Juan||J|Q
-de la Vega, Juan Q. III|de la Vega|Juan||J|Q
-Juan Q. Velasquez y Garcia|Velasquez y Garcia|Juan||J|Q
-Juan Q. Velasquez y Garcia, Jr.|Velasquez y Garcia|Juan||J|Q
-Juan Q. Velasquez y Garcia III|Velasquez y Garcia|Juan||J|Q
-Velasquez y Garcia, Juan Q.|Velasquez y Garcia|Juan||J|Q
-Velasquez y Garcia, Juan Q., Jr.|Velasquez y Garcia|Juan||J|Q
-Velasquez y Garcia, Juan Q. III|Velasquez y Garcia|Juan||J|Q
-Dr. Juan Q. de la Vega|de la Vega|Juan||J|Q
-Dr. Juan Q. de la Vega, Jr.|de la Vega|Juan||J|Q
-Dr. Juan Q. de la Vega III|de la Vega|Juan||J|Q
-de la Vega, Dr. Juan Q.|de la Vega|Juan||J|Q
-de la Vega, Dr. Juan Q., Jr.|de la Vega|Juan||J|Q
-de la Vega, Dr. Juan Q. III|de la Vega|Juan||J|Q
-Dr. Juan Q. Velasquez y Garcia|Velasquez y Garcia|Juan||J|Q
-Dr. Juan Q. Velasquez y Garcia, Jr.|Velasquez y Garcia|Juan||J|Q
-Dr. Juan Q. Velasquez y Garcia III|Velasquez y Garcia|Juan||J|Q
-Velasquez y Garcia, Dr. Juan Q.|Velasquez y Garcia|Juan||J|Q
-Velasquez y Garcia, Dr. Juan Q., Jr.|Velasquez y Garcia|Juan||J|Q
-Velasquez y Garcia, Dr. Juan Q. III|Velasquez y Garcia|Juan||J|Q
-Juan Q. Xavier de la Vega|de la Vega|Juan|Xavier|J|QX
-Juan Q. Xavier de la Vega, Jr.|de la Vega|Juan|Xavier|J|QX
-Juan Q. Xavier de la Vega III|de la Vega|Juan|Xavier|J|QX
-de la Vega, Juan Q. Xavier|de la Vega|Juan|Xavier|J|QX
-de la Vega, Juan Q. Xavier, Jr.|de la Vega|Juan|Xavier|J|QX
-de la Vega, Juan Q. Xavier III|de la Vega|Juan|Xavier|J|QX
-Dr. Juan Q. Xavier de la Vega|de la Vega|Juan|Xavier|J|QX
-Dr. Juan Q. Xavier de la Vega, Jr.|de la Vega|Juan|Xavier|J|QX
-Dr. Juan Q. Xavier de la Vega III|de la Vega|Juan|Xavier|J|QX
-de la Vega, Dr. Juan Q. Xavier|de la Vega|Juan|Xavier|J|QX
-de la Vega, Dr. Juan Q. Xavier, Jr.|de la Vega|Juan|Xavier|J|QX
-de la Vega, Dr. Juan Q. Xavier III|de la Vega|Juan|Xavier|J|QX
-Juan Q. Xavier Velasquez y Garcia|Velasquez y Garcia|Juan|Xavier|J|QX
-Juan Q. Xavier Velasquez y Garcia, Jr.|Velasquez y Garcia|Juan|Xavier|J|QX
-Juan Q. Xavier Velasquez y Garcia III|Velasquez y Garcia|Juan|Xavier|J|QX
-Velasquez y Garcia, Juan Q. Xavier |Velasquez y Garcia|Juan|Xavier|J|QX
-Velasquez y Garcia, Juan Q. Xavier , Jr.|Velasquez y Garcia|Juan|Xavier|J|QX
-Velasquez y Garcia, Juan Q. Xavier III|Velasquez y Garcia|Juan|Xavier|J|QX
-Dr. Juan Q. Xavier Velasquez y Garcia|Velasquez y Garcia|Juan|Xavier|J|QX
-Dr. Juan Q. Xavier Velasquez y Garcia, Jr.|Velasquez y Garcia|Juan|Xavier|J|QX
-Dr. Juan Q. Xavier Velasquez y Garcia III|Velasquez y Garcia|Juan|Xavier|J|QX
-Velasquez y Garcia, Dr. Juan Q. Xavier |Velasquez y Garcia|Juan|Xavier|J|QX
-Velasquez y Garcia, Dr. Juan Q. Xavier, Jr.|Velasquez y Garcia|Juan|Xavier|J|QX
-Velasquez y Garcia, Dr. Juan Q. Xavier III|Velasquez y Garcia|Juan|Xavier|J|QX
-John Doe, CLU, CFP, LUTC|Doe|John||J|
-John Doe CLU CFP LUTC|Doe|John||J|
-John Doe, LUTC, CLU, CFP|Doe|John||J|
-John Doe LUTC CLU CFP|Doe|John||J|
-John Doe Esq.|Doe|John||J|
-John Doe, Esquire|Doe|John||J|
-John Esquire|Esquire|John||J|
-John Doe Phd|Doe|John||J|
-John P. Doe, CLU, CFP, LUTC|Doe|John||J|P
-John P. Doe-Ray, CLU, CFP, LUTC|Doe-Ray|John||J|P
-Dr. John P. Doe-Ray, CLU, CFP, LUTC|Doe-Ray|John||J|P
-Doe-Ray, Dr. John P., CLU, CFP, LUTC|Doe-Ray|John||J|P
-Hon. Barrington P. Doe-Ray, Jr.|Doe-Ray|Barrington||B|P
-Doe-Ray, Hon. Barrington P. Jr., CFP, LUTC|Doe-Ray|Barrington||B|P
-Rev. John A. Kenneth Doe|Doe|John|Kenneth|J|AK
-Rev John A Kenneth Doe|Doe|John|Kenneth|J|AK
-Doe, Rev. John A. Jr.|Doe|John||J|A
-Rt. Hon. Paul E. Mary|Mary|Paul||P|E
-Lord God Almighty|Almighty|God||G|
-vai la|La|Vai||V|
-Andrews, M.D.|Andrews|||M|D
-Andrews, MD|Andrews|||M|D
-ANDREWS, MD|Andrews|||M|D
-M.D. ANDREWS, MD|Andrews|||M|D
-MD ANDREWS MD|Andrews|||M|D
-Smith, M.R.|Smith|||M|R
-Smith, MR|Smith|||M|R
-SMITH, MR|Smith|||M|R
-N.T. Smith|Smith|||N|T
-NT Smith|Smith|||N|T
-NT SMITH|Smith|||N|T
-D.R. Andrews|Andrews|||D|R
-DR Andrews|Andrews|||D|R
-DR ANDREWS|Andrews|||D|R
-Smith Jr., John|Smith|John||J|
-Smith III, John|Smith|John||J|
-Jose Aznar e Lopez|Aznar e Lopez|Jose||J|
-John E Smith|Smith|John||J|E
-john e. smith|Smith|John||J|E
-e j smith|Smith|||E|J
-John e Smith|Smith|John||J|E
-John E Smith, III|Smith|John||J|E
-John e Smith, III|Smith|John||J|E
-John e Smith III|Smith|John||J|E
-Smith, John e, III, Jr|Smith|John||J|E
-Van Nguyen|Nguyen|Van||V|
-Nguyen, Van|Nguyen|Van||V|
-Mr. Van Nguyen|Nguyen|Van||V|
-King John Alexander V|Alexander|John||J|
-larry james edward johnson v|Johnson|Larry|James Edward|L|JE
-Larry James Johnson I|Johnson|Larry|James|L|J
-Buca di Beppo|di Beppo|Buca||B|
-Yin Le|Le|Yin||Y|
-Yin a Le|Le|Yin||Y|A
-Benjamin (Ben) Franklin|Franklin|Benjamin||B|
-Franklin, Benjamin (Ben)|Franklin|Benjamin||B|
-Franklin, Benjamin (Ben), Jr.|Franklin|Benjamin||B|
-Benjamin 'Ben' Franklin|Franklin|Benjamin||B|
-Benjamin "Ben" Franklin|Franklin|Benjamin||B|
-Benjamin ("Ben") Franklin|Franklin|Benjamin||B|
-Brian O'Connor|O'Connor|Brian||B|
-BRIAN O'CONNOR|O'Connor|Brian||B|
-La'tanya O'Connor|O'Connor|La'tanya||L|
-LA'TANYA O'CONNOR|O'Connor|La'Tanya||L|
-Mari' Aube'|Aube'|Mari'||M|
-John Jones (Google Docs)|Jones|John||J|
-John Jones (Google|Jones|John||J|
-Juan del Sur|del Sur|Juan||J|
-pennie von bergen wessels|von Bergen Wessels|Pennie||P|
-pennie von bergen wessels iii|von Bergen Wessels|Pennie||P|
-pennie von bergen wessels, iii|von Bergen Wessels|Pennie||P|
-von bergen wessels, pennie III|von Bergen Wessels|Pennie||P|
-Joe Franklin Jr|Franklin|Joe||J|
-Joe Dentist D.D.S.|Dentist|Joe||J|
-Franklin Washington Jr. M.D.|Washington|Franklin||F|
-Washington Jr. M.D., Franklin|Washington|Franklin||F|
-Washington, Franklin Jr. M.D.|Washington|Franklin||F|
-Kenneth Clarke Q.C.|Clarke|Kenneth||K|
-Clarke, Kenneth, Q.C. M.P.|Clarke|Kenneth||K|
-Clarke, Kenneth Q.C., M.P.|Clarke|Kenneth||K|QC
-John Doe jr., MD|Doe|John||J|
-Doe, John jr., MD|Doe|John||J|
-Doe,John|Doe|John||J|
-Jack Ma|Ma|Jack||J|
-Ma, Jack|Ma|Jack||J|
-JACK MA|Ma|Jack||J|
-Jack Ma Jr|Ma|Jack||J|
-Ma III, Jack Jr|Ma|Jack||J|
-Amy E Maid|Maid|Amy||A|E
-Amy E Maid, Jr.|Maid|Amy||A|E
-#Amy E Maid, MD|Maid|Amy||A|E
-Amy E. Maid, M.D.|Maid|Amy||A|E
-Dr. Martin Luther King Jr.|King|Martin|Luther|M|L
-Duke Martin Luther King, Jr.|King|Martin|Luther|M|L
-John King|King|John||J|
-Secretary of State Hillary Clinton|Clinton|Hillary||H|
-U.S. District Judge Marc Thomas Treadwell|Treadwell|Marc|Thomas|M|T
-US Magistrate Judge T Michael Putnam|Putnam|Michael||T|
-US Magistrate-Judge Elizabeth E Campbell|Campbell|Elizabeth||E|E
-Mag-Judge Harwell G Davis, III|Davis|Harwell||H|G
-The Rt Hon John Jones|Jones|John||J|
-Magistrate-Judge U.S. Grant|Grant|||U|S
-Magistrate-Judge of the U.S. Ulysses Grant|Grant|Ulysses||U|
-U. S. Grant|Grant|||U|S
-U.S. Grant|Grant|||U|S
-#Lord of the Universe and Associate Supreme Queen of the World Lisa Simpson|Simpson|Lisa||L|
-#King John V.|V.|John||J|
-Smith, J.R.|Smith|||J|R
-Lt.Gen. John A. Kenneth Doe IV|Doe|John|Kenneth|J|AK
-Lt. Gen. John A. Kenneth Doe IV|Doe|John|Kenneth|J|AK
-Doe, Lt. Gen. John A. Kenneth IV|Doe|John|Kenneth|J|AK
-Lt. Gen. John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK
-#Doe, Rev. John V, Jr.|Doe|John||J|V
-Doe, Rev. John V., Jr.|Doe|John||J|V
-Doe, Rev. John A., V, Jr.|Doe|John||J|A
-Ahmad ben Husain|Ben Husain|Ahmad||A|
-Ben Johnson|Johnson|Ben||B|
-Ben Johnson, III|Johnson|Ben||B|
-Ben Alex Johnson|Johnson|Ben|Alex|B|A
-#Alex Ben Johnson|Johnson|Alex|Ben|A|B
-Johnson, Alex Ben|Johnson|Alex|Ben|A|B
-johnson, alex ben|Johnson|Alex|Ben|A|B
-alex ben johnson|Ben Johnson|Alex||A|
-Jane Doctor|Doctor|Jane||J|
-J. Smith, PhD|Smith|||J|
-juan q. xavier velasquez y garcia iii|Velasquez y Garcia|Juan|Xavier|J|QX
-lt. gen. john a. kenneth doe iv|Doe|John|Kenneth|J|AK
-donovan mcnabb-smith|McNabb-Smith|Donovan||D|
-scott e. werner|Werner|Scott||S|E
-Shirley Maclaine|Maclaine|Shirley||S|
-shirley maclaine|MacLaine|Shirley||S|
-manny machado|Machado|Manny||M|
-brandon macmurdo|MacMurdo|Brandon||B|
-megan maccullach|MacCullach|Megan||M|
-matthëus schmidt|Schmidt|Matthëus||M|
-RONALD MACDONALD|MacDonald|Ronald||R|
-RONALD MCDONALD|McDonald|Ronald||R|
-Björn O'Malley|O'Malley|Björn||B|
-Bin Lin|Lin|Bin||B|
-Linda Jones|Jones|Linda||L|
-Jason H. Priem|Priem|Jason||J|H
-Björn O'Malley-Muñoz|O'Malley-Muñoz|Björn||B|
-Björn C. O'Malley|O'Malley|Björn||B|C
-Björn "Bill" O'Malley|O'Malley|Björn||B|
-Björn ("Bill") O'Malley|O'Malley|Björn||B|
-Björn ("Wild Bill") O'Malley|O'Malley|Björn||B|
-Björn ‹Wild Bill› O'Malley|O'Malley|Björn||B|
-Björn (Bill) O'Malley|O'Malley|Björn||B|
-Björn 'Bill' O'Malley|O'Malley|Björn||B|
-Björn C O'Malley|O'Malley|Björn||B|C
-Björn C. R. O'Malley|O'Malley|Björn||B|CR
-Björn Charles O'Malley|O'Malley|Björn|Charles|B|C
-Björn Charles R. O'Malley|O'Malley|Björn|Charles|B|CR
-Björn van O'Malley|van O'Malley|Björn||B|
-Björn Charles van der O'Malley|van der O'Malley|Björn|Charles|B|C
-Björn Charles O'Malley y Muñoz|O'Malley y Muñoz|Björn|Charles|B|C
-Björn O'Malley, Jr.|O'Malley|Björn||B|
-Björn O'Malley Jr|O'Malley|Björn||B|
-B O'Malley|O'Malley|||B|
-William Carlos Williams|Williams|William|Carlos|W|C
-C. Björn Roger O'Malley|O'Malley|Björn|Roger|C|R
-B. C. O'Malley|O'Malley|||B|C
-B C O'Malley|O'Malley|||B|C
-B.J. Thomas|Thomas|||B|J
-O'Malley, Björn|O'Malley|Björn||B|
-O'Malley, Björn Jr|O'Malley|Björn||B|
-O'Malley, C. Björn|O'Malley|Björn||C|
-O'Malley, C. Björn III|O'Malley|Björn||C|
-O'Malley y Muñoz, C. Björn Roger III|O'Malley y Muñoz|Björn|Roger|C|R
-Ichiro Suzuki|Suzuki|Ichiro||I|
-鈴 木|木|鈴||鈴|
-鈴木|木|鈴||鈴|
-中(π)华|华|中||中|
-中华|华|中||中|
-Γαλήνη Σερβόπουλος|Σερβόπουλος|Γαλήνη||Γ|
-عليّ عبد العزيز|العزيز|عليّ|عبد|ع|ع
-Yukihiro 'Matz' Matsumoto|Matsumoto|Yukihiro||Y|
-Yukihiro "Matz" Matsumoto|Matsumoto|Yukihiro||Y|
-Mr. Yukihiro "Matz" Matsumoto|Matsumoto|Yukihiro||Y|
-Yukihiro "Matz" Matsumoto Jr.|Matsumoto|Yukihiro||Y|
-Poe, Edgar A.|Poe|Edgar||E|A
-Herr Edgar A. Poe|Poe|Edgar||E|A
-Frau Edgar A. Poe|Poe|Edgar||E|A
-Mrs. Edgar A. Poe|Poe|Edgar||E|A
-Ken Griffey Jr.|Griffey|Ken||K|
-Griffey, Jr., Ken|Griffey|Ken||K|
-Griffey, Ken, Jr.|Griffey|Ken||K|
-Bernado Franecki Ph.D.|Franecki|Bernado||B|
-Andrew Ng|Ng|Andrew||A|
-Poppy Petal Emma Liz Deveraux Donahue|Donahue|Poppy|Petal Emma Liz Deveraux|P|PELD
-P. P. E. L. D. Donahue|Donahue|||P|PELD
-p. p. e. l. d. donahue|Donahue|||P|PELD
-PPELD Donahue|Donahue|||P|PELD
-PPEL Donahue|Donahue|||P|PEL
-P.P.E.L.D. Donahue|Donahue|||P|PELD
-p.p.e.l.d. donahue|Donahue|||P|PELD
-pppld donahue|Donahue|||P|PPLD
-ppld donahue|Donahue|||P|PLD
-Poppy PELD Donahue|Donahue|Poppy||P|PELD
-Poppy P. E. L. D. Donahue|Donahue|Poppy||P|PELD
-Poppy P E L D Donahue|Donahue|Poppy||P|PELD
-poppy p e l d donahue|Donahue|Poppy||P|PELD
-Poppy P.E.L.D. Donahue|Donahue|Poppy||P|PELD
-Poppy PELD Donahue|Donahue|Poppy||P|PELD
-poppy p e l d donahue|Donahue|Poppy||P|PELD
-poppy ppld donahue|Donahue|Poppy||P|PPLD
+Juan Velasquez y Garcia|Velasquez y Garcia|Juan||J||
+Juan Velasquez y Garcia, Jr.|Velasquez y Garcia|Juan||J||Jr.
+Juan Velasquez y Garcia III|Velasquez y Garcia|Juan||J||III
+Velasquez y Garcia, Juan, Jr.|Velasquez y Garcia|Juan||J||Jr.
+Velasquez y Garcia, Juan III|Velasquez y Garcia|Juan||J||III
+Dr. Juan Velasquez y Garcia|Velasquez y Garcia|Juan||J||
+Dr. Juan Velasquez y Garcia, Jr.|Velasquez y Garcia|Juan||J||Jr.
+Dr. Juan Velasquez y Garcia III|Velasquez y Garcia|Juan||J||III
+Velasquez y Garcia, Dr. Juan|Velasquez y Garcia|Juan||J||
+Velasquez y Garcia, Dr. Juan, Jr.|Velasquez y Garcia|Juan||J||Jr.
+Velasquez y Garcia, Dr. Juan III|Velasquez y Garcia|Juan||J||III
+Juan Q. de la Vega|de la Vega|Juan||J|Q|
+Juan Q. de la Vega, Jr.|de la Vega|Juan||J|Q|Jr.
+Juan Q. de la Vega III|de la Vega|Juan||J|Q|III
+de la Vega, Juan Q.|de la Vega|Juan||J|Q|
+de la Vega, Juan Q., Jr.|de la Vega|Juan||J|Q|Jr.
+de la Vega, Juan Q. III|de la Vega|Juan||J|Q|III
+Juan Q. Velasquez y Garcia|Velasquez y Garcia|Juan||J|Q|
+Juan Q. Velasquez y Garcia, Jr.|Velasquez y Garcia|Juan||J|Q|Jr.
+Juan Q. Velasquez y Garcia III|Velasquez y Garcia|Juan||J|Q|III
+Velasquez y Garcia, Juan Q.|Velasquez y Garcia|Juan||J|Q|
+Velasquez y Garcia, Juan Q., Jr.|Velasquez y Garcia|Juan||J|Q|Jr.
+Velasquez y Garcia, Juan Q. III|Velasquez y Garcia|Juan||J|Q|III
+Dr. Juan Q. de la Vega|de la Vega|Juan||J|Q|
+Dr. Juan Q. de la Vega, Jr.|de la Vega|Juan||J|Q|Jr.
+Dr. Juan Q. de la Vega III|de la Vega|Juan||J|Q|III
+de la Vega, Dr. Juan Q.|de la Vega|Juan||J|Q|
+de la Vega, Dr. Juan Q., Jr.|de la Vega|Juan||J|Q|Jr.
+de la Vega, Dr. Juan Q. III|de la Vega|Juan||J|Q|III
+Dr. Juan Q. Velasquez y Garcia|Velasquez y Garcia|Juan||J|Q|
+Dr. Juan Q. Velasquez y Garcia, Jr.|Velasquez y Garcia|Juan||J|Q|Jr.
+Dr. Juan Q. Velasquez y Garcia III|Velasquez y Garcia|Juan||J|Q|III
+Velasquez y Garcia, Dr. Juan Q.|Velasquez y Garcia|Juan||J|Q|
+Velasquez y Garcia, Dr. Juan Q., Jr.|Velasquez y Garcia|Juan||J|Q|Jr.
+Velasquez y Garcia, Dr. Juan Q. III|Velasquez y Garcia|Juan||J|Q|III
+Juan Q. Xavier de la Vega|de la Vega|Juan|Xavier|J|QX|
+Juan Q. Xavier de la Vega, Jr.|de la Vega|Juan|Xavier|J|QX|Jr.
+Juan Q. Xavier de la Vega III|de la Vega|Juan|Xavier|J|QX|III
+de la Vega, Juan Q. Xavier|de la Vega|Juan|Xavier|J|QX|
+de la Vega, Juan Q. Xavier, Jr.|de la Vega|Juan|Xavier|J|QX|Jr.
+de la Vega, Juan Q. Xavier III|de la Vega|Juan|Xavier|J|QX|III
+Dr. Juan Q. Xavier de la Vega|de la Vega|Juan|Xavier|J|QX|
+Dr. Juan Q. Xavier de la Vega, Jr.|de la Vega|Juan|Xavier|J|QX|Jr.
+Dr. Juan Q. Xavier de la Vega III|de la Vega|Juan|Xavier|J|QX|III
+de la Vega, Dr. Juan Q. Xavier|de la Vega|Juan|Xavier|J|QX|
+de la Vega, Dr. Juan Q. Xavier, Jr.|de la Vega|Juan|Xavier|J|QX|Jr.
+de la Vega, Dr. Juan Q. Xavier III|de la Vega|Juan|Xavier|J|QX|III
+Juan Q. Xavier Velasquez y Garcia|Velasquez y Garcia|Juan|Xavier|J|QX|
+Juan Q. Xavier Velasquez y Garcia, Jr.|Velasquez y Garcia|Juan|Xavier|J|QX|Jr.
+Juan Q. Xavier Velasquez y Garcia III|Velasquez y Garcia|Juan|Xavier|J|QX|III
+Velasquez y Garcia, Juan Q. Xavier |Velasquez y Garcia|Juan|Xavier|J|QX|
+Velasquez y Garcia, Juan Q. Xavier , Jr.|Velasquez y Garcia|Juan|Xavier|J|QX|Jr.
+Velasquez y Garcia, Juan Q. Xavier III|Velasquez y Garcia|Juan|Xavier|J|QX|III
+Dr. Juan Q. Xavier Velasquez y Garcia|Velasquez y Garcia|Juan|Xavier|J|QX|
+Dr. Juan Q. Xavier Velasquez y Garcia, Jr.|Velasquez y Garcia|Juan|Xavier|J|QX|Jr.
+Dr. Juan Q. Xavier Velasquez y Garcia III|Velasquez y Garcia|Juan|Xavier|J|QX|III
+Velasquez y Garcia, Dr. Juan Q. Xavier |Velasquez y Garcia|Juan|Xavier|J|QX|
+Velasquez y Garcia, Dr. Juan Q. Xavier, Jr.|Velasquez y Garcia|Juan|Xavier|J|QX|Jr.
+Velasquez y Garcia, Dr. Juan Q. Xavier III|Velasquez y Garcia|Juan|Xavier|J|QX|III
+John Doe, CLU, CFP, LUTC|Doe|John||J||
+John Doe CLU CFP LUTC|Doe|John||J||
+John Doe, LUTC, CLU, CFP|Doe|John||J||
+John Doe LUTC CLU CFP|Doe|John||J||
+John Doe Esq.|Doe|John||J||
+John Doe, Esquire|Doe|John||J||
+John Esquire|Esquire|John||J||
+John Doe Phd|Doe|John||J||
+John P. Doe, CLU, CFP, LUTC|Doe|John||J|P|
+John P. Doe-Ray, CLU, CFP, LUTC|Doe-Ray|John||J|P|
+Dr. John P. Doe-Ray, CLU, CFP, LUTC|Doe-Ray|John||J|P|
+Doe-Ray, Dr. John P., CLU, CFP, LUTC|Doe-Ray|John||J|P|
+Hon. Barrington P. Doe-Ray, Jr.|Doe-Ray|Barrington||B|P|Jr.
+Doe-Ray, Hon. Barrington P. Jr., CFP, LUTC|Doe-Ray|Barrington||B|P|Jr.
+Rev. John A. Kenneth Doe|Doe|John|Kenneth|J|AK|
+Rev John A Kenneth Doe|Doe|John|Kenneth|J|AK|
+Doe, Rev. John A. Jr.|Doe|John||J|A|Jr.
+Rt. Hon. Paul E. Mary|Mary|Paul||P|E|
+Lord God Almighty|Almighty|God||G||
+vai la|La|Vai||V||
+Andrews, M.D.|Andrews|||M|D|
+Andrews, MD|Andrews|||M|D|
+ANDREWS, MD|Andrews|||M|D|
+M.D. ANDREWS, MD|Andrews|||M|D|
+MD ANDREWS MD|Andrews|||M|D|
+Smith, M.R.|Smith|||M|R|
+Smith, MR|Smith|||M|R|
+SMITH, MR|Smith|||M|R|
+N.T. Smith|Smith|||N|T|
+NT Smith|Smith|||N|T|
+NT SMITH|Smith|||N|T|
+D.R. Andrews|Andrews|||D|R|
+DR Andrews|Andrews|||D|R|
+DR ANDREWS|Andrews|||D|R|
+Smith Jr., John|Smith|John||J||Jr.
+Smith III, John|Smith|John||J||III
+Jose Aznar e Lopez|Aznar e Lopez|Jose||J||
+John E Smith|Smith|John||J|E|
+john e. smith|Smith|John||J|E|
+e j smith|Smith|||E|J|
+John e Smith|Smith|John||J|E|
+John E Smith, III|Smith|John||J|E|III
+John e Smith, III|Smith|John||J|E|III
+John e Smith III|Smith|John||J|E|III
+Smith, John e, III, Jr|Smith|John||J|E|III
+Van Nguyen|Nguyen|Van||V||
+Nguyen, Van|Nguyen|Van||V||
+Mr. Van Nguyen|Nguyen|Van||V||
+King John Alexander V|Alexander|John||J||V
+larry james edward johnson v|Johnson|Larry|James Edward|L|JE|V
+Larry James Johnson I|Johnson|Larry|James|L|J|I
+Buca di Beppo|di Beppo|Buca||B||
+Yin Le|Le|Yin||Y||
+Yin a Le|Le|Yin||Y|A|
+Benjamin (Ben) Franklin|Franklin|Benjamin||B||
+Franklin, Benjamin (Ben)|Franklin|Benjamin||B||
+Franklin, Benjamin (Ben), Jr.|Franklin|Benjamin||B||Jr.
+Benjamin 'Ben' Franklin|Franklin|Benjamin||B||
+Benjamin "Ben" Franklin|Franklin|Benjamin||B||
+Benjamin ("Ben") Franklin|Franklin|Benjamin||B||
+Brian O'Connor|O'Connor|Brian||B||
+BRIAN O'CONNOR|O'Connor|Brian||B||
+La'tanya O'Connor|O'Connor|La'tanya||L||
+LA'TANYA O'CONNOR|O'Connor|La'Tanya||L||
+Mari' Aube'|Aube'|Mari'||M||
+John Jones (Google Docs)|Jones|John||J||
+John Jones (Google|Jones|John||J||
+Juan del Sur|del Sur|Juan||J||
+pennie von bergen wessels|von Bergen Wessels|Pennie||P||
+pennie von bergen wessels iii|von Bergen Wessels|Pennie||P||III
+pennie von bergen wessels, iii|von Bergen Wessels|Pennie||P||III
+von bergen wessels, pennie III|von Bergen Wessels|Pennie||P||III
+Joe Franklin Jr|Franklin|Joe||J||Jr.
+Joe Dentist D.D.S.|Dentist|Joe||J||
+Franklin Washington Jr. M.D.|Washington|Franklin||F||Jr.
+Washington Jr. M.D., Franklin|Washington|Franklin||F||Jr.
+Washington, Franklin Jr. M.D.|Washington|Franklin||F||Jr.
+Kenneth Clarke Q.C.|Clarke|Kenneth||K||
+Clarke, Kenneth, Q.C. M.P.|Clarke|Kenneth||K||
+Clarke, Kenneth Q.C., M.P.|Clarke|Kenneth||K|QC|
+John Doe jr., MD|Doe|John||J||Jr.
+Doe, John jr., MD|Doe|John||J||Jr.
+Doe,John|Doe|John||J||
+Jack Ma|Ma|Jack||J||
+Ma, Jack|Ma|Jack||J||
+JACK MA|Ma|Jack||J||
+Jack Ma Jr|Ma|Jack||J||Jr.
+Ma III, Jack Jr|Ma|Jack||J||III
+Amy E Maid|Maid|Amy||A|E|
+Amy E Maid, Jr.|Maid|Amy||A|E|Jr.
+#Amy E Maid, MD|Maid|Amy||A|E|
+Amy E. Maid, M.D.|Maid|Amy||A|E|
+Dr. Martin Luther King Jr.|King|Martin|Luther|M|L|Jr.
+Duke Martin Luther King, Jr.|King|Martin|Luther|M|L|Jr.
+John King|King|John||J||
+Secretary of State Hillary Clinton|Clinton|Hillary||H||
+U.S. District Judge Marc Thomas Treadwell|Treadwell|Marc|Thomas|M|T|
+US Magistrate Judge T Michael Putnam|Putnam|Michael||T||
+US Magistrate-Judge Elizabeth E Campbell|Campbell|Elizabeth||E|E|
+Mag-Judge Harwell G Davis, III|Davis|Harwell||H|G|III
+The Rt Hon John Jones|Jones|John||J||
+Magistrate-Judge U.S. Grant|Grant|||U|S|
+Magistrate-Judge of the U.S. Ulysses Grant|Grant|Ulysses||U||
+U. S. Grant|Grant|||U|S|
+U.S. Grant|Grant|||U|S|
+#Lord of the Universe and Associate Supreme Queen of the World Lisa Simpson|Simpson|Lisa||L||
+#King John V.|V.|John||J||
+Smith, J.R.|Smith|||J|R|
+Lt.Gen. John A. Kenneth Doe IV|Doe|John|Kenneth|J|AK|IV
+Lt. Gen. John A. Kenneth Doe IV|Doe|John|Kenneth|J|AK|IV
+Doe, Lt. Gen. John A. Kenneth IV|Doe|John|Kenneth|J|AK|IV
+Lt. Gen. John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK|Jr.
+#Doe, Rev. John V, Jr.|Doe|John||J|V|Jr.
+Doe, Rev. John V., Jr.|Doe|John||J|V|Jr.
+Doe, Rev. John A., V, Jr.|Doe|John||J|A|V
+Ahmad ben Husain|Ben Husain|Ahmad||A||
+Ben Johnson|Johnson|Ben||B||
+Ben Johnson, III|Johnson|Ben||B||III
+Ben Alex Johnson|Johnson|Ben|Alex|B|A|
+#Alex Ben Johnson|Johnson|Alex|Ben|A|B|
+Johnson, Alex Ben|Johnson|Alex|Ben|A|B|
+johnson, alex ben|Johnson|Alex|Ben|A|B|
+alex ben johnson|Ben Johnson|Alex||A||
+Jane Doctor|Doctor|Jane||J||
+J. Smith, PhD|Smith|||J||
+juan q. xavier velasquez y garcia iii|Velasquez y Garcia|Juan|Xavier|J|QX|III
+lt. gen. john a. kenneth doe iv|Doe|John|Kenneth|J|AK|IV
+donovan mcnabb-smith|McNabb-Smith|Donovan||D||
+scott e. werner|Werner|Scott||S|E|
+Shirley Maclaine|Maclaine|Shirley||S||
+shirley maclaine|MacLaine|Shirley||S||
+manny machado|Machado|Manny||M||
+brandon macmurdo|MacMurdo|Brandon||B||
+megan maccullach|MacCullach|Megan||M||
+matthëus schmidt|Schmidt|Matthëus||M||
+RONALD MACDONALD|MacDonald|Ronald||R||
+RONALD MCDONALD|McDonald|Ronald||R||
+Björn O'Malley|O'Malley|Björn||B||
+Bin Lin|Lin|Bin||B||
+Linda Jones|Jones|Linda||L||
+Jason H. Priem|Priem|Jason||J|H|
+Björn O'Malley-Muñoz|O'Malley-Muñoz|Björn||B||
+Björn C. O'Malley|O'Malley|Björn||B|C|
+Björn "Bill" O'Malley|O'Malley|Björn||B||
+Björn ("Bill") O'Malley|O'Malley|Björn||B||
+Björn ("Wild Bill") O'Malley|O'Malley|Björn||B||
+Björn ‹Wild Bill› O'Malley|O'Malley|Björn||B||
+Björn (Bill) O'Malley|O'Malley|Björn||B||
+Björn 'Bill' O'Malley|O'Malley|Björn||B||
+Björn C O'Malley|O'Malley|Björn||B|C|
+Björn C. R. O'Malley|O'Malley|Björn||B|CR|
+Björn Charles O'Malley|O'Malley|Björn|Charles|B|C|
+Björn Charles R. O'Malley|O'Malley|Björn|Charles|B|CR|
+Björn van O'Malley|van O'Malley|Björn||B||
+Björn Charles van der O'Malley|van der O'Malley|Björn|Charles|B|C|
+Björn Charles O'Malley y Muñoz|O'Malley y Muñoz|Björn|Charles|B|C|
+Björn O'Malley, Jr.|O'Malley|Björn||B||Jr.
+Björn O'Malley Jr|O'Malley|Björn||B||Jr.
+B O'Malley|O'Malley|||B||
+William Carlos Williams|Williams|William|Carlos|W|C|
+C. Björn Roger O'Malley|O'Malley|Björn|Roger|C|R|
+B. C. O'Malley|O'Malley|||B|C|
+B C O'Malley|O'Malley|||B|C|
+B.J. Thomas|Thomas|||B|J|
+O'Malley, Björn|O'Malley|Björn||B||
+O'Malley, Björn Jr|O'Malley|Björn||B||Jr.
+O'Malley, C. Björn|O'Malley|Björn||C||
+O'Malley, C. Björn III|O'Malley|Björn||C||III
+O'Malley y Muñoz, C. Björn Roger III|O'Malley y Muñoz|Björn|Roger|C|R|III
+Ichiro Suzuki|Suzuki|Ichiro||I||
+鈴 木|木|鈴||鈴||
+鈴木|木|鈴||鈴||
+中(π)华|华|中||中||
+中华|华|中||中||
+Γαλήνη Σερβόπουλος|Σερβόπουλος|Γαλήνη||Γ||
+عليّ عبد العزيز|العزيز|عليّ|عبد|ع|ع|
+Yukihiro 'Matz' Matsumoto|Matsumoto|Yukihiro||Y||
+Yukihiro "Matz" Matsumoto|Matsumoto|Yukihiro||Y||
+Mr. Yukihiro "Matz" Matsumoto|Matsumoto|Yukihiro||Y||
+Yukihiro "Matz" Matsumoto Jr.|Matsumoto|Yukihiro||Y||Jr.
+Poe, Edgar A.|Poe|Edgar||E|A|
+Herr Edgar A. Poe|Poe|Edgar||E|A|
+Frau Edgar A. Poe|Poe|Edgar||E|A|
+Mrs. Edgar A. Poe|Poe|Edgar||E|A|
+Ken Griffey Jr.|Griffey|Ken||K||Jr.
+Griffey, Jr., Ken|Griffey|Ken||K||Jr.
+Griffey, Ken, Jr.|Griffey|Ken||K||Jr.
+Bernado Franecki Ph.D.|Franecki|Bernado||B||
+Andrew Ng|Ng|Andrew||A||
+Poppy Petal Emma Liz Deveraux Donahue|Donahue|Poppy|Petal Emma Liz Deveraux|P|PELD|
+P. P. E. L. D. Donahue|Donahue|||P|PELD|
+p. p. e. l. d. donahue|Donahue|||P|PELD|
+PPELD Donahue|Donahue|||P|PELD|
+PPEL Donahue|Donahue|||P|PEL|
+P.P.E.L.D. Donahue|Donahue|||P|PELD|
+p.p.e.l.d. donahue|Donahue|||P|PELD|
+pppld donahue|Donahue|||P|PPLD|
+ppld donahue|Donahue|||P|PLD|
+Poppy PELD Donahue|Donahue|Poppy||P|PELD|
+Poppy P. E. L. D. Donahue|Donahue|Poppy||P|PELD|
+Poppy P E L D Donahue|Donahue|Poppy||P|PELD|
+poppy p e l d donahue|Donahue|Poppy||P|PELD|
+Poppy P.E.L.D. Donahue|Donahue|Poppy||P|PELD|
+Poppy PELD Donahue|Donahue|Poppy||P|PELD|
+poppy p e l d donahue|Donahue|Poppy||P|PELD|
+poppy ppld donahue|Donahue|Poppy||P|PPLD|

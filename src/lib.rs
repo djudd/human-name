@@ -27,6 +27,7 @@ pub struct Name {
   pub middle_names: Option<String>,
   pub first_initial: char,
   pub middle_initials: Option<String>,
+  pub suffix: Option<String>,
 }
 
 fn strip_postfixes_and_find_suffix<'a>(words: &mut Vec<NamePart<'a>>, include_first_word: bool, postfixes: &mut Vec<NamePart<'a>>) { // -> Option<NamePart> {
@@ -50,7 +51,7 @@ fn strip_postfixes_and_find_suffix<'a>(words: &mut Vec<NamePart<'a>>, include_fi
 // either a sort-ordered surname ("Smith, John") or a suffix ("John Smith, esq")
 //
 // This is where the meat of the parsing takes place
-fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>, usize) {
+fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>, usize, Option<NamePart>) {
     let mut words: Vec<NamePart> = Vec::new();
     let mut postfixes: Vec<NamePart> = Vec::new();
     let mut surname_index = 0;
@@ -140,7 +141,7 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
 
     if words.len() < 2 {
         // Failed parse
-        return (words, 0);
+        return (words, 0, None);
     }
 
     if surname_index <= 0 || surname_index >= words.len() {
@@ -149,7 +150,12 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
         surname_index = surname::find_surname_index(&words[1..]) + 1;
     }
 
-    (words, surname_index)
+    let mut suffix = None;
+    if postfixes.len() > 0 {
+        suffix = postfixes.into_iter().find( |word| suffix::is_suffix(&word) );
+    }
+
+    (words, surname_index, suffix)
 }
 
 
@@ -161,7 +167,7 @@ impl Name {
 
         let mixed_case = is_mixed_case(name);
         let name = nickname::strip_nickname(name);
-        let (words, surname_index) = name_words_and_surname_index(&name, mixed_case);
+        let (words, surname_index, suffix) = name_words_and_surname_index(&name, mixed_case);
 
         if words.len() < 2 {
             // We need at least a first and last name, or we can't tell which we have
@@ -217,12 +223,18 @@ impl Name {
             .map( |w| &*w.namecased )
             .join(" ");
 
+        let suffix = match suffix {
+            Some(word) => Some(suffix::namecase(&word)),
+            None => None
+        };
+
         Some(Name {
             first_initial: words[0].initial(),
             given_name: given_name,
             surname: surname,
             middle_names: middle_names,
             middle_initials: middle_initials,
+            suffix: suffix,
         })
     }
 

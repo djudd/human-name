@@ -42,6 +42,7 @@ fn parsing() {
         let middle_names = parts[3];
         let first_initial = parts[4].chars().nth(0).unwrap();
         let middle_initials = parts[5];
+        let suffix = parts[6];
 
         let name = human_name::Name::parse(input);
         assert!(!name.is_none(), "[{}] Could not parse!", input);
@@ -49,6 +50,7 @@ fn parsing() {
         let given_name = none_if_empty(&given_name);
         let middle_names = none_if_empty(&middle_names);
         let middle_initials = none_if_empty(&middle_initials);
+        let suffix = none_if_empty(&suffix);
 
         let name = name.unwrap();
         assert!(name.surname == surname,
@@ -61,9 +63,11 @@ fn parsing() {
                 "[{}] Expected middle names {}, got {}", input, &format(middle_names), &format(name.middle_names));
         assert!(name.middle_initials == middle_initials,
                 "[{}] Expected middle initials {}, got {}", input, &format(middle_initials), &format(name.middle_initials));
+        assert!(name.suffix == suffix,
+                "[{}] Expected suffix {}, got {}", input, &format(suffix), &format(name.suffix));
 
-        writeln!(&mut std::io::stderr(), "Parsed '{}' as '{}', {} ('{}') {} ({})",
-                 input, surname, &format(given_name), first_initial, &format(middle_names), &format(middle_initials)).ok().unwrap();
+        writeln!(&mut std::io::stderr(), "Parsed '{}' as '{}', {} ('{}') {} ({}), {}",
+                 input, surname, &format(given_name), first_initial, &format(middle_names), &format(middle_initials), &format(suffix)).ok().unwrap();
     }
 
     stderr_newline();

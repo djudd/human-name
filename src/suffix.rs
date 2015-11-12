@@ -44,3 +44,13 @@ pub fn is_suffix(part: &NamePart) -> bool {
         false
     }
 }
+
+pub fn namecase(part: &NamePart) -> String {
+    if part.is_abbreviation() {
+        part.namecased.to_string()
+    } else if NUMERIC_SUFFIXES.contains(part.word) {
+        part.word.to_uppercase()
+    } else {
+        format!("{}.", part.namecased)
+    }
+}
