@@ -29,35 +29,6 @@ pub struct Name {
   pub middle_initials: Option<String>,
 }
 
-fn strip_prefix_title(words: &mut Vec<NamePart>, try_to_keep_two_words: bool) -> bool {
-    let mut prefix_len = words.len() - 1;
-    while prefix_len > 0 {
-        let found_prefix = {
-            let next_word = &words[prefix_len];
-            if try_to_keep_two_words && words.len() - prefix_len <= 1 && words[prefix_len-1].is_initials() {
-                // If there is only one word after the prefix, e.g. "DR SMITH",
-                // given prefix of "DR", we treat ambiguous strings like "DR"
-                // as more likely to be initials than a title (there are no
-                // similarly ambiguous given names among our title word list)
-                false
-            }
-            else {
-                (next_word.is_namelike() || next_word.is_initials()) &&
-                    title::is_prefix_title(&words[0..prefix_len])
-            }
-        };
-
-        if found_prefix {
-            words.drain(0..prefix_len);
-            return true;
-        }
-
-        prefix_len -= 1;
-    }
-
-    false
-}
-
 // Strip suffixes and titles, and find the start of the surname.
 // These tasks are intrinsically connected because commas may indicate
 // either a sort-ordered surname ("Smith, John") or a suffix ("John Smith, esq")
@@ -83,7 +54,7 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
             // John Smith"); finding a prefix title means the next word is a
             // first name or initial (we don't support "Dr. Smith, John")
             if words.len() > 1 {
-                found_first_name_or_initial = strip_prefix_title(&mut words, true);
+                found_first_name_or_initial = title::strip_prefix_title(&mut words, true);
             }
 
             // Strip non-comma-separated titles & suffixes (e.g. "John Smith Jr.")
@@ -114,7 +85,7 @@ fn name_words_and_surname_index(name: &str, mixed_case: bool) -> (Vec<NamePart>,
 
             // Check for (unusual) formats like "Smith, Dr. John M."
             if !found_first_name_or_initial && given_middle_or_postfix_words.len() > 1 {
-                found_first_name_or_initial = strip_prefix_title(&mut given_middle_or_postfix_words, false);
+                found_first_name_or_initial = title::strip_prefix_title(&mut given_middle_or_postfix_words, false);
             }
 
             // Check for (more common) formats like "Smith, John" or "Smith, J. M."

@@ -553,7 +553,7 @@ fn might_be_last_title_part(word: &NamePart) -> bool {
     }
 }
 
-pub fn is_prefix_title(words: &[NamePart]) -> bool {
+fn is_prefix_title(words: &[NamePart]) -> bool {
     match words.last() {
         Some(word) => {
             if !might_be_last_title_part(&word) {
@@ -595,4 +595,33 @@ pub fn is_postfix_title(word: &NamePart) -> bool {
     } else {
         true
     }
+}
+
+pub fn strip_prefix_title(words: &mut Vec<NamePart>, try_to_keep_two_words: bool) -> bool {
+    let mut prefix_len = words.len() - 1;
+    while prefix_len > 0 {
+        let found_prefix = {
+            let next_word = &words[prefix_len];
+            if try_to_keep_two_words && words.len() - prefix_len <= 1 && words[prefix_len-1].is_initials() {
+                // If there is only one word after the prefix, e.g. "DR SMITH",
+                // given prefix of "DR", we treat ambiguous strings like "DR"
+                // as more likely to be initials than a title (there are no
+                // similarly ambiguous given names among our title word list)
+                false
+            }
+            else {
+                (next_word.is_namelike() || next_word.is_initials()) &&
+                    is_prefix_title(&words[0..prefix_len])
+            }
+        };
+
+        if found_prefix {
+            words.drain(0..prefix_len);
+            return true;
+        }
+
+        prefix_len -= 1;
+    }
+
+    false
 }

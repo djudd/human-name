@@ -37,17 +37,17 @@ fn expected_close_char_if_opens_nickname(c: char, follows_whitespace: bool) -> O
 // Optimized for the case where there is no nickname, and secondarily for the
 // case where there is only one. Two or more probably means bad input.
 pub fn strip_nickname(input: &str) -> Cow<str> {
-    let mut nick_start_ix = 0; // This counts as not-found; we won't classify the whole string as a nickname
+    let mut nick_start_ix = None;
     let mut nick_open_char = '\0';
     let mut expected_close_char = '\0';
     let mut must_precede_whitespace = false;
     let mut prev_char = '\0';
 
     for (i,c) in input.char_indices() {
-        if nick_start_ix == 0 {
+        if nick_start_ix.is_none() {
             let close = expected_close_char_if_opens_nickname(c, prev_char.is_whitespace());
             if !close.is_none() {
-                nick_start_ix = i;
+                nick_start_ix = Some(i);
                 nick_open_char = c;
                 expected_close_char = close.unwrap().0;
                 must_precede_whitespace = close.unwrap().1
@@ -55,10 +55,10 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
         } else if c == expected_close_char {
             let j = i + c.len_utf8();
             if j >= input.len() {
-                return Cow::Borrowed(&input[0..nick_start_ix]);
+                return Cow::Borrowed(&input[0..nick_start_ix.unwrap()]);
             }
             else if !must_precede_whitespace || input[j..].chars().nth(0).unwrap().is_whitespace()  {
-                return Cow::Owned(input[0..nick_start_ix].to_string() + " " + &strip_nickname(&input[j..]));
+                return Cow::Owned(input[0..nick_start_ix.unwrap()].to_string() + &strip_nickname(&input[j..]));
             }
             else {
                 return Cow::Owned(input[0..i].to_string() + &strip_nickname(&input[i..]));
@@ -68,13 +68,13 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
         prev_char = c;
     }
 
-    if nick_start_ix > 0 {
+    if nick_start_ix.is_some() {
         if !must_precede_whitespace {
             // When there's, e.g., an opening parens, but no closing parens, strip the
             // rest of the string
-            return Cow::Borrowed(&input[0..nick_start_ix]);
+            return Cow::Borrowed(&input[0..nick_start_ix.unwrap()]);
         } else {
-            let i = nick_start_ix + nick_open_char.len_utf8();
+            let i = nick_start_ix.unwrap() + nick_open_char.len_utf8();
             // Otherwise, even if there's an unmatched opening quote, don't
             // modify the string; assume an unmatched opening quote was just
             // in-name punctuation
