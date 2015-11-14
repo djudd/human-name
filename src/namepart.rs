@@ -56,7 +56,16 @@ impl <'a>Iterator for NameParts<'a> {
 
         let word = &self.text[0..next_boundary];
 
-        if !word.chars().any(char::is_alphabetic) {
+        if word == "&" {
+            // Special case: only allowed word without alphabetical characters
+            self.text = &self.text[next_boundary..];
+            Some(NamePart {
+                word: word,
+                chars: 1,
+                category: Category::Other,
+                namecased: Cow::Borrowed(word),
+            })
+        } else if !word.chars().any(char::is_alphabetic) {
             // Not a word, skip it by recursing
             self.text = &self.text[next_boundary..];
             self.next()

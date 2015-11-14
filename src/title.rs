@@ -434,6 +434,8 @@ static POSTFIX_TITLES: phf::Set<&'static str> = phf_set! {
     "Esq",
     "Esquire",
     "Attorney-at-law",
+    "Et",
+    "Al",
 };
 
 fn might_be_title_part(word: &NamePart) -> bool {

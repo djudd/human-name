@@ -1,5 +1,16 @@
 # format: test case | surname | given name | middle names | first initial | middle initials
+
+# simple names
+Linda Jones|Jones|Linda||L||
+Ichiro Suzuki|Suzuki|Ichiro||I||
+Bin Lin|Lin|Bin||B||
+Jason H. Priem|Priem|Jason||J|H|
+William Carlos Williams|Williams|William|Carlos|W|C|
+B.J. Thomas|Thomas|||B|J|
+
+# simple last name, with and without initials, middle, suffix, title, sort order
 John Doe|Doe|John||J||
+Doe,John|Doe|John||J||
 John Doe, Jr.|Doe|John||J||Jr.
 John Doe III|Doe|John||J||III
 Doe, John|Doe|John||J||
@@ -36,6 +47,8 @@ Dr. John A. Kenneth Doe III|Doe|John|Kenneth|J|AK|III
 Doe, Dr. John A. Kenneth|Doe|John|Kenneth|J|AK|
 Doe, Dr. John A. Kenneth Jr.|Doe|John|Kenneth|J|AK|Jr.
 Doe, Dr. John A. Kenneth III|Doe|John|Kenneth|J|AK|III
+
+# "de la" & "y" last names, with and without initials, middle, suffix, title, sort order
 Juan de la Vega|de la Vega|Juan||J||
 Juan de la Vega, Jr.|de la Vega|Juan||J||Jr.
 Juan de la Vega III|de la Vega|Juan||J||III
@@ -108,6 +121,39 @@ Dr. Juan Q. Xavier Velasquez y Garcia III|Velasquez y Garcia|Juan|Xavier|J|QX|II
 Velasquez y Garcia, Dr. Juan Q. Xavier |Velasquez y Garcia|Juan|Xavier|J|QX|
 Velasquez y Garcia, Dr. Juan Q. Xavier, Jr.|Velasquez y Garcia|Juan|Xavier|J|QX|Jr.
 Velasquez y Garcia, Dr. Juan Q. Xavier III|Velasquez y Garcia|Juan|Xavier|J|QX|III
+
+# name with accents, with and without middle names, suffix, initials, particles, sort order
+Björn O'Malley-Muñoz|O'Malley-Muñoz|Björn||B||
+Björn C. O'Malley|O'Malley|Björn||B|C|
+Björn C O'Malley|O'Malley|Björn||B|C|
+Björn C. R. O'Malley|O'Malley|Björn||B|CR|
+Björn Charles O'Malley|O'Malley|Björn|Charles|B|C|
+Björn Charles R. O'Malley|O'Malley|Björn|Charles|B|CR|
+Björn van O'Malley|van O'Malley|Björn||B||
+Björn Charles van der O'Malley|van der O'Malley|Björn|Charles|B|C|
+Björn Charles O'Malley y Muñoz|O'Malley y Muñoz|Björn|Charles|B|C|
+Björn O'Malley, Jr.|O'Malley|Björn||B||Jr.
+Björn O'Malley Jr|O'Malley|Björn||B||Jr.
+B O'Malley|O'Malley|||B||
+C. Björn Roger O'Malley|O'Malley|Björn|Roger|C|R|
+B. C. O'Malley|O'Malley|||B|C|
+B C O'Malley|O'Malley|||B|C|
+O'Malley, Björn|O'Malley|Björn||B||
+O'Malley, Björn Jr|O'Malley|Björn||B||Jr.
+O'Malley, C. Björn|O'Malley|Björn||C||
+O'Malley, C. Björn III|O'Malley|Björn||C||III
+O'Malley y Muñoz, C. Björn Roger III|O'Malley y Muñoz|Björn|Roger|C|R|III
+
+# other particles
+Buca di Beppo|di Beppo|Buca||B||
+Buca di Beppo|di Beppo|Buca||B||
+Juan del Sur|del Sur|Juan||J||
+pennie von bergen wessels|von Bergen Wessels|Pennie||P||
+pennie von bergen wessels iii|von Bergen Wessels|Pennie||P||III
+pennie von bergen wessels, iii|von Bergen Wessels|Pennie||P||III
+von bergen wessels, pennie III|von Bergen Wessels|Pennie||P||III
+
+# other prefix and postfix titles
 John Doe, CLU, CFP, LUTC|Doe|John||J||
 John Doe CLU CFP LUTC|Doe|John||J||
 John Doe, LUTC, CLU, CFP|Doe|John||J||
@@ -127,7 +173,63 @@ Rev John A Kenneth Doe|Doe|John|Kenneth|J|AK|
 Doe, Rev. John A. Jr.|Doe|John||J|A|Jr.
 Rt. Hon. Paul E. Mary|Mary|Paul||P|E|
 Lord God Almighty|Almighty|God||G||
+Lt.Gen. John A. Kenneth Doe IV|Doe|John|Kenneth|J|AK|IV
+Lt. Gen. John A. Kenneth Doe IV|Doe|John|Kenneth|J|AK|IV
+Doe, Lt. Gen. John A. Kenneth IV|Doe|John|Kenneth|J|AK|IV
+Lt. Gen. John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK|Jr.
+Doe, Rev. John V, Jr.|Doe|John||J|V|Jr.
+Doe, Rev. John V., Jr.|Doe|John||J|V|Jr.
+Doe, Rev. John A., V, Jr.|Doe|John||J|A|V
+J. Smith, PhD|Smith|||J||
+Bernado Franecki Ph.D.|Franecki|Bernado||B||
+Bernado Franecki Ph.D|Franecki|Bernado||B||
+Poe, Edgar A.|Poe|Edgar||E|A|
+Herr Edgar A. Poe|Poe|Edgar||E|A|
+Frau Edgar A. Poe|Poe|Edgar||E|A|
+Mrs. Edgar A. Poe|Poe|Edgar||E|A|
+
+# mr. & mrs., & co., et al.
+Jerome B. Rice & Co.|Rice|Jerome||J|B|
+Co., Jerome B. Rice &|Rice|Jerome||J|B|
+Jerome B. Rice & Co|Rice|Jerome||J|B|
+JEROME B. RICE & CO|Rice|Jerome||J|B|
+Jerome B. Rice et al.|Rice|Jerome||J|B|
+Jerome B. Rice et. al.|Rice|Jerome||J|B|
+Jerome B. Rice, et al.|Rice|Jerome||J|B|
+Jerome B. Rice, et al|Rice|Jerome||J|B|
+Jerome B. Rice et al|Rice|Jerome||J|B|
+JEROME B. RICE ET AL.|Rice|Jerome||J|B|
+JEROME B RICE ET AL|Rice|Jerome||J|B|
+Mr. & Mrs. Jerome B. Rice|Rice|Jerome||J|B|
+Mr. and Mrs. Jerome B. Rice|Rice|Jerome||J|B|
+MR AND MRS JEROME B RICE|Rice|Jerome||J|B|
+
+# suffix, various positions
+Ken Griffey Jr.|Griffey|Ken||K||Jr.
+Ken Griffey, Jr.|Griffey|Ken||K||Jr.
+Griffey, Jr., Ken|Griffey|Ken||K||Jr.
+Griffey, Ken, Jr.|Griffey|Ken||K||Jr.
+Smith Jr., John|Smith|John||J||Jr.
+Smith III, John|Smith|John||J||III
+King John Alexander V|Alexander|John||J||V
+Larry James Johnson I|Johnson|Larry|James|L|J|I
+
+# suffix with unusual capitalization
+Smith, John e, III, Jr|Smith|John||J|E|III
+John S. Gallagher Iii|Gallagher|John||J|S|III
+larry james edward johnson v|Johnson|Larry|James Edward|L|JE|V
+
+# last name that could be particle
 vai la|La|Vai||V||
+Yin Le|Le|Yin||Y||
+Yin a Le|Le|Yin||Y|A|
+
+# first name that could be particle
+Van Nguyen|Nguyen|Van||V||
+Nguyen, Van|Nguyen|Van||V||
+Mr. Van Nguyen|Nguyen|Van||V||
+
+# initials that could be abbreviation or title part
 Andrews, M. D.|Andrews|||M|D|
 Andrews, M.D.|Andrews|||M|D|
 Andrews, MD|Andrews|||M|D|
@@ -143,16 +245,10 @@ NT SMITH|Smith|||N|T|
 D.R. Andrews|Andrews|||D|R|
 DR Andrews|Andrews|||D|R|
 DR ANDREWS|Andrews|||D|R|
-Smith Jr., John|Smith|John||J||Jr.
-Smith III, John|Smith|John||J||III
-Jose Aznar e Lopez|Aznar e Lopez|Jose||J||
-John E Smith|Smith|John||J|E|
-john e. smith|Smith|John||J|E|
-e j smith|Smith|||E|J|
-John e Smith|Smith|John||J|E|
-John E Smith, III|Smith|John||J|E|III
-John e Smith, III|Smith|John||J|E|III
-John e Smith III|Smith|John||J|E|III
+U. S. Grant|Grant|||U|S|
+U.S. Grant|Grant|||U|S|
+
+# initials that could be suffix
 Lily I Pao|Pao|Lily||L|I|
 lily i pao|Pao|Lily||L|I|
 LILY I PAO|Pao|Lily||L|I|
@@ -160,35 +256,55 @@ Akmaev, I G |Akmaev|||I|G|
 Akmaev, I|Akmaev|||I||
 Roy V Baker|Baker|Roy||R|V|
 de la Cruz, V|de la Cruz|||V||
-Smith, John e, III, Jr|Smith|John||J|E|III
-John S. Gallagher Iii|Gallagher|John||J|S|III
-Van Nguyen|Nguyen|Van||V||
-Nguyen, Van|Nguyen|Van||V||
-Mr. Van Nguyen|Nguyen|Van||V||
-King John Alexander V|Alexander|John||J||V
-larry james edward johnson v|Johnson|Larry|James Edward|L|JE|V
-Larry James Johnson I|Johnson|Larry|James|L|J|I
-Buca di Beppo|di Beppo|Buca||B||
-Yin Le|Le|Yin||Y||
-Yin a Le|Le|Yin||Y|A|
+Smith, J.R.|Smith|||J|R|
+
+# initials that could be particle
+Jose Aznar e Lopez|Aznar e Lopez|Jose||J||
+Jose Aznar y Lopez|Aznar y Lopez|Jose||J||
+John E Smith|Smith|John||J|E|
+john e. smith|Smith|John||J|E|
+e j smith|Smith|||E|J|
+John e Smith|Smith|John||J|E|
+John E Smith, III|Smith|John||J|E|III
+John e Smith, III|Smith|John||J|E|III
+John e Smith III|Smith|John||J|E|III
+Amy E Maid|Maid|Amy||A|E|
+Amy Y Maid|Maid|Amy||A|Y|
+Amy y Maid|Maid|Amy||A|Y|
+Amy E Maid, Jr.|Maid|Amy||A|E|Jr.
+#Amy E Maid, MD|Maid|Amy||A|E|
+Amy E. Maid, M.D.|Maid|Amy||A|E|
+
+# nicknames
+Björn "Bill" O'Malley|O'Malley|Björn||B||
+Björn ("Bill") O'Malley|O'Malley|Björn||B||
+Björn ("Wild Bill") O'Malley|O'Malley|Björn||B||
+Björn ‹Wild Bill› O'Malley|O'Malley|Björn||B||
+Björn (Bill) O'Malley|O'Malley|Björn||B||
+Björn 'Bill' O'Malley|O'Malley|Björn||B||
 Benjamin (Ben) Franklin|Franklin|Benjamin||B||
 Franklin, Benjamin (Ben)|Franklin|Benjamin||B||
 Franklin, Benjamin (Ben), Jr.|Franklin|Benjamin||B||Jr.
 Benjamin 'Ben' Franklin|Franklin|Benjamin||B||
 Benjamin "Ben" Franklin|Franklin|Benjamin||B||
 Benjamin ("Ben") Franklin|Franklin|Benjamin||B||
+Yukihiro 'Matz' Matsumoto|Matsumoto|Yukihiro||Y||
+Yukihiro "Matz" Matsumoto|Matsumoto|Yukihiro||Y||
+Mr. Yukihiro "Matz" Matsumoto|Matsumoto|Yukihiro||Y||
+Yukihiro "Matz" Matsumoto Jr.|Matsumoto|Yukihiro||Y||Jr.
+
+# nickname-like junk
+John Jones (Google Docs)|Jones|John||J||
+John Jones (Google|Jones|John||J||
+
+# names with apostrophes
 Brian O'Connor|O'Connor|Brian||B||
 BRIAN O'CONNOR|O'Connor|Brian||B||
 La'tanya O'Connor|O'Connor|La'tanya||L||
 LA'TANYA O'CONNOR|O'Connor|La'Tanya||L||
 Mari' Aube'|Aube'|Mari'||M||
-John Jones (Google Docs)|Jones|John||J||
-John Jones (Google|Jones|John||J||
-Juan del Sur|del Sur|Juan||J||
-pennie von bergen wessels|von Bergen Wessels|Pennie||P||
-pennie von bergen wessels iii|von Bergen Wessels|Pennie||P||III
-pennie von bergen wessels, iii|von Bergen Wessels|Pennie||P||III
-von bergen wessels, pennie III|von Bergen Wessels|Pennie||P||III
+
+# suffixes with postfix titles
 Joe Franklin Jr|Franklin|Joe||J||Jr.
 Joe Dentist D.D.S.|Dentist|Joe||J||
 Franklin Washington Jr. M.D.|Washington|Franklin||F||Jr.
@@ -199,19 +315,23 @@ Clarke, Kenneth, Q.C. M.P.|Clarke|Kenneth||K||
 Clarke, Kenneth Q.C., M.P.|Clarke|Kenneth||K|QC|
 John Doe jr., MD|Doe|John||J||Jr.
 Doe, John jr., MD|Doe|John||J||Jr.
-Doe,John|Doe|John||J||
+
+# last names that could be titles
 Jack Ma|Ma|Jack||J||
 Ma, Jack|Ma|Jack||J||
 JACK MA|Ma|Jack||J||
 Jack Ma Jr|Ma|Jack||J||Jr.
 Ma III, Jack Jr|Ma|Jack||J||III
-Amy E Maid|Maid|Amy||A|E|
-Amy E Maid, Jr.|Maid|Amy||A|E|Jr.
-#Amy E Maid, MD|Maid|Amy||A|E|
-Amy E. Maid, M.D.|Maid|Amy||A|E|
 Dr. Martin Luther King Jr.|King|Martin|Luther|M|L|Jr.
 Duke Martin Luther King, Jr.|King|Martin|Luther|M|L|Jr.
 John King|King|John||J||
+Jane Doctor|Doctor|Jane||J||
+
+# first and middle names that could be titles
+Anwar al Awlaki|Awlaki|Anwar|Al|A|A|
+Al Yankovic|Yankovic|Al||A||
+
+# long titles
 Secretary of State Hillary Clinton|Clinton|Hillary||H||
 U.S. District Judge Marc Thomas Treadwell|Treadwell|Marc|Thomas|M|T|
 US Magistrate Judge T Michael Putnam|Putnam|Michael||T||
@@ -220,17 +340,9 @@ Mag-Judge Harwell G Davis, III|Davis|Harwell||H|G|III
 The Rt Hon John Jones|Jones|John||J||
 Magistrate-Judge U.S. Grant|Grant|||U|S|
 #Magistrate-Judge of the U.S. Ulysses Grant|Grant|Ulysses||U||
-U. S. Grant|Grant|||U|S|
-U.S. Grant|Grant|||U|S|
 #Lord of the Universe and Associate Supreme Queen of the World Lisa Simpson|Simpson|Lisa||L||
-Smith, J.R.|Smith|||J|R|
-Lt.Gen. John A. Kenneth Doe IV|Doe|John|Kenneth|J|AK|IV
-Lt. Gen. John A. Kenneth Doe IV|Doe|John|Kenneth|J|AK|IV
-Doe, Lt. Gen. John A. Kenneth IV|Doe|John|Kenneth|J|AK|IV
-Lt. Gen. John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK|Jr.
-Doe, Rev. John V, Jr.|Doe|John||J|V|Jr.
-Doe, Rev. John V., Jr.|Doe|John||J|V|Jr.
-Doe, Rev. John A., V, Jr.|Doe|John||J|A|V
+
+# "ben" as particle, first name or middle name
 Ahmad ben Husain|Ben Husain|Ahmad||A||
 Ben Johnson|Johnson|Ben||B||
 Ben Johnson, III|Johnson|Ben||B||III
@@ -239,53 +351,31 @@ Ben Alex Johnson|Johnson|Ben|Alex|B|A|
 Johnson, Alex Ben|Johnson|Alex|Ben|A|B|
 johnson, alex ben|Johnson|Alex|Ben|A|B|
 alex ben johnson|Ben Johnson|Alex||A||
-Jane Doctor|Doctor|Jane||J||
-J. Smith, PhD|Smith|||J||
+
+# missing capitalization
 juan q. xavier velasquez y garcia iii|Velasquez y Garcia|Juan|Xavier|J|QX|III
 lt. gen. john a. kenneth doe iv|Doe|John|Kenneth|J|AK|IV
 donovan mcnabb-smith|McNabb-Smith|Donovan||D||
 scott e. werner|Werner|Scott||S|E|
+matthëus schmidt|Schmidt|Matthëus||M||
+
+# screwy capitalization
+Jianfei LIU|Liu|Jianfei||J||
+l. PAGE|Page|||L||
+A. l PAGE|Page|||A|L|
+Most. Ferdousi BEGUM|Begum|Ferdousi||F||
+
+# "mac" and "mc" names
 Shirley Maclaine|Maclaine|Shirley||S||
 shirley maclaine|MacLaine|Shirley||S||
 manny machado|Machado|Manny||M||
 brandon macmurdo|MacMurdo|Brandon||B||
 megan maccullach|MacCullach|Megan||M||
-matthëus schmidt|Schmidt|Matthëus||M||
 RONALD MACDONALD|MacDonald|Ronald||R||
 RONALD MCDONALD|McDonald|Ronald||R||
 Björn O'Malley|O'Malley|Björn||B||
-Bin Lin|Lin|Bin||B||
-Linda Jones|Jones|Linda||L||
-Jason H. Priem|Priem|Jason||J|H|
-Björn O'Malley-Muñoz|O'Malley-Muñoz|Björn||B||
-Björn C. O'Malley|O'Malley|Björn||B|C|
-Björn "Bill" O'Malley|O'Malley|Björn||B||
-Björn ("Bill") O'Malley|O'Malley|Björn||B||
-Björn ("Wild Bill") O'Malley|O'Malley|Björn||B||
-Björn ‹Wild Bill› O'Malley|O'Malley|Björn||B||
-Björn (Bill) O'Malley|O'Malley|Björn||B||
-Björn 'Bill' O'Malley|O'Malley|Björn||B||
-Björn C O'Malley|O'Malley|Björn||B|C|
-Björn C. R. O'Malley|O'Malley|Björn||B|CR|
-Björn Charles O'Malley|O'Malley|Björn|Charles|B|C|
-Björn Charles R. O'Malley|O'Malley|Björn|Charles|B|CR|
-Björn van O'Malley|van O'Malley|Björn||B||
-Björn Charles van der O'Malley|van der O'Malley|Björn|Charles|B|C|
-Björn Charles O'Malley y Muñoz|O'Malley y Muñoz|Björn|Charles|B|C|
-Björn O'Malley, Jr.|O'Malley|Björn||B||Jr.
-Björn O'Malley Jr|O'Malley|Björn||B||Jr.
-B O'Malley|O'Malley|||B||
-William Carlos Williams|Williams|William|Carlos|W|C|
-C. Björn Roger O'Malley|O'Malley|Björn|Roger|C|R|
-B. C. O'Malley|O'Malley|||B|C|
-B C O'Malley|O'Malley|||B|C|
-B.J. Thomas|Thomas|||B|J|
-O'Malley, Björn|O'Malley|Björn||B||
-O'Malley, Björn Jr|O'Malley|Björn||B||Jr.
-O'Malley, C. Björn|O'Malley|Björn||C||
-O'Malley, C. Björn III|O'Malley|Björn||C||III
-O'Malley y Muñoz, C. Björn Roger III|O'Malley y Muñoz|Björn|Roger|C|R|III
-Ichiro Suzuki|Suzuki|Ichiro||I||
+
+# non-Latin names
 鈴 木|木|鈴||鈴||
 鈴木|木|鈴||鈴||
 中(π)华|华|中||中||
@@ -294,19 +384,11 @@ Ichiro Suzuki|Suzuki|Ichiro||I||
 #방성철
 Γαλήνη Σερβόπουλος|Σερβόπουλος|Γαλήνη||Γ||
 عليّ عبد العزيز|العزيز|عليّ|عبد|ع|ع|
-Yukihiro 'Matz' Matsumoto|Matsumoto|Yukihiro||Y||
-Yukihiro "Matz" Matsumoto|Matsumoto|Yukihiro||Y||
-Mr. Yukihiro "Matz" Matsumoto|Matsumoto|Yukihiro||Y||
-Yukihiro "Matz" Matsumoto Jr.|Matsumoto|Yukihiro||Y||Jr.
-Poe, Edgar A.|Poe|Edgar||E|A|
-Herr Edgar A. Poe|Poe|Edgar||E|A|
-Frau Edgar A. Poe|Poe|Edgar||E|A|
-Mrs. Edgar A. Poe|Poe|Edgar||E|A|
-Ken Griffey Jr.|Griffey|Ken||K||Jr.
-Griffey, Jr., Ken|Griffey|Ken||K||Jr.
-Griffey, Ken, Jr.|Griffey|Ken||K||Jr.
-Bernado Franecki Ph.D.|Franecki|Bernado||B||
+
+# surname without vowels
 Andrew Ng|Ng|Andrew||A||
+
+# max number of middle names/initials
 Poppy Petal Emma Liz Deveraux Donahue|Donahue|Poppy|Petal Emma Liz Deveraux|P|PELD|
 P. P. E. L. D. Donahue|Donahue|||P|PELD|
 p. p. e. l. d. donahue|Donahue|||P|PELD|
@@ -324,15 +406,13 @@ Poppy P.E.L.D. Donahue|Donahue|Poppy||P|PELD|
 Poppy PELD Donahue|Donahue|Poppy||P|PELD|
 poppy p e l d donahue|Donahue|Poppy||P|PELD|
 poppy ppld donahue|Donahue|Poppy||P|PPLD|
-Jianfei LIU|Liu|Jianfei||J||
-l. PAGE|Page|||L||
-A. l PAGE|Page|||A|L|
-Most. Ferdousi BEGUM|Begum|Ferdousi||F||
+
+# hyphens in initials
 #J.-L. Lefaix|Lefaix|||J|L|
 #J-L Lefaix|Lefaix|||J|L|
 #Kim, P-H.|Kim|||P|H|
 #Maj Vinberg|Vinberg|Maj||M||
+
+# missing whitespace
 X.Gironés|Gironés|||X||
 F.Joachim Weyl|Weyl|Joachim||F||
-Jerome B. Rice & Co.|Rice|Jerome||J|B|
-Co., Jerome B. Rice &|Rice|Jerome||J|B|
