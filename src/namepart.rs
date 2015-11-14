@@ -40,28 +40,25 @@ impl <'a>Iterator for NameParts<'a> {
 
     fn next(&mut self) -> Option<NamePart<'a>> {
         // Skip any leading whitespace
-        match self.text.char_indices().find( |&(_,c)| !c.is_whitespace() ) {
-            Some((i,_)) => {
-                if i > 0 {
-                    self.text = &self.text[i..];
-                }
-            },
-            None => {
-                return None;
-            }
-        };
+        self.text = self.text.trim_left();
+
+        if self.text.is_empty() {
+            return None
+        }
 
         // Now look for the next whitespace that remains
-        let next_whitespace = match self.text.char_indices().find( |&(_,c)| c.is_whitespace() ) {
-            Some((i,_)) => i,
-            None => self.text.len()
+        let next_whitespace = self.text.find(char::is_whitespace).unwrap_or(self.text.len());
+        let next_inner_period = self.text[0..next_whitespace].find('.');
+        let next_boundary = match next_inner_period {
+            Some(i) => i + 1,
+            None => next_whitespace,
         };
 
-        let word = &self.text[0..next_whitespace];
+        let word = &self.text[0..next_boundary];
 
         if !word.chars().any(char::is_alphabetic) {
             // Not a word, skip it by recursing
-            self.text = &self.text[next_whitespace..];
+            self.text = &self.text[next_boundary..];
             self.next()
         } else if !word.chars().any( |c| c.is_ascii() ) {
             // For non-ASCII, we defer to the unicode_segmentation library
@@ -71,9 +68,8 @@ impl <'a>Iterator for NameParts<'a> {
             self.text = &self.text[next_word_boundary+subword.len()..];
             Some(NamePart::from_word(subword, self.trust_capitalization, self.next_location()))
         } else {
-            // For ASCII, we split on whitespace only, and handle further
-            // segmenting ourselves
-            self.text = &self.text[next_whitespace..];
+            // For ASCII, we split on whitespace and periods only
+            self.text = &self.text[next_boundary..];
             Some(NamePart::from_word(word, self.trust_capitalization, self.next_location()))
         }
     }
@@ -113,10 +109,12 @@ impl <'a>NamePart<'a> {
                 Category::Initials
             } else if chars == 1 {
                 Category::Name
-            } else if utils::is_period_separated(word) {
-                Category::Initials
-            } else if word.contains('.') {
-                Category::Abbreviation
+            } else if word.ends_with('.') {
+                if word.chars().filter( |c| c.is_alphabetic() ).count() > 1 {
+                    Category::Abbreviation
+                } else {
+                    Category::Initials
+                }
             } else if word.chars().filter( |c| !c.is_alphabetic() ).count() > 2 {
                 Category::Other
             } else if utils::is_missing_vowels(word) {
@@ -132,8 +130,7 @@ impl <'a>NamePart<'a> {
             } else {
                 if chars <= 5 && trust_capitalization && word.chars().all(|c| !c.is_alphabetic() || c.is_uppercase()) {
                     Category::Initials
-                }
-                else {
+                } else {
                     Category::Name
                 }
             };
@@ -141,8 +138,7 @@ impl <'a>NamePart<'a> {
         let namecased =
             if trust_capitalization && utils::is_capitalized(word) {
                 Cow::Borrowed(word)
-            }
-            else {
+            } else {
                 let might_be_particle = location == Location::Middle;
                 Cow::Owned(namecase::namecase(word, might_be_particle))
             };

@@ -128,6 +128,7 @@ Doe, Rev. John A. Jr.|Doe|John||J|A|Jr.
 Rt. Hon. Paul E. Mary|Mary|Paul||P|E|
 Lord God Almighty|Almighty|God||G||
 vai la|La|Vai||V||
+Andrews, M. D.|Andrews|||M|D|
 Andrews, M.D.|Andrews|||M|D|
 Andrews, MD|Andrews|||M|D|
 ANDREWS, MD|Andrews|||M|D|
@@ -218,17 +219,16 @@ US Magistrate-Judge Elizabeth E Campbell|Campbell|Elizabeth||E|E|
 Mag-Judge Harwell G Davis, III|Davis|Harwell||H|G|III
 The Rt Hon John Jones|Jones|John||J||
 Magistrate-Judge U.S. Grant|Grant|||U|S|
-Magistrate-Judge of the U.S. Ulysses Grant|Grant|Ulysses||U||
+#Magistrate-Judge of the U.S. Ulysses Grant|Grant|Ulysses||U||
 U. S. Grant|Grant|||U|S|
 U.S. Grant|Grant|||U|S|
 #Lord of the Universe and Associate Supreme Queen of the World Lisa Simpson|Simpson|Lisa||L||
-#King John V.|V.|John||J||
 Smith, J.R.|Smith|||J|R|
 Lt.Gen. John A. Kenneth Doe IV|Doe|John|Kenneth|J|AK|IV
 Lt. Gen. John A. Kenneth Doe IV|Doe|John|Kenneth|J|AK|IV
 Doe, Lt. Gen. John A. Kenneth IV|Doe|John|Kenneth|J|AK|IV
 Lt. Gen. John A. Kenneth Doe, Jr.|Doe|John|Kenneth|J|AK|Jr.
-#Doe, Rev. John V, Jr.|Doe|John||J|V|Jr.
+Doe, Rev. John V, Jr.|Doe|John||J|V|Jr.
 Doe, Rev. John V., Jr.|Doe|John||J|V|Jr.
 Doe, Rev. John A., V, Jr.|Doe|John||J|A|V
 Ahmad ben Husain|Ben Husain|Ahmad||A||
@@ -290,6 +290,8 @@ Ichiro Suzuki|Suzuki|Ichiro||I||
 鈴木|木|鈴||鈴||
 中(π)华|华|中||中||
 中华|华|中||中||
+#이용희
+#방성철
 Γαλήνη Σερβόπουλος|Σερβόπουλος|Γαλήνη||Γ||
 عليّ عبد العزيز|العزيز|عليّ|عبد|ع|ع|
 Yukihiro 'Matz' Matsumoto|Matsumoto|Yukihiro||Y||
@@ -330,9 +332,7 @@ Most. Ferdousi BEGUM|Begum|Ferdousi||F||
 #J-L Lefaix|Lefaix|||J|L|
 #Kim, P-H.|Kim|||P|H|
 #Maj Vinberg|Vinberg|Maj||M||
-#X.Gironés|Gironés|||X||
-#F.Joachim Weyl|Weyl|Joachim||F||
+X.Gironés|Gironés|||X||
+F.Joachim Weyl|Weyl|Joachim||F||
 Jerome B. Rice & Co.|Rice|Jerome||J|B|
 Co., Jerome B. Rice &|Rice|Jerome||J|B|
-#이용희
-#방성철 

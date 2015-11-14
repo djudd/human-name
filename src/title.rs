@@ -440,7 +440,7 @@ fn might_be_title_part(word: &NamePart) -> bool {
     if word.chars < 3 {
         // Allow any word with 1 or 2 characters as part of a title (but see below)
         true
-    } else if word.is_abbreviation() || word.is_initials() {
+    } else if !word.is_namelike() {
         true
     } else {
         PREFIX_TITLE_PARTS.contains(&*word.namecased)
