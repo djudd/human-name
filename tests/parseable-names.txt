@@ -155,6 +155,9 @@ John e Smith III|Smith|John||J|E|III
 #Lily I Pao|Pao|Lily||L|I|
 #lily i pao|Pao|Lily||L|I|
 #LILY I PAU|Pao|Lily||L|I|
+#Akmaev, I G |Akmaev|||I|G|
+#Akmaev, I|Akmaev|||I||
+#Roy V Baker|Baker|Roy||V|
 Smith, John e, III, Jr|Smith|John||J|E|III
 Van Nguyen|Nguyen|Van||V||
 Nguyen, Van|Nguyen|Van||V||
@@ -317,3 +320,16 @@ Poppy P.E.L.D. Donahue|Donahue|Poppy||P|PELD|
 Poppy PELD Donahue|Donahue|Poppy||P|PELD|
 poppy p e l d donahue|Donahue|Poppy||P|PELD|
 poppy ppld donahue|Donahue|Poppy||P|PPLD|
+#Jianfei LIU|Liu|Jianfei||L||
+#J.-L. Lefaix|Lefaix|||J|L|
+#J-L Lefaix|Lefaix|||J|L|
+#Maj Vinberg|Vinberg|Maj||M||
+#X.Gironés|Gironés|||X||
+#F.Joachim Weyl|Weyl|Joachim||F||
+#A. l PAGE|Page|||A|L|
+#John S. Gallagher Iii|Gallagher|John||J|S|III
+#Kim, P-H.|Kim|||P|H|
+#Most. Ferdousi BEGUM|Begum|Ferdousi||F||
+Co., Jerome B. Rice &|Rice|Jerome||J|B|
+#이용희
+#방성철 

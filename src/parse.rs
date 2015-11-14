@@ -23,7 +23,9 @@ pub fn parse(name: &str, use_capitalization: bool) -> Option<(Vec<NamePart>,usiz
     let successful = words.len() >= 2 &&
         words[0..suffix_index].iter().all( |w| w.is_namelike() || w.is_initials() ) &&
         surname_index > 0 &&
+        surname_index < 6 &&
         suffix_index > surname_index &&
+        suffix_index - surname_index < 6 &&
         words[surname_index..suffix_index].iter().any( |w| w.is_namelike() );
 
     if successful {

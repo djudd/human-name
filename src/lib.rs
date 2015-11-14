@@ -32,7 +32,7 @@ pub struct Name {
 
 impl Name {
     pub fn parse(name: &str) -> Option<Name> {
-        if !name.chars().any(char::is_alphabetic) {
+        if name.len() >= 1000 || !name.chars().any(char::is_alphabetic) {
             return None
         }
 
