@@ -160,6 +160,7 @@ Akmaev, I|Akmaev|||I||
 Roy V Baker|Baker|Roy||R|V|
 de la Cruz, V|de la Cruz|||V||
 Smith, John e, III, Jr|Smith|John||J|E|III
+John S. Gallagher Iii|Gallagher|John||J|S|III
 Van Nguyen|Nguyen|Van||V||
 Nguyen, Van|Nguyen|Van||V||
 Mr. Van Nguyen|Nguyen|Van||V||
@@ -321,16 +322,16 @@ Poppy P.E.L.D. Donahue|Donahue|Poppy||P|PELD|
 Poppy PELD Donahue|Donahue|Poppy||P|PELD|
 poppy p e l d donahue|Donahue|Poppy||P|PELD|
 poppy ppld donahue|Donahue|Poppy||P|PPLD|
-#Jianfei LIU|Liu|Jianfei||L||
+Jianfei LIU|Liu|Jianfei||J||
+l. PAGE|Page|||L||
+A. l PAGE|Page|||A|L|
+Most. Ferdousi BEGUM|Begum|Ferdousi||F||
 #J.-L. Lefaix|Lefaix|||J|L|
 #J-L Lefaix|Lefaix|||J|L|
+#Kim, P-H.|Kim|||P|H|
 #Maj Vinberg|Vinberg|Maj||M||
 #X.Gironés|Gironés|||X||
 #F.Joachim Weyl|Weyl|Joachim||F||
-#A. l PAGE|Page|||A|L|
-#John S. Gallagher Iii|Gallagher|John||J|S|III
-#Kim, P-H.|Kim|||P|H|
-#Most. Ferdousi BEGUM|Begum|Ferdousi||F||
 Jerome B. Rice & Co.|Rice|Jerome||J|B|
 Co., Jerome B. Rice &|Rice|Jerome||J|B|
 #이용희

@@ -2,7 +2,7 @@ use std::cmp;
 use super::title;
 use super::surname;
 use super::suffix;
-use super::namepart::{NamePart, Location};
+use super::namepart::{NamePart, Location, Category};
 
 struct ParseOp<'a> {
     surname_index: usize,
@@ -68,18 +68,27 @@ impl <'a>ParseOp<'a> {
         // ambiguous strings like "MA" as surnames rather than titles
         // (not initials, which should only be at the end of the input
         // if they are comma-separated, and we already handled that case)
-        if words.len() < 2 && self.maybe_not_postfix.is_some() {
+        if ParseOp::fixably_invalid(&words, self.surname_index) && self.maybe_not_postfix.is_some() {
             words.push(self.maybe_not_postfix.unwrap());
         }
 
         // Anything trailing that looks like initials is probably a stray postfix
         while !words.is_empty() && !words.last().unwrap().is_namelike() {
-            words.pop();
+            let mut removed = words.pop().unwrap();
 
-            // If we guessed the surname was one of these trailing non-names,
-            // try again
-            if self.surname_index >= words.len() {
-                self.surname_index = 0;
+            // If we guessed the surname previously, our guess is no longer valid
+            self.surname_index = 0;
+
+            // If the alternative is having less than two words and giving up,
+            // check if we can treat the last word as a name if we just ignore
+            // case; this handles the not-quite-rare-enough case of an all-caps
+            // last name (e.g. John SMITH), among others
+            if self.use_capitalization && ParseOp::fixably_invalid(&words, self.surname_index) {
+                if NamePart::from_word(&*removed.namecased, false, Location::End).is_namelike() {
+                    removed.category = Category::Name;
+                    words.push(removed);
+                    break;
+                }
             }
         }
 
@@ -97,6 +106,10 @@ impl <'a>ParseOp<'a> {
         }
 
         (words, self.surname_index, suffix_index)
+    }
+
+    fn fixably_invalid(words: &Vec<NamePart>, surname_index: usize) -> bool {
+        words.len() < 2 || !words[surname_index..].iter().any( |w| w.is_namelike() )
     }
 
     // Called only until any words are found
@@ -234,7 +247,7 @@ impl <'a>ParseOp<'a> {
     // just in case we make a mistake and it turns out by process of elimination
     // that this must actually be a surname
     fn found_postfix_title(&mut self, postfix: NamePart<'a>) {
-        if self.maybe_not_postfix.is_none() && postfix.is_namelike() {
+        if self.maybe_not_postfix.is_none() && (postfix.is_namelike() || postfix.is_initials()) {
             self.maybe_not_postfix = Some(postfix);
         }
     }
