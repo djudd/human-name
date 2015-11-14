@@ -6,7 +6,7 @@ use std::ascii::AsciiExt;
 use unicode_segmentation::UnicodeSegmentation;
 
 // If Start and End overlap, use End
-#[derive(Eq,PartialEq)]
+#[derive(Eq,PartialEq,Debug)]
 pub enum Location {
     Start,
     Middle,
@@ -79,7 +79,7 @@ impl <'a>Iterator for NameParts<'a> {
     }
 }
 
-#[derive(Eq,PartialEq)]
+#[derive(Eq,PartialEq,Debug)]
 pub enum Category {
     Name,
     Initials,
@@ -87,6 +87,7 @@ pub enum Category {
     Other,
 }
 
+#[derive(Debug)]
 pub struct NamePart<'a> {
     pub word: &'a str,
     pub chars: usize,

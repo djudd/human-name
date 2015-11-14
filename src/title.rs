@@ -482,12 +482,12 @@ fn is_prefix_title(words: &[NamePart]) -> bool {
     }
 }
 
-pub fn is_postfix_title(word: &NamePart) -> bool {
+pub fn is_postfix_title(word: &NamePart, might_be_initials: bool) -> bool {
     if word.is_namelike() {
         POSTFIX_TITLES.contains(&*word.namecased)
     }
     else if word.is_initials() {
-        false
+        !might_be_initials && word.word.chars().filter( |c| c.is_alphabetic()).count() > 1
     }
     else {
         true

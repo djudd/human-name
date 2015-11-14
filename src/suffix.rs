@@ -10,20 +10,11 @@ static NUMERIC_SUFFIXES: phf::Set<&'static str> = phf_set! {
     "3rd",
     "4th",
     "5th",
-    "2RD",
-    "3RD",
-    "4TH",
-    "5TH",
     "I",
-    "II",
-    "III",
-    "IV",
+    "Ii",
+    "Iii",
+    "Iv",
     "V",
-    "i",
-    "ii",
-    "iii",
-    "iv",
-    "v",
 };
 
 static ABBREVIATION_SUFFIXES: phf::Set<&'static str> = phf_set! {
@@ -33,11 +24,11 @@ static ABBREVIATION_SUFFIXES: phf::Set<&'static str> = phf_set! {
     "Snr",
 };
 
-pub fn is_suffix(part: &NamePart) -> bool {
+pub fn is_suffix(part: &NamePart, might_be_initials: bool) -> bool {
     let namecased = &*part.namecased;
 
-    if part.is_namelike() || part.is_initials() {
-        NUMERIC_SUFFIXES.contains(part.word) || ABBREVIATION_SUFFIXES.contains(namecased)
+    if part.is_namelike() || (part.is_initials() && !(part.chars == 1 && might_be_initials)) {
+        NUMERIC_SUFFIXES.contains(namecased) || ABBREVIATION_SUFFIXES.contains(namecased)
     } else if part.is_abbreviation() {
         ABBREVIATION_SUFFIXES.contains(&namecased[0..namecased.len()-1])
     } else {
@@ -48,7 +39,7 @@ pub fn is_suffix(part: &NamePart) -> bool {
 pub fn namecase(part: &NamePart) -> String {
     if part.is_abbreviation() {
         part.namecased.to_string()
-    } else if NUMERIC_SUFFIXES.contains(part.word) {
+    } else if NUMERIC_SUFFIXES.contains(&*part.namecased) {
         part.word.to_uppercase()
     } else {
         format!("{}.", part.namecased)

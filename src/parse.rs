@@ -1,3 +1,4 @@
+use std::cmp;
 use super::title;
 use super::surname;
 use super::suffix;
@@ -172,7 +173,7 @@ impl <'a>ParseOp<'a> {
         while self.maybe_not_postfix.is_none() || self.suffix.is_none() {
             match postfix_words.next() {
                 Some(word) => {
-                    if suffix::is_suffix(&word) {
+                    if suffix::is_suffix(&word, false) {
                         self.found_suffix(word);
                     }
                     else {
@@ -184,35 +185,38 @@ impl <'a>ParseOp<'a> {
         }
     }
 
-    fn strip_postfixes<'b>(&mut self, words: &mut Vec<NamePart<'a>>, include_first_word: bool) {
-        let mut postfix_is_suffix = false;
+    fn strip_postfixes<'b>(&mut self, words: &mut Vec<NamePart<'a>>, after_comma: bool) {
+        let skip = if after_comma { 0 } else { 1 };
+        let expect_initials = after_comma && self.surname_index == 0;
 
-        let postfix_position = words.iter().enumerate().position( |(i, word)|
-            if i == 0 && !include_first_word {
-                false
-            }
-            else if suffix::is_suffix(&word) {
-                postfix_is_suffix = true;
-                true
-            }
-            else if title::is_postfix_title(&word) {
-                true
-            }
-            else {
-                false
+        let last_nonpostfix_index = words[skip..].iter().rposition( |word|
+            !suffix::is_suffix(&word, expect_initials)
+                && !title::is_postfix_title(&word, expect_initials)
+        );
+
+        let first_abbr_index = words[skip..].iter().position( |word|
+            !word.is_namelike() && !word.is_initials()
+        ).unwrap_or(words[skip..].len()) + skip;
+
+        let first_postfix_index = cmp::min(
+            first_abbr_index,
+            match last_nonpostfix_index {
+                Some(i) => i + 1 + skip,
+                None => skip,
             }
         );
 
-        if postfix_position.is_some() {
-            let additional_postfixes_range = (postfix_position.unwrap()+1)..words.len();
-            words.drain(additional_postfixes_range);
+        if first_postfix_index < words.len() {
+            while words.len() > first_postfix_index + 1 {
+                words.pop();
+            }
 
             let first_postfix = words.pop().unwrap();
-            if postfix_is_suffix {
-                self.found_suffix(first_postfix)
+            if suffix::is_suffix(&first_postfix, expect_initials) {
+                self.found_suffix(first_postfix);
             }
             else {
-                self.found_postfix_title(first_postfix)
+                self.found_postfix_title(first_postfix);
             }
         }
     }

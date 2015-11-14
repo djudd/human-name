@@ -152,12 +152,13 @@ John e Smith|Smith|John||J|E|
 John E Smith, III|Smith|John||J|E|III
 John e Smith, III|Smith|John||J|E|III
 John e Smith III|Smith|John||J|E|III
-#Lily I Pao|Pao|Lily||L|I|
-#lily i pao|Pao|Lily||L|I|
-#LILY I PAU|Pao|Lily||L|I|
-#Akmaev, I G |Akmaev|||I|G|
-#Akmaev, I|Akmaev|||I||
-#Roy V Baker|Baker|Roy||V|
+Lily I Pao|Pao|Lily||L|I|
+lily i pao|Pao|Lily||L|I|
+LILY I PAO|Pao|Lily||L|I|
+Akmaev, I G |Akmaev|||I|G|
+Akmaev, I|Akmaev|||I||
+Roy V Baker|Baker|Roy||R|V|
+de la Cruz, V|de la Cruz|||V||
 Smith, John e, III, Jr|Smith|John||J|E|III
 Van Nguyen|Nguyen|Van||V||
 Nguyen, Van|Nguyen|Van||V||
@@ -330,6 +331,7 @@ poppy ppld donahue|Donahue|Poppy||P|PPLD|
 #John S. Gallagher Iii|Gallagher|John||J|S|III
 #Kim, P-H.|Kim|||P|H|
 #Most. Ferdousi BEGUM|Begum|Ferdousi||F||
+Jerome B. Rice & Co.|Rice|Jerome||J|B|
 Co., Jerome B. Rice &|Rice|Jerome||J|B|
 #이용희
 #방성철 
