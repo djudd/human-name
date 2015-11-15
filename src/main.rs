@@ -11,7 +11,7 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use rustc_serialize::json;
 
-#[rustfmt_skip]
+#[cfg_attr(rustfmt, rustfmt_skip)]
 const USAGE: &'static str = "
 Usage:
     human_name -

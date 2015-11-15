@@ -62,7 +62,7 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
             let j = i + c.len_utf8();
             if j >= input.len() {
                 return Cow::Borrowed(&input[0..nick_start_ix.unwrap()]);
-            } else if !must_precede_whitespace || starts_with_whitespace(input[j..]) {
+            } else if !must_precede_whitespace || starts_with_whitespace(&input[j..]) {
                 return Cow::Owned(input[0..nick_start_ix.unwrap()].to_string() +
                                   &strip_nickname(&input[j..]));
             } else {
