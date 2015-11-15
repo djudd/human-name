@@ -93,3 +93,38 @@ fn unparseable() {
 
     stderr_newline();
 }
+
+#[test]
+fn equality() {
+    let f = File::open("tests/equal-names.txt").ok().unwrap();
+    let reader = BufReader::new(f);
+
+    stderr_newline();
+
+    for line in reader.lines() {
+        let line = line.ok().unwrap();
+
+        if line.starts_with("#") { continue }
+
+        let parts: Vec<&str> = line.split('|').collect();
+        let a = parts[0];
+        let b = parts[1];
+        let expect = parts[2];
+
+        let parsed_a = human_name::Name::parse(&a);
+        let parsed_b = human_name::Name::parse(&b);
+
+        if expect == "==" {
+            assert!(parsed_a == parsed_b, "{} should be equal to {} but was not!", a, b);
+            assert!(parsed_b == parsed_a, "{} should be equal to {} but was not!", b, a);
+        }
+        else {
+            assert!(parsed_a != parsed_b, "{} should not be equal to {} but was!", a, b);
+            assert!(parsed_b != parsed_a, "{} should not be equal to {} but was!", b, a);
+        }
+
+        writeln!(&mut std::io::stderr(), "{} {} {}", a, expect, b).ok().unwrap();
+    }
+
+    stderr_newline();
+}

@@ -116,4 +116,48 @@ impl Name {
             }
         }
     }
+
+    fn surname_eq(&self, other: &Name) -> bool {
+        self.surname == other.surname
+    }
+
+    fn given_name_eq(&self, other: &Name) -> bool {
+        self.given_name.is_none() ||
+            other.given_name.is_none() ||
+            self.given_name == other.given_name
+    }
+
+    fn middle_names_eq(&self, other: &Name) -> bool {
+        self.middle_names.is_none() ||
+            other.middle_names.is_none() ||
+            self.middle_names == other.middle_names
+    }
+
+    fn middle_initials_eq(&self, other: &Name) -> bool {
+        self.middle_initials.is_none() ||
+            other.middle_initials.is_none() ||
+            self.middle_initials == other.middle_initials
+    }
+
+    fn suffix_eq(&self, other: &Name) -> bool {
+        self.suffix.is_none() ||
+            other.suffix.is_none() ||
+            self.suffix == other.suffix
+    }
+}
+
+// NOTE This is technically an invalid implementation of Eq because it is not
+// transitive - "J. Doe" == "Jane Doe", and "J. Doe" == "John Doe", but
+// "Jane Doe" != "John Doe". (It is, however, symmetric and reflexive.)
+//
+// Use with caution!
+impl PartialEq for Name {
+    fn eq(&self, other: &Name) -> bool {
+        self.first_initial == other.first_initial &&
+            self.surname_eq(other) &&
+            self.given_name_eq(other) &&
+            self.middle_initials_eq(other) &&
+            self.middle_names_eq(other) &&
+            self.suffix_eq(other)
+    }
 }
