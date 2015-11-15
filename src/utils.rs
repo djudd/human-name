@@ -50,3 +50,24 @@ pub fn capitalize(word: &str) -> String {
 pub fn is_missing_vowels(word: &str) -> bool {
     word.chars().all(|c| !c.is_alphabetic() || (c.is_ascii() && !VOWELS.contains(&c)))
 }
+
+pub fn has_sequential_alphas(word: &str) -> bool {
+    let mut iter = word.chars().peekable();
+    loop {
+        match iter.next() {
+            Some(c) => {
+                match iter.peek() {
+                    Some(nc) => {
+                        if c.is_alphabetic() && nc.is_alphabetic() {
+                            return true;
+                        }
+                    },
+                    None => { break },
+                }
+            },
+            None => { break },
+        }
+    }
+
+    false
+}

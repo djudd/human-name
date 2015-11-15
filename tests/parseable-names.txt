@@ -7,6 +7,7 @@ Bin Lin|Lin|Bin||B||
 Jason H. Priem|Priem|Jason||J|H|
 William Carlos Williams|Williams|William|Carlos|W|C|
 B.J. Thomas|Thomas|||B|J|
+Poul-Henning Kemp|Kemp|Poul-Henning||P||
 
 # simple last name, with and without initials, middle, suffix, title, sort order
 John Doe|Doe|John||J||
@@ -330,6 +331,7 @@ Jane Doctor|Doctor|Jane||J||
 # first and middle names that could be titles
 Anwar al Awlaki|Awlaki|Anwar|Al|A|A|
 Al Yankovic|Yankovic|Al||A||
+#Maj Vinberg|Vinberg|Maj||M||
 
 # long titles
 Secretary of State Hillary Clinton|Clinton|Hillary||H||
@@ -408,10 +410,10 @@ poppy p e l d donahue|Donahue|Poppy||P|PELD|
 poppy ppld donahue|Donahue|Poppy||P|PPLD|
 
 # hyphens in initials
-#J.-L. Lefaix|Lefaix|||J|L|
-#J-L Lefaix|Lefaix|||J|L|
-#Kim, P-H.|Kim|||P|H|
-#Maj Vinberg|Vinberg|Maj||M||
+J.-L. Lefaix|Lefaix|||J|L|
+J-L Lefaix|Lefaix|||J|L|
+Kim, P-H|Kim|||P|H|
+Kim, P-H.|Kim|||P|H|
 
 # missing whitespace
 X.Gironés|Gironés|||X||

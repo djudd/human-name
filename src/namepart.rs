@@ -119,7 +119,7 @@ impl <'a>NamePart<'a> {
             } else if chars == 1 {
                 Category::Name
             } else if word.ends_with('.') {
-                if word.chars().filter( |c| c.is_alphabetic() ).count() > 1 {
+                if chars > 2 && utils::has_sequential_alphas(word) {
                     Category::Abbreviation
                 } else {
                     Category::Initials
