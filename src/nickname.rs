@@ -1,7 +1,9 @@
 use std::borrow::Cow;
 
 // Returns tuple (close_char, must_precede_whitespace)
-fn expected_close_char_if_opens_nickname(c: char, follows_whitespace: bool) -> Option<(char, bool)> {
+fn expected_close_char_if_opens_nickname(c: char,
+                                         follows_whitespace: bool)
+                                         -> Option<(char, bool)> {
     let close = match c {
         '(' => Some((')', false)),
         '[' => Some((']', false)),
@@ -10,7 +12,7 @@ fn expected_close_char_if_opens_nickname(c: char, follows_whitespace: bool) -> O
         '〝' => Some(('〞', false)),
         '‹' => Some(('›', false)),
         '«' => Some(('»', false)),
-        _ => None
+        _ => None,
     };
 
     if !close.is_none() {
@@ -27,11 +29,15 @@ fn expected_close_char_if_opens_nickname(c: char, follows_whitespace: bool) -> O
             '\'' => Some(('\'', true)),
             '"' => Some(('"', true)),
             '‘' => Some(('’', true)),
-            _ => None
+            _ => None,
         }
     } else {
         None
     }
+}
+
+fn starts_with_whitespace(text: &str) -> bool {
+    text.chars().nth(0).unwrap().is_whitespace()
 }
 
 // Optimized for the case where there is no nickname, and secondarily for the
@@ -43,7 +49,7 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
     let mut must_precede_whitespace = false;
     let mut prev_char = '\0';
 
-    for (i,c) in input.char_indices() {
+    for (i, c) in input.char_indices() {
         if nick_start_ix.is_none() {
             let close = expected_close_char_if_opens_nickname(c, prev_char.is_whitespace());
             if !close.is_none() {
@@ -56,11 +62,10 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
             let j = i + c.len_utf8();
             if j >= input.len() {
                 return Cow::Borrowed(&input[0..nick_start_ix.unwrap()]);
-            }
-            else if !must_precede_whitespace || input[j..].chars().nth(0).unwrap().is_whitespace()  {
-                return Cow::Owned(input[0..nick_start_ix.unwrap()].to_string() + &strip_nickname(&input[j..]));
-            }
-            else {
+            } else if !must_precede_whitespace || starts_with_whitespace(input[j..]) {
+                return Cow::Owned(input[0..nick_start_ix.unwrap()].to_string() +
+                                  &strip_nickname(&input[j..]));
+            } else {
                 return Cow::Owned(input[0..i].to_string() + &strip_nickname(&input[i..]));
             }
         }
@@ -84,8 +89,7 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
             // have missed while looking for the first closing character
             if i >= input.len() {
                 return Cow::Borrowed(input);
-            }
-            else {
+            } else {
                 return Cow::Owned(input[0..i].to_string() + &strip_nickname(&input[i..]));
             }
         }

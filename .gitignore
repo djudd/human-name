@@ -12,3 +12,6 @@
 
 # Profiling
 callgrind.*
+
+# rustfmt
+*.rs.bk

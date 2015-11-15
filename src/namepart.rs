@@ -10,7 +10,7 @@ use unicode_segmentation::UnicodeSegmentation;
 pub enum Location {
     Start,
     Middle,
-    End
+    End,
 }
 
 pub struct NameParts<'a> {
@@ -27,7 +27,7 @@ impl <'a>NameParts<'a> {
         } else if self.location == Location::Start {
             self.location = Location::Middle;
             Location::Start
-        } else if self.text.chars().find( |c| c.is_alphabetic() ).is_none() {
+        } else if self.text.chars().find(|c| c.is_alphabetic()).is_none() {
             Location::End
         } else {
             Location::Middle
@@ -43,7 +43,7 @@ impl <'a>Iterator for NameParts<'a> {
         self.text = self.text.trim_left();
 
         if self.text.is_empty() {
-            return None
+            return None;
         }
 
         // Now look for the next whitespace that remains
@@ -69,12 +69,14 @@ impl <'a>Iterator for NameParts<'a> {
             // Not a word, skip it by recursing
             self.text = &self.text[next_boundary..];
             self.next()
-        } else if !word.chars().any( |c| c.is_ascii() ) {
+        } else if !word.chars().any(|c| c.is_ascii()) {
             // For non-ASCII, we defer to the unicode_segmentation library
-            let (next_word_boundary, subword) = word.split_word_bound_indices().find( |&(_,subword)|
-               subword.chars().any(char::is_alphabetic)
-            ).unwrap();
-            self.text = &self.text[next_word_boundary+subword.len()..];
+            let (next_word_boundary, subword) = word.split_word_bound_indices()
+                                                    .find(|&(_, subword)| {
+                                                        subword.chars().any(char::is_alphabetic)
+                                                    })
+                                                    .unwrap();
+            self.text = &self.text[next_word_boundary + subword.len()..];
             Some(NamePart::from_word(subword, self.trust_capitalization, self.next_location()))
         } else {
             // For ASCII, we split on whitespace and periods only
@@ -106,51 +108,52 @@ impl <'a>NamePart<'a> {
         NameParts {
             text: text,
             trust_capitalization: trust_capitalization,
-            location: location
+            location: location,
         }
     }
 
     pub fn from_word(word: &str, trust_capitalization: bool, location: Location) -> NamePart {
         let chars = word.chars().count();
 
-        let category =
-            if chars == 1 && word.chars().nth(0).unwrap().is_ascii() {
+        let category = if chars == 1 && word.chars().nth(0).unwrap().is_ascii() {
+            Category::Initials
+        } else if chars == 1 {
+            Category::Name
+        } else if word.ends_with('.') {
+            if chars > 2 && utils::has_sequential_alphas(word) {
+                Category::Abbreviation
+            } else {
                 Category::Initials
-            } else if chars == 1 {
+            }
+        } else if word.chars().filter(|c| !c.is_alphabetic()).count() > 2 {
+            Category::Other
+        } else if utils::is_missing_vowels(word) {
+            if trust_capitalization &&
+               word.chars().all(|c| !c.is_alphabetic() || c.is_uppercase()) {
+                Category::Initials
+            } else if location == Location::End &&
+               surname::is_vowelless_surname(word, trust_capitalization) {
                 Category::Name
-            } else if word.ends_with('.') {
-                if chars > 2 && utils::has_sequential_alphas(word) {
-                    Category::Abbreviation
-                } else {
-                    Category::Initials
-                }
-            } else if word.chars().filter( |c| !c.is_alphabetic() ).count() > 2 {
+            } else if chars <= 5 {
+                Category::Initials
+            } else {
                 Category::Other
-            } else if utils::is_missing_vowels(word) {
-                if trust_capitalization && word.chars().all(|c| !c.is_alphabetic() || c.is_uppercase()) {
-                    Category::Initials
-                } else if location == Location::End && surname::is_vowelless_surname(word, trust_capitalization) {
-                    Category::Name
-                } else if chars <= 5 {
-                    Category::Initials
-                } else {
-                    Category::Other
-                }
+            }
+        } else {
+            if chars <= 5 && trust_capitalization &&
+               word.chars().all(|c| !c.is_alphabetic() || c.is_uppercase()) {
+                Category::Initials
             } else {
-                if chars <= 5 && trust_capitalization && word.chars().all(|c| !c.is_alphabetic() || c.is_uppercase()) {
-                    Category::Initials
-                } else {
-                    Category::Name
-                }
-            };
+                Category::Name
+            }
+        };
 
-        let namecased =
-            if trust_capitalization && utils::is_capitalized(word) {
-                Cow::Borrowed(word)
-            } else {
-                let might_be_particle = location == Location::Middle;
-                Cow::Owned(namecase::namecase(word, might_be_particle))
-            };
+        let namecased = if trust_capitalization && utils::is_capitalized(word) {
+            Cow::Borrowed(word)
+        } else {
+            let might_be_particle = location == Location::Middle;
+            Cow::Owned(namecase::namecase(word, might_be_particle))
+        };
 
         NamePart {
             word: word,

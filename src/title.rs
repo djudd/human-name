@@ -2,12 +2,7 @@ use phf;
 use std::ascii::AsciiExt;
 use super::namepart::NamePart;
 
-static TWO_CHAR_TITLES: [&'static str; 4] = [
-    "mr",
-    "ms",
-    "sr",
-    "dr",
-];
+static TWO_CHAR_TITLES: [&'static str; 4] = ["mr", "ms", "sr", "dr"];
 
 static PREFIX_TITLE_PARTS: phf::Set<&'static str> = phf_set! {
     "Aunt",
@@ -455,11 +450,9 @@ fn might_be_last_title_part(word: &NamePart) -> bool {
     // because otherwise we are more likely dealing with initials
     if word.chars == 1 {
         false
-    }
-    else if word.chars == 2 {
-        TWO_CHAR_TITLES.iter().any( |title| title.eq_ignore_ascii_case(word.word) )
-    }
-    else {
+    } else if word.chars == 2 {
+        TWO_CHAR_TITLES.iter().any(|title| title.eq_ignore_ascii_case(word.word))
+    } else {
         might_be_title_part(word)
     }
 }
@@ -477,9 +470,8 @@ fn is_prefix_title(words: &[NamePart]) -> bool {
     }
 
     if words.len() > 1 {
-        words[0..words.len()-1].iter().all( |word| might_be_title_part(&word) )
-    }
-    else {
+        words[0..words.len() - 1].iter().all(|word| might_be_title_part(&word))
+    } else {
         true
     }
 }
@@ -487,11 +479,9 @@ fn is_prefix_title(words: &[NamePart]) -> bool {
 pub fn is_postfix_title(word: &NamePart, might_be_initials: bool) -> bool {
     if word.is_namelike() {
         POSTFIX_TITLES.contains(&*word.namecased)
-    }
-    else if word.is_initials() {
-        !might_be_initials && word.word.chars().filter( |c| c.is_alphabetic()).count() > 1
-    }
-    else {
+    } else if word.is_initials() {
+        !might_be_initials && word.word.chars().filter(|c| c.is_alphabetic()).count() > 1
+    } else {
         true
     }
 }
@@ -501,16 +491,16 @@ pub fn strip_prefix_title(words: &mut Vec<NamePart>, try_to_keep_two_words: bool
     while prefix_len > 0 {
         let found_prefix = {
             let next_word = &words[prefix_len];
-            if try_to_keep_two_words && words.len() - prefix_len <= 1 && words[prefix_len-1].is_initials() {
+            if try_to_keep_two_words && words.len() - prefix_len <= 1 &&
+               words[prefix_len - 1].is_initials() {
                 // If there is only one word after the prefix, e.g. "DR SMITH",
                 // given prefix of "DR", we treat ambiguous strings like "DR"
                 // as more likely to be initials than a title (there are no
                 // similarly ambiguous given names among our title word list)
                 false
-            }
-            else {
+            } else {
                 (next_word.is_namelike() || next_word.is_initials()) &&
-                    is_prefix_title(&words[0..prefix_len])
+                is_prefix_title(&words[0..prefix_len])
             }
         };
 

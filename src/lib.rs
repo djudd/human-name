@@ -22,18 +22,18 @@ use itertools::Itertools;
 
 #[derive(RustcDecodable, RustcEncodable)]
 pub struct Name {
-  pub given_name: Option<String>,
-  pub surname: String,
-  pub middle_names: Option<String>,
-  pub first_initial: char,
-  pub middle_initials: Option<String>,
-  pub suffix: Option<String>,
+    pub given_name: Option<String>,
+    pub surname: String,
+    pub middle_names: Option<String>,
+    pub first_initial: char,
+    pub middle_initials: Option<String>,
+    pub suffix: Option<String>,
 }
 
 impl Name {
     pub fn parse(name: &str) -> Option<Name> {
         if name.len() >= 1000 || !name.chars().any(char::is_alphabetic) {
-            return None
+            return None;
         }
 
         let mixed_case = is_mixed_case(name);
@@ -41,7 +41,7 @@ impl Name {
 
         let result = parse::parse(&*name, mixed_case);
         if result.is_none() {
-            return None
+            return None;
         }
 
         let (words, surname_index, suffix_index) = result.unwrap();
@@ -55,14 +55,17 @@ impl Name {
 
         for (i, word) in words[0..surname_index].iter().enumerate() {
             if word.is_initials() {
-                let start = if i == 0 { 1 } else { 0 };
+                let start = if i == 0 {
+                    1
+                } else {
+                    0
+                };
                 if word.chars > start {
-                    middle_initials.extend(
-                        word.word
-                            .chars()
-                            .filter( |c| c.is_alphabetic() )
-                            .skip(start)
-                            .filter_map( |w| w.to_uppercase().next() ));
+                    middle_initials.extend(word.word
+                                               .chars()
+                                               .filter(|c| c.is_alphabetic())
+                                               .skip(start)
+                                               .filter_map(|w| w.to_uppercase().next()));
                 }
             } else if given_name.is_none() {
                 given_name = Some(word.namecased.to_string());
@@ -72,24 +75,22 @@ impl Name {
             }
         }
 
-        let middle_names =
-            if middle_names.is_empty() {
-                None
-            } else {
-                Some(middle_names.join(" "))
-            };
+        let middle_names = if middle_names.is_empty() {
+            None
+        } else {
+            Some(middle_names.join(" "))
+        };
 
-        let middle_initials =
-            if middle_initials.is_empty() {
-                None
-            } else {
-                Some(middle_initials)
-            };
+        let middle_initials = if middle_initials.is_empty() {
+            None
+        } else {
+            Some(middle_initials)
+        };
 
         let surname = words[surname_index..suffix_index]
-            .iter()
-            .map( |w| &*w.namecased )
-            .join(" ");
+                          .iter()
+                          .map(|w| &*w.namecased)
+                          .join(" ");
 
         let suffix = match words[suffix_index..].iter().nth(0) {
             Some(word) => Some(suffix::namecase(&word)),
@@ -122,27 +123,22 @@ impl Name {
     }
 
     fn given_name_eq(&self, other: &Name) -> bool {
-        self.given_name.is_none() ||
-            other.given_name.is_none() ||
-            self.given_name == other.given_name
+        self.given_name.is_none() || other.given_name.is_none() ||
+        self.given_name == other.given_name
     }
 
     fn middle_names_eq(&self, other: &Name) -> bool {
-        self.middle_names.is_none() ||
-            other.middle_names.is_none() ||
-            self.middle_names == other.middle_names
+        self.middle_names.is_none() || other.middle_names.is_none() ||
+        self.middle_names == other.middle_names
     }
 
     fn middle_initials_eq(&self, other: &Name) -> bool {
-        self.middle_initials.is_none() ||
-            other.middle_initials.is_none() ||
-            self.middle_initials == other.middle_initials
+        self.middle_initials.is_none() || other.middle_initials.is_none() ||
+        self.middle_initials == other.middle_initials
     }
 
     fn suffix_eq(&self, other: &Name) -> bool {
-        self.suffix.is_none() ||
-            other.suffix.is_none() ||
-            self.suffix == other.suffix
+        self.suffix.is_none() || other.suffix.is_none() || self.suffix == other.suffix
     }
 }
 
@@ -153,11 +149,8 @@ impl Name {
 // Use with caution!
 impl PartialEq for Name {
     fn eq(&self, other: &Name) -> bool {
-        self.first_initial == other.first_initial &&
-            self.surname_eq(other) &&
-            self.given_name_eq(other) &&
-            self.middle_initials_eq(other) &&
-            self.middle_names_eq(other) &&
-            self.suffix_eq(other)
+        self.first_initial == other.first_initial && self.surname_eq(other) &&
+        self.given_name_eq(other) && self.middle_initials_eq(other) &&
+        self.middle_names_eq(other) && self.suffix_eq(other)
     }
 }

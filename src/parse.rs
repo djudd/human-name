@@ -11,7 +11,7 @@ struct ParseOp<'a> {
     use_capitalization: bool,
 }
 
-pub fn parse(name: &str, use_capitalization: bool) -> Option<(Vec<NamePart>,usize,usize)> {
+pub fn parse(name: &str, use_capitalization: bool) -> Option<(Vec<NamePart>, usize, usize)> {
     let op = ParseOp {
         surname_index: 0,
         suffix: None,
@@ -22,17 +22,15 @@ pub fn parse(name: &str, use_capitalization: bool) -> Option<(Vec<NamePart>,usiz
     let (words, surname_index, suffix_index) = op.run(name);
 
     let successful = words.len() >= 2 &&
-        words[0..suffix_index].iter().all( |w| w.is_namelike() || w.is_initials() ) &&
-        surname_index > 0 &&
-        surname_index < 6 &&
-        suffix_index > surname_index &&
-        suffix_index - surname_index < 6 &&
-        words[surname_index..suffix_index].iter().any( |w| w.is_namelike() );
+                     words[0..suffix_index].iter().all(|w| w.is_namelike() || w.is_initials()) &&
+                     surname_index > 0 && surname_index < 6 &&
+                     suffix_index > surname_index &&
+                     suffix_index - surname_index < 6 &&
+                     words[surname_index..suffix_index].iter().any(|w| w.is_namelike());
 
     if successful {
         Some((words, surname_index, suffix_index))
-    }
-    else {
+    } else {
         None
     }
 }
@@ -50,14 +48,12 @@ impl <'a>ParseOp<'a> {
                 // or the only actual name part (if the format is "John Smith,
                 // esq." or just "John Smith")
                 words = self.handle_before_comma(part, words);
-            }
-            else if self.surname_index == 0 {
+            } else if self.surname_index == 0 {
                 // We already processed one comma-separated part, but we think
                 // it was just the surname, so this might be the given name or
                 // initials
                 words = self.handle_after_comma(part, words);
-            }
-            else {
+            } else {
                 // We already found the full name, so this is a comma-separated
                 // postfix title or suffix
                 self.handle_after_surname(part);
@@ -68,7 +64,8 @@ impl <'a>ParseOp<'a> {
         // ambiguous strings like "MA" as surnames rather than titles
         // (not initials, which should only be at the end of the input
         // if they are comma-separated, and we already handled that case)
-        if ParseOp::fixably_invalid(&words, self.surname_index) && self.maybe_not_postfix.is_some() {
+        if ParseOp::fixably_invalid(&words, self.surname_index) &&
+           self.maybe_not_postfix.is_some() {
             words.push(self.maybe_not_postfix.unwrap());
         }
 
@@ -109,16 +106,22 @@ impl <'a>ParseOp<'a> {
     }
 
     fn fixably_invalid(words: &Vec<NamePart>, surname_index: usize) -> bool {
-        words.len() < 2 || !words[surname_index..].iter().any( |w| w.is_namelike() )
+        words.len() < 2 || !words[surname_index..].iter().any(|w| w.is_namelike())
     }
 
     // Called only until any words are found
-    fn handle_before_comma(&mut self, part: &'a str, mut words: Vec<NamePart<'a>>) -> Vec<NamePart<'a>> {
-        assert!(words.is_empty() && self.surname_index == 0, "Invalid state for handle_before_comma!");
+    fn handle_before_comma(&mut self,
+                           part: &'a str,
+                           mut words: Vec<NamePart<'a>>)
+                           -> Vec<NamePart<'a>> {
+        assert!(words.is_empty() && self.surname_index == 0,
+                "Invalid state for handle_before_comma!");
 
         words.extend(NamePart::all_from_text(part, self.use_capitalization, Location::End));
 
-        if words.is_empty() { return words }
+        if words.is_empty() {
+            return words;
+        }
 
         // Check for title as prefix (e.g. "Dr. John Smith" or "Right Hon.
         // John Smith")
@@ -134,8 +137,7 @@ impl <'a>ParseOp<'a> {
             // Finding a prefix title means the next word is a first name or
             // initial (we don't support "Dr. Smith, John")
             self.surname_index = surname::find_surname_index(&words[1..]) + 1;
-        }
-        else {
+        } else {
             // Have to guess whether this is just the surname (as in "Smith, John")
             // or the full name (as in "John Smith")
             //
@@ -148,13 +150,19 @@ impl <'a>ParseOp<'a> {
     }
 
     // Called after the first comma, until we find a given name or first initial
-    fn handle_after_comma(&mut self, part: &'a str, mut words: Vec<NamePart<'a>>) -> Vec<NamePart<'a>> {
-        assert!(!words.is_empty() && self.surname_index == 0, "Invalid state for handle_after_comma!");
+    fn handle_after_comma(&mut self,
+                          part: &'a str,
+                          mut words: Vec<NamePart<'a>>)
+                          -> Vec<NamePart<'a>> {
+        assert!(!words.is_empty() && self.surname_index == 0,
+                "Invalid state for handle_after_comma!");
 
         let mut given_middle_or_postfix_words: Vec<NamePart> =
             NamePart::all_from_text(part, self.use_capitalization, Location::Start).collect();
 
-        if given_middle_or_postfix_words.is_empty() { return words }
+        if given_middle_or_postfix_words.is_empty() {
+            return words;
+        }
 
         // Handle (unusual) formats like "Smith, Dr. John M."
         if given_middle_or_postfix_words.len() > 1 {
@@ -180,46 +188,56 @@ impl <'a>ParseOp<'a> {
 
     // Called on any parts remaining after full name is found
     fn handle_after_surname(&mut self, part: &'a str) {
-        assert!(self.surname_index > 0, "Invalid state for handle_after_surname!");
+        assert!(self.surname_index > 0,
+                "Invalid state for handle_after_surname!");
 
-        if self.maybe_not_postfix.is_some() && self.suffix.is_some() { return }
+        if self.maybe_not_postfix.is_some() && self.suffix.is_some() {
+            return;
+        }
 
-        let mut postfix_words = NamePart::all_from_text(part, self.use_capitalization, Location::End);
+        let mut postfix_words = NamePart::all_from_text(part,
+                                                        self.use_capitalization,
+                                                        Location::End);
         while self.maybe_not_postfix.is_none() || self.suffix.is_none() {
             match postfix_words.next() {
                 Some(word) => {
                     if suffix::is_suffix(&word, false) {
                         self.found_suffix(word);
-                    }
-                    else {
+                    } else {
                         self.found_postfix_title(word);
                     }
-                },
-                None => { break }
+                }
+                None => {
+                    break;
+                }
             }
         }
     }
 
     fn strip_postfixes<'b>(&mut self, words: &mut Vec<NamePart<'a>>, after_comma: bool) {
-        let skip = if after_comma { 0 } else { 1 };
+        let skip = if after_comma {
+            0
+        } else {
+            1
+        };
         let expect_initials = after_comma && self.surname_index == 0;
 
-        let last_nonpostfix_index = words[skip..].iter().rposition( |word|
-            !suffix::is_suffix(&word, expect_initials)
-                && !title::is_postfix_title(&word, expect_initials)
-        );
+        let last_nonpostfix_index = words[skip..].iter().rposition(|word| {
+            !suffix::is_suffix(&word, expect_initials) &&
+            !title::is_postfix_title(&word, expect_initials)
+        });
 
-        let first_abbr_index = words[skip..].iter().position( |word|
-            !word.is_namelike() && !word.is_initials()
-        ).unwrap_or(words[skip..].len()) + skip;
+        let first_abbr_index = words[skip..]
+                                   .iter()
+                                   .position(|word| !word.is_namelike() && !word.is_initials())
+                                   .unwrap_or(words[skip..].len()) +
+                               skip;
 
-        let first_postfix_index = cmp::min(
-            first_abbr_index,
-            match last_nonpostfix_index {
-                Some(i) => i + 1 + skip,
-                None => skip,
-            }
-        );
+        let first_postfix_index = cmp::min(first_abbr_index,
+                                           match last_nonpostfix_index {
+                                               Some(i) => i + 1 + skip,
+                                               None => skip,
+                                           });
 
         if first_postfix_index < words.len() {
             while words.len() > first_postfix_index + 1 {
@@ -229,8 +247,7 @@ impl <'a>ParseOp<'a> {
             let first_postfix = words.pop().unwrap();
             if suffix::is_suffix(&first_postfix, expect_initials) {
                 self.found_suffix(first_postfix);
-            }
-            else {
+            } else {
                 self.found_postfix_title(first_postfix);
             }
         }
@@ -239,8 +256,7 @@ impl <'a>ParseOp<'a> {
     fn found_suffix(&mut self, suffix: NamePart<'a>) {
         if self.suffix.is_none() {
             self.suffix = Some(suffix);
-        }
-        else {
+        } else {
             self.found_postfix_title(suffix);
         }
     }
@@ -254,4 +270,3 @@ impl <'a>ParseOp<'a> {
         }
     }
 }
-

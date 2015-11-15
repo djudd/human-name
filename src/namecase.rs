@@ -43,12 +43,11 @@ fn capitalize_after_mac(word: &str) -> bool {
         false
     } else if word.ends_with('o') && word != "Macmurdo" {
         false
-    } else if ["a","c","i","z","j"].iter().any( |c| word.ends_with(c)) {
+    } else if ["a", "c", "i", "z", "j"].iter().any(|c| word.ends_with(c)) {
         false
     } else if MAC_EXCEPTIONS.contains(word) {
         false
-    }
-    else {
+    } else {
         true
     }
 }

@@ -30,7 +30,7 @@ pub fn is_suffix(part: &NamePart, might_be_initials: bool) -> bool {
     if part.is_namelike() || (part.is_initials() && !(part.chars == 1 && might_be_initials)) {
         NUMERIC_SUFFIXES.contains(namecased) || ABBREVIATION_SUFFIXES.contains(namecased)
     } else if part.is_abbreviation() {
-        ABBREVIATION_SUFFIXES.contains(&namecased[0..namecased.len()-1])
+        ABBREVIATION_SUFFIXES.contains(&namecased[0..namecased.len() - 1])
     } else {
         false
     }
