@@ -15,7 +15,7 @@ fn none_if_empty(s: &str) -> Option<String> {
 fn format(o: Option<String>) -> String {
     match o {
         Some(s) => format!("'{}'", s),
-        None => "n/a".to_string()
+        None => "n/a".to_string(),
     }
 }
 
@@ -33,7 +33,9 @@ fn parsing() {
     for line in reader.lines() {
         let line = line.ok().unwrap();
 
-        if line.starts_with("#") || !line.contains("|") { continue }
+        if line.starts_with("#") || !line.contains("|") {
+            continue;
+        }
 
         let parts: Vec<&str> = line.split("|").collect();
         let input = parts[0];
@@ -54,20 +56,47 @@ fn parsing() {
 
         let name = name.unwrap();
         assert!(name.surname == surname,
-                "[{}] Expected surname '{}', got '{}'", input, surname, name.surname);
+                "[{}] Expected surname '{}', got '{}'",
+                input,
+                surname,
+                name.surname);
         assert!(name.first_initial == first_initial,
-                "[{}] Expected first initial '{}', got '{}'", input, first_initial, name.first_initial);
+                "[{}] Expected first initial '{}', got '{}'",
+                input,
+                first_initial,
+                name.first_initial);
         assert!(name.given_name == given_name,
-                "[{}] Expected given_name {}, got {}", input, &format(given_name), &format(name.given_name));
+                "[{}] Expected given_name {}, got {}",
+                input,
+                &format(given_name),
+                &format(name.given_name));
         assert!(name.middle_names == middle_names,
-                "[{}] Expected middle names {}, got {}", input, &format(middle_names), &format(name.middle_names));
+                "[{}] Expected middle names {}, got {}",
+                input,
+                &format(middle_names),
+                &format(name.middle_names));
         assert!(name.middle_initials == middle_initials,
-                "[{}] Expected middle initials {}, got {}", input, &format(middle_initials), &format(name.middle_initials));
+                "[{}] Expected middle initials {}, got {}",
+                input,
+                &format(middle_initials),
+                &format(name.middle_initials));
         assert!(name.suffix == suffix,
-                "[{}] Expected suffix {}, got {}", input, &format(suffix), &format(name.suffix));
+                "[{}] Expected suffix {}, got {}",
+                input,
+                &format(suffix),
+                &format(name.suffix));
 
-        writeln!(&mut std::io::stderr(), "Parsed '{}' as '{}', {} ('{}') {} ({}), {}",
-                 input, surname, &format(given_name), first_initial, &format(middle_names), &format(middle_initials), &format(suffix)).ok().unwrap();
+        writeln!(&mut std::io::stderr(),
+                 "Parsed '{}' as '{}', {} ('{}') {} ({}), {}",
+                 input,
+                 surname,
+                 &format(given_name),
+                 first_initial,
+                 &format(middle_names),
+                 &format(middle_initials),
+                 &format(suffix))
+            .ok()
+            .unwrap();
     }
 
     stderr_newline();
@@ -83,10 +112,15 @@ fn unparseable() {
     for line in reader.lines() {
         let line = line.ok().unwrap();
 
-        if line.starts_with("#") { continue }
+        if line.starts_with("#") {
+            continue;
+        }
 
         let result = human_name::Name::parse(&line);
-        assert!(result.is_none(), "'Parsed' junk name: '{}' as '{}'", line, result.unwrap().display());
+        assert!(result.is_none(),
+                "'Parsed' junk name: '{}' as '{}'",
+                line,
+                result.unwrap().display());
 
         writeln!(&mut std::io::stderr(), "Correctly discarded '{}'", line).ok().unwrap();
     }
@@ -104,7 +138,9 @@ fn equality() {
     for line in reader.lines() {
         let line = line.ok().unwrap();
 
-        if line.starts_with("#") { continue }
+        if line.starts_with("#") {
+            continue;
+        }
 
         let parts: Vec<&str> = line.split('|').collect();
         let a = parts[0];
@@ -115,12 +151,23 @@ fn equality() {
         let parsed_b = human_name::Name::parse(&b);
 
         if expect == "==" {
-            assert!(parsed_a == parsed_b, "{} should be equal to {} but was not!", a, b);
-            assert!(parsed_b == parsed_a, "{} should be equal to {} but was not!", b, a);
-        }
-        else {
-            assert!(parsed_a != parsed_b, "{} should not be equal to {} but was!", a, b);
-            assert!(parsed_b != parsed_a, "{} should not be equal to {} but was!", b, a);
+            assert!(parsed_a == parsed_b,
+                    "{} should be equal to {} but was not!",
+                    a,
+                    b);
+            assert!(parsed_b == parsed_a,
+                    "{} should be equal to {} but was not!",
+                    b,
+                    a);
+        } else {
+            assert!(parsed_a != parsed_b,
+                    "{} should not be equal to {} but was!",
+                    a,
+                    b);
+            assert!(parsed_b != parsed_a,
+                    "{} should not be equal to {} but was!",
+                    b,
+                    a);
         }
 
         writeln!(&mut std::io::stderr(), "{} {} {}", a, expect, b).ok().unwrap();

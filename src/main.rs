@@ -11,6 +11,7 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use rustc_serialize::json;
 
+#[rustfmt_skip]
 const USAGE: &'static str = "
 Usage:
     human_name -
@@ -35,15 +36,21 @@ fn main() {
                 Some(input) => {
                     let parsed = human_name::Name::parse(&input);
                     let output = match parsed {
-                        Some(name) => { json::encode(&name).unwrap() },
-                        None => { "".to_string() }
+                        Some(name) => {
+                            json::encode(&name).unwrap()
+                        }
+                        None => {
+                            "".to_string()
+                        }
                     };
 
                     if !writeln!(&mut io::stdout(), "{}", output).is_ok() {
-                        break
+                        break;
                     }
-                },
-                None => { break }
+                }
+                None => {
+                    break;
+                }
             }
         }
     } else {
@@ -101,7 +108,7 @@ mod bench {
     fn bench_parsing_many(b: &mut Bencher) {
         let f = File::open("tests/benchmark-names.txt").ok().unwrap();
         let reader = BufReader::new(f);
-        let names: Vec<String> = reader.lines().map( |l| l.ok().unwrap() ).collect();
+        let names: Vec<String> = reader.lines().map(|l| l.ok().unwrap()).collect();
 
         b.iter(move || {
             let mut valid = 0;
