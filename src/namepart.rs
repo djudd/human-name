@@ -185,7 +185,3 @@ impl <'a>NamePart<'a> {
         self.category == Category::Abbreviation
     }
 }
-
-impl <'a>From<NamePart<'a>> for &'a str {
-	fn from(part: NamePart<'a>) -> &'a str { part.word }
-}

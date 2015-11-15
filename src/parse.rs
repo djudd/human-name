@@ -44,8 +44,8 @@ impl <'a>ParseOp<'a> {
 
         // Separate comma-separated titles and suffixes, then flip remaining words
         // around remaining comma, if any
-        for (i, part) in name.split(",").enumerate() {
-            if i == 0 || words.is_empty() {
+        for part in name.split(",") {
+            if words.is_empty() {
                 // We're in the surname part (if the format is "Smith, John"),
                 // or the only actual name part (if the format is "John Smith,
                 // esq." or just "John Smith")
@@ -60,7 +60,7 @@ impl <'a>ParseOp<'a> {
             else {
                 // We already found the full name, so this is a comma-separated
                 // postfix title or suffix
-                self.handle_definite_postfixes(part);
+                self.handle_after_surname(part);
             }
         }
 
@@ -179,7 +179,9 @@ impl <'a>ParseOp<'a> {
     }
 
     // Called on any parts remaining after full name is found
-    fn handle_definite_postfixes(&mut self, part: &'a str) {
+    fn handle_after_surname(&mut self, part: &'a str) {
+        assert!(self.surname_index > 0, "Invalid state for handle_after_surname!");
+
         if self.maybe_not_postfix.is_some() && self.suffix.is_some() { return }
 
         let mut postfix_words = NamePart::all_from_text(part, self.use_capitalization, Location::End);
