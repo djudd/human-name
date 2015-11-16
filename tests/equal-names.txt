@@ -17,3 +17,5 @@ Iria del Río Gayo|Iria Gayo|==
 Iria del Río-Gayo|Iria Río Gayo|==
 Iria Delrío-Gayo|Iria Río Gayo|==
 A. Holmes|Anta Mes|!=
+A. Ye|A. Ye|==
+A. Ye|A. Yu|!=
