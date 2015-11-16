@@ -9,7 +9,7 @@ use std::process;
 use std::io;
 use std::io::BufReader;
 use std::io::prelude::*;
-use rustc_serialize::json;
+use rustc_serialize::json::ToJson;
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 const USAGE: &'static str = "
@@ -37,7 +37,7 @@ fn main() {
                     let parsed = human_name::Name::parse(&input);
                     let output = match parsed {
                         Some(name) => {
-                            json::encode(&name).unwrap()
+                            name.to_json().to_string()
                         }
                         None => {
                             "".to_string()
@@ -58,7 +58,7 @@ fn main() {
         if parsed.is_none() {
             process::exit(1);
         } else {
-            println!("{}", json::encode(&parsed.unwrap()).unwrap());
+            println!("{}", parsed.unwrap().to_json());
         }
     }
 }

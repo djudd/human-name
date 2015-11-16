@@ -4,18 +4,11 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
 
-fn none_if_empty(s: &str) -> Option<String> {
+fn none_if_empty(s: &str) -> Option<&str> {
     if s.is_empty() {
         None
     } else {
-        Some(s.to_string())
-    }
-}
-
-fn format(o: Option<String>) -> String {
-    match o {
-        Some(s) => format!("'{}'", s),
-        None => "n/a".to_string(),
+        Some(s)
     }
 }
 
@@ -55,46 +48,45 @@ fn parsing() {
         let suffix = none_if_empty(&suffix);
 
         let name = name.unwrap();
-        assert!(name.surname == surname,
-                "[{}] Expected surname '{}', got '{}'",
+        assert!(name.surname() == surname,
+                "[{}] Expected surname {}, got {}",
                 input,
                 surname,
-                name.surname);
-        assert!(name.first_initial == first_initial,
-                "[{}] Expected first initial '{}', got '{}'",
+                name.surname());
+        assert!(name.first_initial() == first_initial,
+                "[{}] Expected first initial {}, got {}",
                 input,
                 first_initial,
-                name.first_initial);
-        assert!(name.given_name == given_name,
-                "[{}] Expected given_name {}, got {}",
+                name.first_initial());
+        assert!(name.given_name() == given_name,
+                "[{}] Expected given_name {:?}, got {:?}",
                 input,
-                &format(given_name),
-                &format(name.given_name));
-        assert!(name.middle_names == middle_names,
-                "[{}] Expected middle names {}, got {}",
+                given_name,
+                name.given_name());
+        assert!(name.middle_name().map(|w|w.to_string()) == middle_names.map(|w|w.to_string()),
+                "[{}] Expected middle names {:?}, got {:?}",
                 input,
-                &format(middle_names),
-                &format(name.middle_names));
-        assert!(name.middle_initials == middle_initials,
-                "[{}] Expected middle initials {}, got {}",
+                middle_names,
+                name.middle_name());
+        assert!(name.middle_initials() == middle_initials,
+                "[{}] Expected middle initials {:?}, got {:?}",
                 input,
-                &format(middle_initials),
-                &format(name.middle_initials));
-        assert!(name.suffix == suffix,
-                "[{}] Expected suffix {}, got {}",
+                middle_initials,
+                name.middle_initials());
+        assert!(name.suffix() == suffix,
+                "[{}] Expected suffix {:?}, got {:?}",
                 input,
-                &format(suffix),
-                &format(name.suffix));
+                suffix,
+                name.suffix());
 
         writeln!(&mut std::io::stderr(),
-                 "Parsed '{}' as '{}', {} ('{}') {} ({}), {}",
+                 "Parsed '{}' as '{}', {:?} {:?} ({:?}), {:?}",
                  input,
                  surname,
-                 &format(given_name),
-                 first_initial,
-                 &format(middle_names),
-                 &format(middle_initials),
-                 &format(suffix))
+                 given_name,
+                 middle_names,
+                 middle_initials,
+                 suffix)
             .ok()
             .unwrap();
     }
@@ -120,7 +112,7 @@ fn unparseable() {
         assert!(result.is_none(),
                 "'Parsed' junk name: '{}' as '{}'",
                 line,
-                result.unwrap().display());
+                result.unwrap().display_short());
 
         writeln!(&mut std::io::stderr(), "Correctly discarded '{}'", line).ok().unwrap();
     }

@@ -17,17 +17,16 @@ mod namecase;
 mod namepart;
 mod parse;
 
+use std::borrow::Cow;
 use utils::*;
 use itertools::Itertools;
+use rustc_serialize::json::{self, ToJson, Json};
 
-#[derive(RustcDecodable, RustcEncodable)]
 pub struct Name {
-    pub given_name: Option<String>,
-    pub surname: String,
-    pub middle_names: Option<String>,
-    pub first_initial: char,
-    pub middle_initials: Option<String>,
-    pub suffix: Option<String>,
+    words: Vec<String>,
+    surname_index: usize,
+    suffix_index: usize,
+    initials: String,
 }
 
 impl Name {
@@ -46,99 +45,146 @@ impl Name {
 
         let (words, surname_index, suffix_index) = result.unwrap();
 
-        // Take the remaining words, and strip out the initials (if present;
-        // only allow one block of initials) and the first name (if present),
-        // and whatever's left are the middle names
-        let mut given_name: Option<String> = None;
-        let mut middle_names: Vec<&str> = Vec::new();
-        let mut middle_initials = String::new();
+        let mut names: Vec<String> = Vec::with_capacity(words.len());
+        let mut initials = String::with_capacity(surname_index);
+        let mut surname_index_in_names = surname_index;
+        let mut suffix_index_in_names = suffix_index;
 
-        for (i, word) in words[0..surname_index].iter().enumerate() {
-            if word.is_initials() {
-                let start = if i == 0 {
-                    1
-                } else {
-                    0
-                };
-                if word.chars > start {
-                    middle_initials.extend(word.word
-                                               .chars()
-                                               .filter(|c| c.is_alphabetic())
-                                               .skip(start)
-                                               .filter_map(|w| w.to_uppercase().next()));
-                }
-            } else if given_name.is_none() {
-                given_name = Some(word.namecased.to_string());
+        for (i, word) in words.into_iter().enumerate() {
+            if word.is_initials() && i < surname_index {
+                initials.extend(word.word
+                                    .chars()
+                                    .filter(|c| c.is_alphabetic())
+                                    .filter_map(|w| w.to_uppercase().next()));
+
+                surname_index_in_names -= 1;
+                suffix_index_in_names -= 1;
+            } else if i < surname_index {
+                initials.push(word.initial());
+
+                let owned: String = word.namecased.into_owned();
+                names.push(owned);
+            } else if i < suffix_index {
+                let owned: String = word.namecased.into_owned();
+                names.push(owned);
             } else {
-                middle_names.push(&*word.namecased);
-                middle_initials.push(word.initial());
+                names.push(suffix::namecase(&word));
             }
         }
 
-        let middle_names = if middle_names.is_empty() {
-            None
-        } else {
-            Some(middle_names.join(" "))
-        };
-
-        let middle_initials = if middle_initials.is_empty() {
-            None
-        } else {
-            Some(middle_initials)
-        };
-
-        let surname = words[surname_index..suffix_index]
-                          .iter()
-                          .map(|w| &*w.namecased)
-                          .join(" ");
-
-        let suffix = match words[suffix_index..].iter().nth(0) {
-            Some(word) => Some(suffix::namecase(&word)),
-            None => None,
-        };
+        names.shrink_to_fit();
 
         Some(Name {
-            first_initial: words[0].initial(),
-            given_name: given_name,
-            surname: surname,
-            middle_names: middle_names,
-            middle_initials: middle_initials,
-            suffix: suffix,
+            words: names,
+            surname_index: surname_index_in_names,
+            suffix_index: suffix_index_in_names,
+            initials: initials,
         })
     }
 
-    pub fn display(&self) -> String {
-        match self.given_name {
+    pub fn first_initial(&self) -> char {
+        self.initials.chars().nth(0).unwrap()
+    }
+
+    pub fn given_name(&self) -> Option<&str> {
+        if self.surname_index > 0 {
+            Some(&*self.words[0])
+        } else {
+            None
+        }
+    }
+
+    pub fn goes_by_middle_name(&self) -> bool {
+        self.given_name().is_some() &&
+            !self.given_name().unwrap().starts_with(self.first_initial())
+    }
+
+    pub fn initials(&self) -> &str {
+        &self.initials
+    }
+
+    pub fn middle_names(&self) -> Option<&[String]> {
+        if self.surname_index > 1 {
+            Some(&self.words[1..self.surname_index])
+        } else {
+            None
+        }
+    }
+
+    pub fn middle_name(&self) -> Option<Cow<str>> {
+        match self.middle_names() {
+            Some(words) => {
+                if words.len() == 1 {
+                    Some(Cow::Borrowed(&*words[0]))
+                } else {
+                    Some(Cow::Owned(words.join(" ")))
+                }
+            },
+            None => None,
+        }
+    }
+
+    pub fn middle_initials(&self) -> Option<&str> {
+        match self.initials().char_indices().skip(1).nth(0) {
+            Some((i,_)) => Some(&self.initials[i..]),
+            None => None,
+        }
+    }
+
+    pub fn surnames(&self) -> &[String] {
+        &self.words[self.surname_index..self.suffix_index]
+    }
+
+    pub fn surname(&self) -> Cow<str> {
+        if self.surnames().len() > 1 {
+            Cow::Owned(self.surnames().join(" "))
+        }
+        else {
+            Cow::Borrowed(&*self.surnames()[0])
+        }
+    }
+
+    pub fn suffix(&self) -> Option<&str> {
+        if self.words.len() > self.suffix_index {
+            Some(&*self.words[self.suffix_index])
+        } else {
+            None
+        }
+    }
+
+    pub fn display_short(&self) -> String {
+        match self.given_name() {
             Some(ref name) => {
-                format!("{} {}", name, self.surname)
+                format!("{} {}", name, self.surname())
             }
             None => {
-                format!("{}. {}", self.first_initial, self.surname)
+                format!("{}. {}", self.first_initial(), self.surname())
             }
         }
     }
 
     fn surname_eq(&self, other: &Name) -> bool {
-        self.surname == other.surname
+        self.surnames() == other.surnames()
     }
 
     fn given_name_eq(&self, other: &Name) -> bool {
-        self.given_name.is_none() || other.given_name.is_none() ||
-        self.given_name == other.given_name
+        self.given_name().is_none() || other.given_name().is_none() ||
+        self.given_name() == other.given_name()
     }
 
     fn middle_names_eq(&self, other: &Name) -> bool {
-        self.middle_names.is_none() || other.middle_names.is_none() ||
-        self.middle_names == other.middle_names
+        self.middle_names().is_none() || other.middle_names().is_none() ||
+        self.middle_names() == other.middle_names()
     }
 
     fn middle_initials_eq(&self, other: &Name) -> bool {
-        self.middle_initials.is_none() || other.middle_initials.is_none() ||
-        self.middle_initials == other.middle_initials
+        self.middle_initials().is_none() || other.middle_initials().is_none() ||
+        self.middle_initials() == other.middle_initials()
     }
 
     fn suffix_eq(&self, other: &Name) -> bool {
-        self.suffix.is_none() || other.suffix.is_none() || self.suffix == other.suffix
+        self.suffix().is_none() || other.suffix().is_none() ||
+        self.suffix() == other.suffix()
     }
 }
 
@@ -149,8 +195,37 @@ impl Name {
 // Use with caution!
 impl PartialEq for Name {
     fn eq(&self, other: &Name) -> bool {
-        self.first_initial == other.first_initial && self.surname_eq(other) &&
+        self.first_initial() == other.first_initial() && self.surname_eq(other) &&
         self.given_name_eq(other) && self.middle_initials_eq(other) &&
         self.middle_names_eq(other) && self.suffix_eq(other)
+    }
+}
+
+#[derive(RustcEncodable)]
+struct SerializeableName {
+    pub given_name: Option<String>,
+    pub surname: String,
+    pub middle_names: Option<String>,
+    pub first_initial: char,
+    pub middle_initials: Option<String>,
+    pub suffix: Option<String>,
+}
+
+impl SerializeableName {
+    pub fn new(name: &Name) -> SerializeableName {
+        SerializeableName {
+            given_name: name.given_name().map(|s| s.to_string()),
+            surname: name.surname().to_string(),
+            middle_names: name.middle_name().map(|s| s.to_string()),
+            first_initial: name.first_initial(),
+            middle_initials: name.middle_initials().map(|s| s.to_string()),
+            suffix: name.suffix().map(|s| s.to_string()),
+        }
+    }
+}
+
+impl ToJson for Name {
+    fn to_json(&self) -> Json {
+        Json::String(json::encode(&SerializeableName::new(self)).unwrap())
     }
 }

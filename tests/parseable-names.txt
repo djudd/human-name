@@ -136,14 +136,14 @@ Björn Charles O'Malley y Muñoz|O'Malley y Muñoz|Björn|Charles|B|C|
 Björn O'Malley, Jr.|O'Malley|Björn||B||Jr.
 Björn O'Malley Jr|O'Malley|Björn||B||Jr.
 B O'Malley|O'Malley|||B||
-C. Björn Roger O'Malley|O'Malley|Björn|Roger|C|R|
+C. Björn Roger O'Malley|O'Malley|Björn|Roger|C|BR|
 B. C. O'Malley|O'Malley|||B|C|
 B C O'Malley|O'Malley|||B|C|
 O'Malley, Björn|O'Malley|Björn||B||
 O'Malley, Björn Jr|O'Malley|Björn||B||Jr.
-O'Malley, C. Björn|O'Malley|Björn||C||
-O'Malley, C. Björn III|O'Malley|Björn||C||III
-O'Malley y Muñoz, C. Björn Roger III|O'Malley y Muñoz|Björn|Roger|C|R|III
+O'Malley, C. Björn|O'Malley|Björn||C|B|
+O'Malley, C. Björn III|O'Malley|Björn||C|B|III
+O'Malley y Muñoz, C. Björn Roger III|O'Malley y Muñoz|Björn|Roger|C|BR|III
 
 # other particles
 Buca di Beppo|di Beppo|Buca||B||
@@ -336,7 +336,7 @@ Al Yankovic|Yankovic|Al||A||
 # long titles
 Secretary of State Hillary Clinton|Clinton|Hillary||H||
 U.S. District Judge Marc Thomas Treadwell|Treadwell|Marc|Thomas|M|T|
-US Magistrate Judge T Michael Putnam|Putnam|Michael||T||
+US Magistrate Judge T Michael Putnam|Putnam|Michael||T|M|
 US Magistrate-Judge Elizabeth E Campbell|Campbell|Elizabeth||E|E|
 Mag-Judge Harwell G Davis, III|Davis|Harwell||H|G|III
 The Rt Hon John Jones|Jones|John||J||
@@ -417,4 +417,4 @@ Kim, P-H.|Kim|||P|H|
 
 # missing whitespace
 X.Gironés|Gironés|||X||
-F.Joachim Weyl|Weyl|Joachim||F||
+F.Joachim Weyl|Weyl|Joachim||F|J|
