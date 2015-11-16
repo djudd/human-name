@@ -166,9 +166,11 @@ impl Name {
     }
 
     fn given_name_eq(&self, other: &Name) -> bool {
-        self.given_name().is_none() || other.given_name().is_none() ||
-        utils::eq_or_starts_with_ignoring_accents_punct_and_case(self.given_name().unwrap(),
-                                                                 other.given_name().unwrap())
+        let mine = self.given_name();
+        let theirs = other.given_name();
+
+        mine.is_none() || theirs.is_none() ||
+        utils::eq_or_starts_with_ignoring_accents_punct_and_case(mine.unwrap(), theirs.unwrap())
     }
 
     fn middle_names_eq(&self, other: &Name) -> bool {
@@ -177,8 +179,11 @@ impl Name {
     }
 
     fn middle_initials_eq(&self, other: &Name) -> bool {
-        self.middle_initials().is_none() || other.middle_initials().is_none() ||
-        self.middle_initials() == other.middle_initials()
+        let mine = self.middle_initials();
+        let theirs = other.middle_initials();
+
+        mine.is_none() || theirs.is_none() || mine.unwrap().starts_with(theirs.unwrap()) ||
+        theirs.unwrap().starts_with(mine.unwrap())
     }
 
     fn suffix_eq(&self, other: &Name) -> bool {
