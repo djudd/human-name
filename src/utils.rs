@@ -1,4 +1,5 @@
 use std::ascii::AsciiExt;
+use unicode_normalization::UnicodeNormalization;
 
 const VOWELS: [char; 12] = ['a', 'e', 'i', 'o', 'u', 'y', 'A', 'E', 'I', 'O', 'U', 'Y'];
 
@@ -80,4 +81,51 @@ pub fn has_sequential_alphas(word: &str) -> bool {
     }
 
     false
+}
+
+macro_rules! eq_or_starts_with_normalized {
+    ($chars_a:expr, $chars_b:expr) => {
+        {
+            let mut iter_a = $chars_a.nfkd().filter_map( |c|
+                if c.is_uppercase() {
+                    c.to_lowercase().next()
+                } else if c.is_alphabetic() {
+                    Some(c)
+                } else {
+                    None
+                }
+            );
+
+            let mut iter_b = $chars_b.nfkd().filter_map( |c|
+                if c.is_uppercase() {
+                    c.to_lowercase().next()
+                } else if c.is_alphabetic() {
+                    Some(c)
+                } else {
+                    None
+                }
+            );
+
+            loop {
+                let ca = iter_a.next();
+                let cb = iter_b.next();
+
+                if ca.is_none() || cb.is_none() {
+                    return true;
+                } else if ca != cb {
+                    return false;
+                }
+            }
+        }
+    };
+}
+
+pub fn eq_or_ends_with_ignoring_accents_punct_and_case(a: &[String], b: &[String]) -> bool {
+    let iter_a = a.iter().flat_map(|w| w.chars()).rev();
+    let iter_b = b.iter().flat_map(|w| w.chars()).rev();
+    eq_or_starts_with_normalized!(iter_a, iter_b)
+}
+
+pub fn eq_or_starts_with_ignoring_accents_punct_and_case(a: &str, b: &str) -> bool {
+    eq_or_starts_with_normalized!(a.chars(), b.chars())
 }

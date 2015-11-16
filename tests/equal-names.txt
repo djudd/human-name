@@ -1,6 +1,19 @@
 Hernan Alperin|Hernan Alperin|==
+Hernan Alperin|Herman Alperin|!=
+Hernan Alperin|Hernan Alpine|!=
 Hernan Alperin|Hernan M. Alperin|==
+Hernan H. Alperin|Hernan M. Alperin|!=
 H. Alperin|H. M. Alperin|==
+H. A. Alperin|H. M. Alperin|!=
+#H.M.T. Alperin|H. M. Alperin|==
 H. Alperin|Hernán Alperin|==
-#Hernan Alperin|Hernán Alperin|==
-#Iria del Río Gayo|Iria Gayo|==
+M. Alperin|Hernán Alperin|!=
+Hernan Alperin|Hernán Alperin|==
+Hern Alperin|Hernán Alperin|==
+Hern' Alperin|Hernán Alperin|==
+Iria del Rio Gayo|Iria del Río Gayo|==
+Iria del Rio Gayo|Iria Gayo|==
+Iria del Río Gayo|Iria Gayo|==
+Iria del Río-Gayo|Iria Río Gayo|==
+Iria Delrío-Gayo|Iria Río Gayo|==
+#A. Holmes|Anta Mes|!=

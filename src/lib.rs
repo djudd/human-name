@@ -164,12 +164,18 @@ impl Name {
     }
 
     fn surname_eq(&self, other: &Name) -> bool {
-        self.surnames() == other.surnames()
+        utils::eq_or_ends_with_ignoring_accents_punct_and_case(
+            self.surnames(),
+            other.surnames()
+        )
     }
 
     fn given_name_eq(&self, other: &Name) -> bool {
         self.given_name().is_none() || other.given_name().is_none() ||
-        self.given_name() == other.given_name()
+        utils::eq_or_starts_with_ignoring_accents_punct_and_case(
+            self.given_name().unwrap(),
+            other.given_name().unwrap()
+        )
     }
 
     fn middle_names_eq(&self, other: &Name) -> bool {
