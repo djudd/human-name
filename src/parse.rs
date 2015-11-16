@@ -65,7 +65,7 @@ impl <'a>ParseOp<'a> {
         // (not initials, which should only be at the end of the input
         // if they are comma-separated, and we already handled that case)
         if ParseOp::fixably_invalid(&words, self.surname_index) &&
-            self.maybe_not_postfix.is_some() {
+           self.maybe_not_postfix.is_some() {
             words.push(self.maybe_not_postfix.unwrap());
         }
 

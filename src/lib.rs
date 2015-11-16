@@ -95,8 +95,7 @@ impl Name {
     }
 
     pub fn goes_by_middle_name(&self) -> bool {
-        self.given_name().is_some() &&
-            !self.given_name().unwrap().starts_with(self.first_initial())
+        self.given_name().is_some() && !self.given_name().unwrap().starts_with(self.first_initial())
     }
 
     pub fn initials(&self) -> &str {
@@ -119,14 +118,14 @@ impl Name {
                 } else {
                     Some(Cow::Owned(words.join(" ")))
                 }
-            },
+            }
             None => None,
         }
     }
 
     pub fn middle_initials(&self) -> Option<&str> {
         match self.initials().char_indices().skip(1).nth(0) {
-            Some((i,_)) => Some(&self.initials[i..]),
+            Some((i, _)) => Some(&self.initials[i..]),
             None => None,
         }
     }
@@ -138,8 +137,7 @@ impl Name {
     pub fn surname(&self) -> Cow<str> {
         if self.surnames().len() > 1 {
             Cow::Owned(self.surnames().join(" "))
-        }
-        else {
+        } else {
             Cow::Borrowed(&*self.surnames()[0])
         }
     }
@@ -164,18 +162,13 @@ impl Name {
     }
 
     fn surname_eq(&self, other: &Name) -> bool {
-        utils::eq_or_ends_with_ignoring_accents_punct_and_case(
-            self.surnames(),
-            other.surnames()
-        )
+        utils::eq_or_ends_with_ignoring_accents_punct_and_case(self.surnames(), other.surnames())
     }
 
     fn given_name_eq(&self, other: &Name) -> bool {
         self.given_name().is_none() || other.given_name().is_none() ||
-        utils::eq_or_starts_with_ignoring_accents_punct_and_case(
-            self.given_name().unwrap(),
-            other.given_name().unwrap()
-        )
+        utils::eq_or_starts_with_ignoring_accents_punct_and_case(self.given_name().unwrap(),
+                                                                 other.given_name().unwrap())
     }
 
     fn middle_names_eq(&self, other: &Name) -> bool {
@@ -189,8 +182,7 @@ impl Name {
     }
 
     fn suffix_eq(&self, other: &Name) -> bool {
-        self.suffix().is_none() || other.suffix().is_none() ||
-        self.suffix() == other.suffix()
+        self.suffix().is_none() || other.suffix().is_none() || self.suffix() == other.suffix()
     }
 }
 
@@ -200,10 +192,14 @@ impl Name {
 //
 // Use with caution!
 impl PartialEq for Name {
+    #[cfg_attr(rustfmt, rustfmt_skip)]
     fn eq(&self, other: &Name) -> bool {
-        self.first_initial() == other.first_initial() && self.surname_eq(other) &&
-        self.given_name_eq(other) && self.middle_initials_eq(other) &&
-        self.middle_names_eq(other) && self.suffix_eq(other)
+        self.first_initial() == other.first_initial() &&
+        self.surname_eq(other) &&
+        self.given_name_eq(other) &&
+        self.middle_initials_eq(other) &&
+        self.middle_names_eq(other) &&
+        self.suffix_eq(other)
     }
 }
 
