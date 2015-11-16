@@ -106,15 +106,23 @@ macro_rules! eq_or_starts_with_normalized {
                 }
             );
 
+            let mut compared = 0;
+
             loop {
                 let ca = iter_a.next();
                 let cb = iter_b.next();
 
-                if ca.is_none() || cb.is_none() {
+                if ca.is_none() && cb.is_none() {
                     return true;
+                } else if ca.is_none() != cb.is_none() {
+                    // Only allow containment, vs equality, when contained
+                    // string has at least four characters
+                    return compared > 3;
                 } else if ca != cb {
                     return false;
                 }
+
+                compared += 1;
             }
         }
     };

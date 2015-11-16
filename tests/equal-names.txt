@@ -16,4 +16,4 @@ Iria del Rio Gayo|Iria Gayo|==
 Iria del Río Gayo|Iria Gayo|==
 Iria del Río-Gayo|Iria Río Gayo|==
 Iria Delrío-Gayo|Iria Río Gayo|==
-#A. Holmes|Anta Mes|!=
+A. Holmes|Anta Mes|!=
