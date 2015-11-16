@@ -89,6 +89,14 @@ mod bench {
     }
 
     #[bench]
+    fn bench_parsing_needs_namecase(b: &mut Bencher) {
+        b.iter(|| {
+            let parsed = Name::parse("JAIME GARCIA");
+            black_box(parsed.is_none())
+        })
+    }
+
+    #[bench]
     fn bench_parsing_unparseable(b: &mut Bencher) {
         b.iter(|| {
             let parsed = Name::parse("foo@bar.com");
@@ -101,6 +109,36 @@ mod bench {
         b.iter(|| {
             let parsed = Name::parse("鈴木 Velasquez y Garcia, Dr. Juan Q. 'Don Juan' Xavier III");
             black_box(parsed.is_none())
+        })
+    }
+
+    #[bench]
+    fn bench_equality_equal(b: &mut Bencher) {
+        let x = Name::parse("Jane Doe");
+        let y = Name::parse("Jane H. Doe");
+
+        b.iter(|| {
+            black_box(x == y)
+        })
+    }
+
+    #[bench]
+    fn bench_equality_not_equal(b: &mut Bencher) {
+        let x = Name::parse("Jane Doe");
+        let y = Name::parse("Foo Bar");
+
+        b.iter(|| {
+            black_box(x == y)
+        })
+    }
+
+    #[bench]
+    fn bench_equality_close_to_equal(b: &mut Bencher) {
+        let x = Name::parse("Jane Doe");
+        let y = Name::parse("John Doe");
+
+        b.iter(|| {
+            black_box(x == y)
         })
     }
 
