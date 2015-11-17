@@ -267,6 +267,7 @@ impl Name {
 // "Jane Doe" != "John Doe". (It is, however, symmetric and reflexive.)
 //
 // Use with caution!
+impl Eq for Name {}
 impl PartialEq for Name {
 
     // Order matters, both for efficiency (initials check is the fastest,

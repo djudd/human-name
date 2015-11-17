@@ -122,6 +122,7 @@ fn parse_mode(args: &Vec<String>) {
 
 #[cfg(test)]
 mod bench {
+    use std::collections::HashSet;
     use std::io::prelude::*;
     use std::io::BufReader;
     use std::fs::File;
@@ -220,6 +221,22 @@ mod bench {
 
             black_box(valid);
             black_box(invalid);
+        })
+    }
+
+    #[bench]
+    fn bench_equality_many(b: &mut Bencher) {
+        let f = File::open("tests/benchmark-names.txt").ok().unwrap();
+        let reader = BufReader::new(f);
+        let names: Vec<Name> = reader
+            .lines()
+            .filter_map(|l| Name::parse(&l.ok().unwrap()))
+            .collect();
+
+        let mut deduped = HashSet::with_capacity(names.len() / 4);
+        b.iter(|| {
+            deduped.extend(names.iter());
+            black_box(deduped.len())
         })
     }
 }
