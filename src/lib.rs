@@ -8,6 +8,7 @@ extern crate unicode_segmentation;
 extern crate unicode_normalization;
 extern crate rustc_serialize;
 
+#[macro_use]
 mod utils;
 mod suffix;
 mod nickname;
@@ -18,9 +19,11 @@ mod namepart;
 mod parse;
 
 use std::borrow::Cow;
-use utils::*;
+use std::hash::{Hash, Hasher};
 use itertools::Itertools;
 use rustc_serialize::json::{self, ToJson, Json};
+use unicode_normalization::UnicodeNormalization;
+use utils::*;
 
 pub struct Name {
     words: Vec<String>,
@@ -162,7 +165,9 @@ impl Name {
     }
 
     fn surname_eq(&self, other: &Name) -> bool {
-        utils::eq_or_ends_with_ignoring_accents_punct_and_case(self.surnames(), other.surnames())
+        let mine = self.surnames().iter().flat_map(|w| w.chars()).rev();
+        let theirs = other.surnames().iter().flat_map(|w| w.chars()).rev();
+        eq_or_starts_with_ignoring_accents_nonalpha_and_case!(mine, theirs)
     }
 
     fn given_name_eq(&self, other: &Name) -> bool {
@@ -170,7 +175,7 @@ impl Name {
         let theirs = other.given_name();
 
         mine.is_none() || theirs.is_none() ||
-        utils::eq_or_starts_with_ignoring_accents_punct_and_case(mine.unwrap(), theirs.unwrap())
+        eq_or_starts_with_ignoring_accents_nonalpha_and_case!(mine.unwrap(), theirs.unwrap())
     }
 
     fn middle_names_eq(&self, other: &Name) -> bool {
@@ -215,7 +220,7 @@ impl Name {
             // If we have two names for the same initial, require that they
             // match using the same logic as for a given name
             if my_name.is_some() && their_name.is_some() &&
-            !utils::eq_or_starts_with_ignoring_accents_punct_and_case(my_name.unwrap(), their_name.unwrap()) {
+            !eq_or_starts_with_ignoring_accents_nonalpha_and_case!(my_name.unwrap(), their_name.unwrap()) {
                 return false;
             }
         }
@@ -255,6 +260,24 @@ impl PartialEq for Name {
         self.middle_initials_eq(other) &&
         self.middle_names_eq(other) &&
         self.suffix_eq(other)
+    }
+}
+
+// We only use the first initial and last four alphabetical characters of the
+// surname, because that's all we're guaranteed to use in the equality test.
+//
+// That still gives us 23.5 bits assuming ASCII characters, which isn't great
+// but shouldn't be terrible for small-to-moderate sets
+//
+// TODO Would be nice to make this configurable
+impl Hash for Name {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.first_initial().hash(state);
+
+        let surname_chars = self.surnames().iter().flat_map(|w| w.chars()).rev();
+        for c in lowercase_alpha_without_accents!(surname_chars).take(MIN_CHARS_FOR_EQ_BY_CONTAINS) {
+            c.hash(state);
+        }
     }
 }
 

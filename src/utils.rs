@@ -1,6 +1,6 @@
 use std::ascii::AsciiExt;
-use unicode_normalization::UnicodeNormalization;
 
+pub const MIN_CHARS_FOR_EQ_BY_CONTAINS: usize = 4;
 const VOWELS: [char; 12] = ['a', 'e', 'i', 'o', 'u', 'y', 'A', 'E', 'I', 'O', 'U', 'Y'];
 
 pub fn is_mixed_case(s: &str) -> bool {
@@ -83,28 +83,29 @@ pub fn has_sequential_alphas(word: &str) -> bool {
     false
 }
 
-macro_rules! eq_or_starts_with_normalized {
+#[macro_export]
+macro_rules! lowercase_alpha_without_accents {
+    ($chars:expr) => {
+        $chars.nfkd().filter_map( |c|
+            if c.is_uppercase() {
+                c.to_lowercase().next()
+            } else if c.is_alphabetic() {
+                Some(c)
+            } else {
+                None
+            }
+        )
+    }
+}
+
+#[macro_export]
+macro_rules! eq_or_starts_with_ignoring_accents_nonalpha_and_case {
     ($chars_a:expr, $chars_b:expr) => {
         {
-            let mut iter_a = $chars_a.nfkd().filter_map( |c|
-                if c.is_uppercase() {
-                    c.to_lowercase().next()
-                } else if c.is_alphabetic() {
-                    Some(c)
-                } else {
-                    None
-                }
-            );
+            let result;
 
-            let mut iter_b = $chars_b.nfkd().filter_map( |c|
-                if c.is_uppercase() {
-                    c.to_lowercase().next()
-                } else if c.is_alphabetic() {
-                    Some(c)
-                } else {
-                    None
-                }
-            );
+            let mut iter_a = lowercase_alpha_without_accents!($chars_a);
+            let mut iter_b = lowercase_alpha_without_accents!($chars_b);
 
             let mut compared = 0;
 
@@ -113,27 +114,22 @@ macro_rules! eq_or_starts_with_normalized {
                 let cb = iter_b.next();
 
                 if ca.is_none() && cb.is_none() {
-                    return true;
+                    result = true;
+                    break;
                 } else if ca.is_none() != cb.is_none() {
                     // Only allow containment, vs equality, when contained
                     // string has at least four characters
-                    return compared > 3;
+                    result = compared >= MIN_CHARS_FOR_EQ_BY_CONTAINS;
+                    break;
                 } else if ca != cb {
-                    return false;
+                    result = false;
+                    break;
                 }
 
                 compared += 1;
             }
+
+            result
         }
     };
-}
-
-pub fn eq_or_ends_with_ignoring_accents_punct_and_case(a: &[String], b: &[String]) -> bool {
-    let iter_a = a.iter().flat_map(|w| w.chars()).rev();
-    let iter_b = b.iter().flat_map(|w| w.chars()).rev();
-    eq_or_starts_with_normalized!(iter_a, iter_b)
-}
-
-pub fn eq_or_starts_with_ignoring_accents_punct_and_case(a: &str, b: &str) -> bool {
-    eq_or_starts_with_normalized!(a.chars(), b.chars())
 }

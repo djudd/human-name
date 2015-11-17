@@ -3,6 +3,7 @@ extern crate human_name;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
+use std::hash::{Hash,Hasher,SipHasher};
 
 fn none_if_empty(s: &str) -> Option<&str> {
     if s.is_empty() {
@@ -14,6 +15,12 @@ fn none_if_empty(s: &str) -> Option<&str> {
 
 fn stderr_newline() {
     writeln!(&mut std::io::stderr(), "").ok().unwrap();
+}
+
+fn hash<T: Hash>(t: &T) -> u64 {
+    let mut s = SipHasher::new();
+    t.hash(&mut s);
+    s.finish()
 }
 
 #[test]
@@ -151,6 +158,10 @@ fn equality() {
                     "{} should be equal to {} but was not!",
                     b,
                     a);
+            assert!(hash(&parsed_a) == hash(&parsed_b),
+                    "{} should have the same hash as {} but did not!",
+                    a,
+                    b);
         } else {
             assert!(parsed_a != parsed_b,
                     "{} should not be equal to {} but was!",

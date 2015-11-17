@@ -7,12 +7,6 @@ static VOWELLESS_SURNAMES: [&'static str; 4] = ["Ng", "Lv", "Mtz", "Hdz"];
 static SINGLE_LETTER_CONJUNCTIONS: [&'static str; 4] = ["e", "y", "E", "Y"];
 
 static SURNAME_PREFIXES: phf::Set<&'static str> = phf_set! {
-    "abu",
-    "abd",
-    "bar",
-    "ben",
-    "bon",
-    "bin",
     "da",
     "das",
     "dal",
@@ -24,13 +18,8 @@ static SURNAME_PREFIXES: phf::Set<&'static str> = phf_set! {
     "dí",
     "do",
     "dos",
-    "ibn",
     "la",
     "le",
-    "san",
-    "santa",
-    "st",
-    "ste",
     "ter",
     "van",
     "vel",
