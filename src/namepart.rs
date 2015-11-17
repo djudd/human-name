@@ -1,4 +1,4 @@
-use super::utils;
+use super::utils::*;
 use super::surname;
 use super::namecase;
 use std::borrow::Cow;
@@ -120,14 +120,14 @@ impl <'a>NamePart<'a> {
         } else if chars == 1 {
             Category::Name
         } else if word.ends_with('.') {
-            if chars > 2 && utils::has_sequential_alphas(word) {
+            if chars > 2 && has_sequential_alphas(word) {
                 Category::Abbreviation
             } else {
                 Category::Initials
             }
-        } else if word.chars().filter(|c| !c.is_alphabetic()).count() > 2 {
+        } else if word.chars().filter(|c| !c.is_alphabetic() && !is_combining(*c)).count() > 2 {
             Category::Other
-        } else if utils::is_missing_vowels(word) {
+        } else if is_missing_vowels(word) {
             if trust_capitalization &&
                word.chars().all(|c| !c.is_alphabetic() || c.is_uppercase()) {
                 Category::Initials
@@ -148,7 +148,7 @@ impl <'a>NamePart<'a> {
             }
         };
 
-        let namecased = if trust_capitalization && utils::is_capitalized_and_normalized(word) {
+        let namecased = if trust_capitalization && is_capitalized_and_normalized(word) {
             Cow::Borrowed(word)
         } else {
             let might_be_particle = location == Location::Middle;

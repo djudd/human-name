@@ -1,4 +1,6 @@
 use std::ascii::AsciiExt;
+use unicode_normalization::char::canonical_combining_class;
+use unicode_normalization::UnicodeNormalization;
 
 pub const MIN_CHARS_FOR_EQ_BY_CONTAINS: usize = 4;
 const VOWELS: [char; 12] = ['a', 'e', 'i', 'o', 'u', 'y', 'A', 'E', 'I', 'O', 'U', 'Y'];
@@ -38,24 +40,32 @@ pub fn is_capitalized_and_normalized(word: &str) -> bool {
     word.chars().skip(1).all(|c| c.is_ascii() && (c.is_lowercase() || !c.is_alphabetic()))
 }
 
+#[inline]
+pub fn is_combining(c: char) -> bool {
+    canonical_combining_class(c) > 0
+}
+
 pub fn capitalize_and_normalize(word: &str) -> String {
     let mut capitalize_next = true;
+
     word.chars()
         .filter_map(|c| {
-            if HYPHENS.contains(&c) {
-                capitalize_next = true;
-                Some('-')
-            } else if !c.is_alphanumeric() {
-                capitalize_next = true;
-                Some(c)
-            } else if capitalize_next {
-                capitalize_next = false;
-                c.to_uppercase().next()
-            } else {
-                capitalize_next = false;
-                c.to_lowercase().next()
-            }
+            let result =
+                if HYPHENS.contains(&c) {
+                    Some('-')
+                } else if !c.is_alphanumeric() {
+                    Some(c)
+                } else if capitalize_next {
+                    c.to_uppercase().next()
+                } else {
+                    c.to_lowercase().next()
+                };
+
+            capitalize_next = !c.is_alphanumeric() && !is_combining(c);
+
+            result
         })
+        .nfkd()
         .collect()
 }
 
@@ -91,7 +101,7 @@ pub fn has_sequential_alphas(word: &str) -> bool {
 #[macro_export]
 macro_rules! lowercase_alpha_without_accents {
     ($chars:expr) => {
-        $chars.nfkd().filter_map( |c|
+        $chars.filter_map( |c|
             if c.is_uppercase() {
                 c.to_lowercase().next()
             } else if c.is_alphabetic() {

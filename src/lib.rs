@@ -22,7 +22,6 @@ use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
 use itertools::Itertools;
 use rustc_serialize::json::{self, ToJson, Json};
-use unicode_normalization::UnicodeNormalization;
 use utils::*;
 
 pub struct Name {
@@ -243,7 +242,7 @@ impl Name {
             // equal, ignoring case, accents, and non-alphabetic chars, or
             // that one starts with the other
             if my_name.is_some() && their_name.is_some() &&
-            !eq_or_starts_with_ignoring_accents_nonalpha_and_case!(my_name.unwrap(), their_name.unwrap()) {
+            !eq_or_starts_with_ignoring_accents_nonalpha_and_case!(my_name.unwrap().chars(), their_name.unwrap().chars()) {
                 return false;
             }
         }

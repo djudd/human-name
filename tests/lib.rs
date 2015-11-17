@@ -1,9 +1,11 @@
 extern crate human_name;
+extern crate unicode_normalization;
 
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
 use std::hash::{Hash,Hasher,SipHasher};
+use unicode_normalization::UnicodeNormalization;
 
 fn none_if_empty(s: &str) -> Option<&str> {
     if s.is_empty() {
@@ -31,7 +33,7 @@ fn parsing() {
     stderr_newline();
 
     for line in reader.lines() {
-        let line = line.ok().unwrap();
+        let line: String = line.ok().unwrap().nfkd().collect();
 
         if line.starts_with("#") || !line.contains("|") {
             continue;
