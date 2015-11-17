@@ -4,9 +4,38 @@ Hernan Alperin|Hernan Alpine|!=
 Hernan Alperin|Hernan M. Alperin|==
 Hernan H. Alperin|Hernan M. Alperin|!=
 H. Alperin|H. M. Alperin|==
+H. Alperin|Hernan Manuel Alperin|==
+H. M. Alperin|Hernan Manuel Alperin|==
+H. T. Alperin|Hernan Manuel Alperin|!=
+H.M.T. Alperin|Hernan Manuel Torres Alperin|==
+Hernan Alperin|Hernan Manuel Alperin|==
+Hernan M. Alperin|Hernan Manuel Alperin|==
+Hernan T. Alperin|Hernan Manuel Alperin|!=
+Hernan MT Alperin|Hernan Manuel Torres Alperin|==
+Hernan LT Alperin|Hernan Manuel Torres Alperin|!=
+H.M. Alperin|Hernan Manuel Torres Alperin|==
+H.M.L. Alperin|Hernan Manuel Torres Alperin|!=
+H.M. Alperin|Hernan M. Torres Alperin|==
+H.M.T. Alperin|Hernan M. Torres Alperin|==
+H.M.L. Alperin|Hernan M. Torres Alperin|!=
+Hernan Alperin|Hernan M. Torres Alperin|==
+Hernan T. Alperin|Hernan M. Torres Alperin|==
+Hernan M.T. Alperin|Hernan M. Torres Alperin|==
+Hernan M. Alperin|Hernan M. Torres Alperin|==
+Hernan M.L. Alperin|Hernan M. Torres Alperin|!=
+Hernan Manuel T. Alperin|Hernan M. Torres Alperin|==
+Hernan Manuel T. Alperin|Hernan T.M. Alperin|!=
+Hernan Manuel Torrés Alperin|Hernan Manuel Torres Alperin|==
+Hernan Manuel Teo Alperin|Hernan M. Torres Alperin|!=
+Hernan Mendoza Torres Alperin|Hernan Manuel Torres Alperin|!=
+Hernan Manuel Torrés Alperin|Hernan M. Torres Alperin|==
+Hernan Manuel Torrés Alperin|Hernan Emanuel Torres Alperin|!=
+Hernan Manuel L. Alperin|Hernan M. Torres Alperin|!=
+Hernan Manuel Alperin|Hernan Torres Alperin|!=
 H. A. Alperin|H. M. Alperin|!=
 H.M.T. Alperin|H. M. Alperin|==
-H.L.M.T. Alperin|H. M. Alperin|!=
+H.L.M.T. Alperin|H. M. Alperin|==
+H.L.T. Alperin|H. M. Alperin|!=
 H. Alperin|Hernán Alperin|==
 M. Alperin|Hernán Alperin|!=
 Hernan Alperin|Hernán Alperin|==
@@ -20,3 +49,16 @@ Iria Delrío-Gayo|Iria Río Gayo|==
 A. Holmes|Anta Mes|!=
 A. Ye|A. Ye|==
 A. Ye|A. Yu|!=
+鈴木|鈴木|==
+木鈴|鈴木|!=
+Poul-Henning Kemp|Poul Henning Kemp|==
+Poul Henning-Kemp|Poul Henning Kemp|==
+Poul Kemp Henning|Poul Henning Kemp|!=
+B. O'Malley|B OMalley|==
+B. O'Malley|B. O'Mallet|!=
+Bartholomew O'Malley|Bart O'Malley|==
+Bartolomeo O'Malley|Bart O'Malley|==
+Bartolomeo O'Malley|Bartholomew O'Malley|!=
+Bartolomeo O'Malley|Bartholomew O'Malley|!=
+Mew O'Malley|Bartholomew O'Malley|!=
+B. O'Malley|B. O'Mal|!=

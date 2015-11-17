@@ -174,16 +174,61 @@ impl Name {
     }
 
     fn middle_names_eq(&self, other: &Name) -> bool {
-        self.middle_names().is_none() || other.middle_names().is_none() ||
-        self.middle_names() == other.middle_names()
+        if self.middle_names().is_none() || other.middle_names().is_none() {
+            return true;
+        }
+
+        // We know they're equal or one contains the other if we've got this far,
+        // so we know the longer string includes the first letters of all the
+        // names
+        let my_initials = self.middle_initials().unwrap();
+        let their_initials = other.middle_initials().unwrap();
+        let initials = if my_initials.len() > their_initials.len() {
+            my_initials
+        } else {
+            their_initials
+        };
+
+        let mut my_names = self.middle_names().unwrap().iter().peekable();
+        let mut their_names = other.middle_names().unwrap().iter().peekable();
+
+        for initial in initials.chars() {
+            if my_names.peek().is_none() || their_names.peek().is_none() {
+                // None of the names were inconsistent and we already know
+                // the initials match
+                return true;
+            }
+
+            // Only look at a name that corresponds to this initial; if the next
+            // name doesn't, it means we only have an initial for this name
+            let my_name: Option<&String> = if my_names.peek().unwrap().starts_with(initial) {
+                my_names.next()
+            } else {
+                None
+            };
+            let their_name: Option<&String> = if their_names.peek().unwrap().starts_with(initial) {
+                their_names.next()
+            } else {
+                None
+            };
+
+            // If we have two names for the same initial, require that they
+            // match using the same logic as for a given name
+            if my_name.is_some() && their_name.is_some() &&
+            !utils::eq_or_starts_with_ignoring_accents_punct_and_case(my_name.unwrap(), their_name.unwrap()) {
+                return false;
+            }
+        }
+
+        true
     }
 
     fn middle_initials_eq(&self, other: &Name) -> bool {
         let mine = self.middle_initials();
         let theirs = other.middle_initials();
 
-        mine.is_none() || theirs.is_none() || mine.unwrap().starts_with(theirs.unwrap()) ||
-        theirs.unwrap().starts_with(mine.unwrap())
+        mine.is_none() || theirs.is_none() || mine.unwrap().contains(theirs.unwrap()) ||
+        theirs.unwrap().contains(mine.unwrap())
     }
 
     fn suffix_eq(&self, other: &Name) -> bool {
@@ -197,6 +242,11 @@ impl Name {
 //
 // Use with caution!
 impl PartialEq for Name {
+
+    // Order matters, both for efficiency (single-initial check is the fastest,
+    // coincidentally-identical surnames are less likely than for given names),
+    // and for correctness (the middle names check assumes a positive result
+    // for the middle initials check)
     #[cfg_attr(rustfmt, rustfmt_skip)]
     fn eq(&self, other: &Name) -> bool {
         self.first_initial() == other.first_initial() &&
