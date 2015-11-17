@@ -55,15 +55,16 @@ impl Name {
 
         for (i, word) in words.into_iter().enumerate() {
             if word.is_initials() && i < surname_index {
-                initials.extend(word.word
-                                    .chars()
-                                    .filter(|c| c.is_alphabetic())
-                                    .filter_map(|w| w.to_uppercase().next()));
+                initials.extend(word.word.chars()
+                    .filter(|c| c.is_alphabetic())
+                    .filter_map(|c| c.to_uppercase().next()));
 
                 surname_index_in_names -= 1;
                 suffix_index_in_names -= 1;
             } else if i < surname_index {
-                initials.push(word.initial());
+                initials.extend(word.word.split('-')
+                    .filter_map(|w| w.chars().find(|c| c.is_alphabetic()))
+                    .filter_map(|c| c.to_uppercase().next()));
 
                 let owned: String = word.namecased.into_owned();
                 names.push(owned);
@@ -205,8 +206,17 @@ impl Name {
             other.initials()
         };
 
-        let mut my_names = self.words[0..self.surname_index].iter().peekable();
-        let mut their_names = other.words[0..other.surname_index].iter().peekable();
+        let mut my_names = self
+            .words[0..self.surname_index]
+            .iter()
+            .flat_map(|w|w.split('-'))
+            .peekable();
+
+        let mut their_names = other
+            .words[0..other.surname_index]
+            .iter()
+            .flat_map(|w|w.split('-'))
+            .peekable();
 
         for initial in initials.chars() {
             if my_names.peek().is_none() || their_names.peek().is_none() {
@@ -217,13 +227,13 @@ impl Name {
             // Only look at a name-word that corresponds to this initial; if the
             // next word doesn't, it means we only have an initial for this word
             // in a given version of the name
-            let my_name: Option<&String> = if my_names.peek().unwrap().starts_with(initial) {
+            let my_name: Option<&str> = if my_names.peek().unwrap().starts_with(initial) {
                 my_names.next()
             } else {
                 None
             };
 
-            let their_name: Option<&String> = if their_names.peek().unwrap().starts_with(initial) {
+            let their_name: Option<&str> = if their_names.peek().unwrap().starts_with(initial) {
                 their_names.next()
             } else {
                 None

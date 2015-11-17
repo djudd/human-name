@@ -7,7 +7,7 @@ Bin Lin|Lin|Bin||B||
 Jason H. Priem|Priem|Jason||J|H|
 William Carlos Williams|Williams|William|Carlos|W|C|
 B.J. Thomas|Thomas|||B|J|
-Poul-Henning Kemp|Kemp|Poul-Henning||P||
+Poul-Henning Kemp|Kemp|Poul-Henning||P|H|
 
 # simple last name, with and without initials, middle, suffix, title, sort order
 John Doe|Doe|John||J||

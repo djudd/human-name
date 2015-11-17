@@ -163,16 +163,6 @@ impl <'a>NamePart<'a> {
         }
     }
 
-    pub fn initial(&self) -> char {
-        self.word
-            .chars()
-            .find(|c| c.is_alphabetic())
-            .unwrap()
-            .to_uppercase()
-            .next()
-            .unwrap()
-    }
-
     #[inline]
     pub fn is_initials(&self) -> bool {
         self.category == Category::Initials

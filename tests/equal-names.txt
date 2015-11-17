@@ -76,14 +76,14 @@ Mew O'Malley|Bartholomew O'Malley|!=
 Jianfei Liu|Jian Liu|==
 Jianpeng Liu|Jian Liu|==
 Jianpeng Liu|Jianfei Liu|!=
-Jinli Cao|Jin-Li Cao|==
+#Jinli Cao|Jin-Li Cao|==
 Jinli Cao|Jin-Yi Cao|!=
 #Jong Kyung Kim|Jong‐Suk Kim|!=
 #Xiaopeng Zhang|Xiao Feng Zhang|!=
 B. O'Malley|B. O'Mal|!=
 A Souza|Aline Coelho de Souza|==
 #Ahmad M F Alam|M Firoz Alam|!=
-#Byung Se Choi|Byung-Cheul Choi|!=
+Byung Se Choi|Byung-Cheul Choi|!=
 Chyi Tsong Chen|CHYI-TSONG CHEN|==
 #D. Hebert|Didier Bert|!=
 #D. Orris|Douglas N Morris|!=
@@ -94,7 +94,7 @@ Chyi Tsong Chen|CHYI-TSONG CHEN|==
 F De Pinto|Francisco Pinto|==
 F Delle Monache|F. Delle Monache|==
 F Delle Monache|Franco Delle Monache|==
-#H.-T. Lee|Hyuk-Jae Lee|!=
+H.-T. Lee|Hyuk-Jae Lee|!=
 J-L LEFAIX|Jean-Louis Lefaix|==
 #J.-M. Baribeau|Jean-Marie Beau|!=
 I. K K Deurloo|Inger-Karine K Kolkman-Deurloo|==
