@@ -1,5 +1,5 @@
 use phf;
-use super::utils::capitalize;
+use super::utils::capitalize_and_normalize;
 
 // Store capitalized versions because we check after doing the initial,
 // naive capitalization
@@ -53,14 +53,14 @@ fn capitalize_after_mac(word: &str) -> bool {
 }
 
 pub fn namecase(word: &str, might_be_particle: bool) -> String {
-    let result = capitalize(word);
+    let result = capitalize_and_normalize(word);
 
     if might_be_particle && UNCAPITALIZED_PARTICLES.contains(&*result) {
         result.to_lowercase()
     } else if result.starts_with("Mac") && capitalize_after_mac(&result) {
-        "Mac".to_string() + &capitalize(&result[3..])
+        "Mac".to_string() + &capitalize_and_normalize(&result[3..])
     } else if result.starts_with("Mc") && result.len() > 3 {
-        "Mc".to_string() + &capitalize(&result[2..])
+        "Mc".to_string() + &capitalize_and_normalize(&result[2..])
     } else {
         // Normal case
         result

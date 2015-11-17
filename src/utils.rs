@@ -2,6 +2,7 @@ use std::ascii::AsciiExt;
 
 pub const MIN_CHARS_FOR_EQ_BY_CONTAINS: usize = 4;
 const VOWELS: [char; 12] = ['a', 'e', 'i', 'o', 'u', 'y', 'A', 'E', 'I', 'O', 'U', 'Y'];
+const HYPHENS: [char; 11] = ['-', '\u{2010}', '‑', '‒','–', '—', '―', '−','－','﹘','﹣'];
 
 pub fn is_mixed_case(s: &str) -> bool {
     let mut has_lowercase = false;
@@ -22,10 +23,10 @@ pub fn is_mixed_case(s: &str) -> bool {
     false
 }
 
-pub fn is_capitalized(word: &str) -> bool {
+pub fn is_capitalized_and_normalized(word: &str) -> bool {
     match word.chars().nth(0) {
         Some(c) => {
-            if !c.is_uppercase() {
+            if !c.is_ascii() || !c.is_uppercase() {
                 return false;
             }
         }
@@ -34,22 +35,26 @@ pub fn is_capitalized(word: &str) -> bool {
         }
     }
 
-    word.chars().skip(1).all(|c| c.is_lowercase() || !c.is_alphabetic())
+    word.chars().skip(1).all(|c| c.is_ascii() && (c.is_lowercase() || !c.is_alphabetic()))
 }
 
-pub fn capitalize(word: &str) -> String {
+pub fn capitalize_and_normalize(word: &str) -> String {
     let mut capitalize_next = true;
     word.chars()
         .filter_map(|c| {
-            let result = if capitalize_next {
+            if HYPHENS.contains(&c) {
+                capitalize_next = true;
+                Some('-')
+            } else if !c.is_alphanumeric() {
+                capitalize_next = true;
+                Some(c)
+            } else if capitalize_next {
+                capitalize_next = false;
                 c.to_uppercase().next()
             } else {
+                capitalize_next = false;
                 c.to_lowercase().next()
-            };
-
-            capitalize_next = !c.is_alphanumeric();
-
-            result
+            }
         })
         .collect()
 }

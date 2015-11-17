@@ -148,7 +148,7 @@ impl <'a>NamePart<'a> {
             }
         };
 
-        let namecased = if trust_capitalization && utils::is_capitalized(word) {
+        let namecased = if trust_capitalization && utils::is_capitalized_and_normalized(word) {
             Cow::Borrowed(word)
         } else {
             let might_be_particle = location == Location::Middle;

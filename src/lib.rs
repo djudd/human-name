@@ -62,7 +62,7 @@ impl Name {
                 surname_index_in_names -= 1;
                 suffix_index_in_names -= 1;
             } else if i < surname_index {
-                initials.extend(word.word.split('-')
+                initials.extend(word.namecased.split('-')
                     .filter_map(|w| w.chars().find(|c| c.is_alphabetic()))
                     .filter_map(|c| c.to_uppercase().next()));
 

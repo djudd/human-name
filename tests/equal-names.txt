@@ -78,7 +78,7 @@ Jianpeng Liu|Jian Liu|==
 Jianpeng Liu|Jianfei Liu|!=
 #Jinli Cao|Jin-Li Cao|==
 Jinli Cao|Jin-Yi Cao|!=
-#Jong Kyung Kim|Jong‐Suk Kim|!=
+Jong Kyung Kim|Jong‐Suk Kim|!=
 #Xiaopeng Zhang|Xiao Feng Zhang|!=
 B. O'Malley|B. O'Mal|!=
 A Souza|Aline Coelho de Souza|==
