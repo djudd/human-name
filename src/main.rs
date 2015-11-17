@@ -14,22 +14,79 @@ use rustc_serialize::json::ToJson;
 #[cfg_attr(rustfmt, rustfmt_skip)]
 const USAGE: &'static str = "
 Usage:
-    human_name -
-    human_name <name>
+    human_name -p <name>
+    human_name -p -
+    human_name -e '<name1>' '<name2>'
+    human_name -e '<name>' -
 
-If `-` is the argument, human_name will expect input on stdin.
-Otherwise, it will try to parse the arguments as a name.
+If given the -e option, human_name will check names for equality, If '-' is the
+first argument, it will expect newline-separated names from stdin to compare to
+the second argument, and will print each which matches. Otherwise, it will compare
+the two arguments, exiting with status 0 if the names are equal, and status 1 if
+not.
+
+If given the -p option, it will run in parsing mode. If `-` is the argument, it
+will expect newline-separated names to parse from stdin. Otherwise, it will try
+to parse the arguments as a name. In either case it will print parsed output as
+JSON if it succeeds, or exit with status 1 if not.
 ";
 
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() < 2 {
+    if args.len() == 4 && args[1] == "-e" {
+        equality_mode(&args);
+    } else if args.len() > 2 && args[1] == "-p" {
+        parse_mode(&args);
+    } else {
         writeln!(&mut std::io::stderr(), "{}", USAGE).ok().unwrap();
         process::exit(64);
     }
+}
 
-    if args.len() == 2 && args[1] == "-" {
+fn equality_mode(args: &Vec<String>) {
+    if args[2] == "-" {
+        let parsed_a = human_name::Name::parse(&args[3]);
+        if parsed_a.is_none() {
+            writeln!(&mut std::io::stderr(), "parse failed!").ok();
+            process::exit(1);
+        }
+
+        let reader = BufReader::new(io::stdin());
+        for line in reader.lines() {
+            match line.ok() {
+                Some(input) => {
+                    let parsed_b = human_name::Name::parse(&input);
+                    if parsed_a == parsed_b {
+                        if !writeln!(&mut io::stdout(), "{}", input.trim()).is_ok() {
+                            break;
+                        }
+                    };
+                }
+                None => {
+                    break;
+                }
+            }
+        }
+    } else {
+        let parsed_a = human_name::Name::parse(&args[2]);
+        let parsed_b = human_name::Name::parse(&args[3]);
+        if parsed_a.is_none() || parsed_b.is_none() {
+            writeln!(&mut std::io::stdout(), "parse failed!").ok();
+            process::exit(1);
+        } else if parsed_a.unwrap() != parsed_b.unwrap() {
+            writeln!(&mut std::io::stdout(), "not equal!").ok();
+            process::exit(1);
+        }
+        else {
+            writeln!(&mut std::io::stdout(), "equal").ok();
+            process::exit(0);
+        }
+    }
+}
+
+fn parse_mode(args: &Vec<String>) {
+    if args[2] == "-" {
         let reader = BufReader::new(io::stdin());
         for line in reader.lines() {
             match line.ok() {

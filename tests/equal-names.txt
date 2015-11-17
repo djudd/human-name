@@ -71,5 +71,38 @@ Bartholomew O'Malley|Bart O'Malley|==
 Bartolomeo O'Malley|Bart O'Malley|==
 Bartolomeo O'Malley|Bartholomew O'Malley|!=
 Bartolomeo O'Malley|Bartholomew O'Malley|!=
+Konertz, Wolfgang F.|Konertz, Wolf|==
 Mew O'Malley|Bartholomew O'Malley|!=
+Jianfei Liu|Jian Liu|==
+Jianpeng Liu|Jian Liu|==
+Jianpeng Liu|Jianfei Liu|!=
+Jinli Cao|Jin-Li Cao|==
+Jinli Cao|Jin-Yi Cao|!=
+#Jong Kyung Kim|Jong‐Suk Kim|!=
+#Xiaopeng Zhang|Xiao Feng Zhang|!=
 B. O'Malley|B. O'Mal|!=
+A Souza|Aline Coelho de Souza|==
+#Ahmad M F Alam|M Firoz Alam|!=
+#Byung Se Choi|Byung-Cheul Choi|!=
+Chyi Tsong Chen|CHYI-TSONG CHEN|==
+#D. Hebert|Didier Bert|!=
+#D. Orris|Douglas N Morris|!=
+#Douglas Michael Strong|D. ARMSTRONG|!=
+#S. Hara|Syuichi Kurihara|!=
+#A. Manikumar|Adarsh M. Kumar|!=
+#A. Manikumar|Amit Kumar|!=
+F De Pinto|Francisco Pinto|==
+F Delle Monache|F. Delle Monache|==
+F Delle Monache|Franco Delle Monache|==
+#H.-T. Lee|Hyuk-Jae Lee|!=
+J-L LEFAIX|Jean-Louis Lefaix|==
+#J.-M. Baribeau|Jean-Marie Beau|!=
+I. K K Deurloo|Inger-Karine K Kolkman-Deurloo|==
+J. J Connors III|J. J Connors|==
+J. J Connors III|J. J Connors III|==
+J. J Connors II|J. J Connors III|!=
+JF Chen|Jing’an Chen|==
+Jennifer MacAllen|Jennifer Macallen|==
+Jens O Drachmann Bukh|J. D. Bukh|==
+M A de Boer-van den Berg|M de Boer-Vandenberg|==
+Paul von Ragué Schleyer|Paul v. R. Schleyer|==
