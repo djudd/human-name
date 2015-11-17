@@ -164,61 +164,74 @@ impl Name {
         }
     }
 
-    fn surname_eq(&self, other: &Name) -> bool {
-        let mine = self.surnames().iter().flat_map(|w| w.chars()).rev();
-        let theirs = other.surnames().iter().flat_map(|w| w.chars()).rev();
-        eq_or_starts_with_ignoring_accents_nonalpha_and_case!(mine, theirs)
+    fn initials_consistent(&self, other: &Name) -> bool {
+        if self.goes_by_middle_name() == other.goes_by_middle_name() {
+            // Normal case: neither goes by a middle name (as far as we know)
+            // or both do, so we require the first initial to be the same
+            // and one set of middle initials to equal or contain the other
+            if self.first_initial() != other.first_initial() {
+                return false;
+            }
+
+            let my_middle = self.middle_initials();
+            let their_middle = other.middle_initials();
+
+            my_middle.is_none() || their_middle.is_none() ||
+                my_middle.unwrap().contains(their_middle.unwrap()) ||
+                their_middle.unwrap().contains(my_middle.unwrap())
+        } else if self.goes_by_middle_name() {
+            // Otherwise, we stop requiring the first initial to be the same,
+            // because it might have been included in one context and omitted
+            // elsewhere, but instead we assume that the name with the initial
+            // prior to the middle name includes a full set of initials, so
+            // we require the other version to be equal or included
+            self.initials().contains(other.initials())
+        } else {
+            other.initials().contains(self.initials())
+        }
     }
 
-    fn given_name_eq(&self, other: &Name) -> bool {
-        let mine = self.given_name();
-        let theirs = other.given_name();
-
-        mine.is_none() || theirs.is_none() ||
-        eq_or_starts_with_ignoring_accents_nonalpha_and_case!(mine.unwrap(), theirs.unwrap())
-    }
-
-    fn middle_names_eq(&self, other: &Name) -> bool {
-        if self.middle_names().is_none() || other.middle_names().is_none() {
+    fn given_and_middle_names_consistent(&self, other: &Name) -> bool {
+        if self.surname_index == 0 || other.surname_index == 0 {
             return true;
         }
 
-        // We know they're equal or one contains the other if we've got this far,
-        // so we know the longer string includes the first letters of all the
-        // names
-        let my_initials = self.middle_initials().unwrap();
-        let their_initials = other.middle_initials().unwrap();
-        let initials = if my_initials.len() > their_initials.len() {
-            my_initials
+        // We know the initials are equal or one is a superset of the other if
+        // we've got this far, so we know the longer string includes the first
+        // letters of all the given & middle names
+        let initials = if self.initials().len() > other.initials().len() {
+            self.initials()
         } else {
-            their_initials
+            other.initials()
         };
 
-        let mut my_names = self.middle_names().unwrap().iter().peekable();
-        let mut their_names = other.middle_names().unwrap().iter().peekable();
+        let mut my_names = self.words[0..self.surname_index].iter().peekable();
+        let mut their_names = other.words[0..other.surname_index].iter().peekable();
 
         for initial in initials.chars() {
             if my_names.peek().is_none() || their_names.peek().is_none() {
-                // None of the names were inconsistent and we already know
-                // the initials match
+                // None of the name-words were inconsistent
                 return true;
             }
 
-            // Only look at a name that corresponds to this initial; if the next
-            // name doesn't, it means we only have an initial for this name
+            // Only look at a name-word that corresponds to this initial; if the
+            // next word doesn't, it means we only have an initial for this word
+            // in a given version of the name
             let my_name: Option<&String> = if my_names.peek().unwrap().starts_with(initial) {
                 my_names.next()
             } else {
                 None
             };
+
             let their_name: Option<&String> = if their_names.peek().unwrap().starts_with(initial) {
                 their_names.next()
             } else {
                 None
             };
 
-            // If we have two names for the same initial, require that they
-            // match using the same logic as for a given name
+            // If we have two names for the same initial, require that they are
+            // equal, ignoring case, accents, and non-alphabetic chars, or
+            // that one starts with the other
             if my_name.is_some() && their_name.is_some() &&
             !eq_or_starts_with_ignoring_accents_nonalpha_and_case!(my_name.unwrap(), their_name.unwrap()) {
                 return false;
@@ -228,52 +241,55 @@ impl Name {
         true
     }
 
-    fn middle_initials_eq(&self, other: &Name) -> bool {
-        let mine = self.middle_initials();
-        let theirs = other.middle_initials();
-
-        mine.is_none() || theirs.is_none() || mine.unwrap().contains(theirs.unwrap()) ||
-        theirs.unwrap().contains(mine.unwrap())
+    fn surname_consistent(&self, other: &Name) -> bool {
+        let mine = self.surnames().iter().flat_map(|w| w.chars()).rev();
+        let theirs = other.surnames().iter().flat_map(|w| w.chars()).rev();
+        eq_or_starts_with_ignoring_accents_nonalpha_and_case!(mine, theirs)
     }
 
-    fn suffix_eq(&self, other: &Name) -> bool {
+    fn suffix_consistent(&self, other: &Name) -> bool {
         self.suffix().is_none() || other.suffix().is_none() || self.suffix() == other.suffix()
     }
 }
 
-// NOTE This is technically an invalid implementation of Eq because it is not
-// transitive - "J. Doe" == "Jane Doe", and "J. Doe" == "John Doe", but
+// NOTE This is technically an invalid implementation of PartialEq because it is
+// not transitive - "J. Doe" == "Jane Doe", and "J. Doe" == "John Doe", but
 // "Jane Doe" != "John Doe". (It is, however, symmetric and reflexive.)
 //
 // Use with caution!
 impl PartialEq for Name {
 
-    // Order matters, both for efficiency (single-initial check is the fastest,
+    // Order matters, both for efficiency (initials check is the fastest,
     // coincidentally-identical surnames are less likely than for given names),
-    // and for correctness (the middle names check assumes a positive result
+    // and for correctness (the given/middle names check assumes a positive result
     // for the middle initials check)
     #[cfg_attr(rustfmt, rustfmt_skip)]
     fn eq(&self, other: &Name) -> bool {
-        self.first_initial() == other.first_initial() &&
-        self.surname_eq(other) &&
-        self.given_name_eq(other) &&
-        self.middle_initials_eq(other) &&
-        self.middle_names_eq(other) &&
-        self.suffix_eq(other)
+        self.initials_consistent(other) &&
+        self.surname_consistent(other) &&
+        self.given_and_middle_names_consistent(other) &&
+        self.suffix_consistent(other)
     }
 }
 
-// We only use the first initial and last four alphabetical characters of the
-// surname, because that's all we're guaranteed to use in the equality test.
+// NOTE This hash function is prone to collisions!
 //
-// That still gives us 23.5 bits assuming ASCII characters, which isn't great
-// but shouldn't be terrible for small-to-moderate sets
+// We can only use the last four alphabetical characters of the surname, because
+// that's all we're guaranteed to use in the equality test. That means if names
+// are ASCII, we only have 19 bits of variability.
 //
-// TODO Would be nice to make this configurable
+// That means if you are working with a lot of names and you expect surnames
+// to be similar or identical, you might be better off avoiding hash-based
+// datastructures (or using a custom hash and alternate equality test).
+//
+// We can't use more characters of the surname because we treat names as equal
+// when one surname ends with the other and the smaller is at least four
+// characters, to catch cases like "Iria Gayo" == "Iria del Río Gayo".
+//
+// We can't use the first initial because we might ignore it if someone goes
+// by a middle name, to catch cases like "H. Manuel Alperin" == "Manuel Alperin."
 impl Hash for Name {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.first_initial().hash(state);
-
         let surname_chars = self.surnames().iter().flat_map(|w| w.chars()).rev();
         for c in lowercase_alpha_without_accents!(surname_chars).take(MIN_CHARS_FOR_EQ_BY_CONTAINS) {
             c.hash(state);
