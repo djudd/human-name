@@ -111,7 +111,7 @@ fn parse_mode(args: &Vec<String>) {
             }
         }
     } else {
-        let parsed = human_name::Name::parse(&args[1..].join(" "));
+        let parsed = human_name::Name::parse(&args[2..].join(" "));
         if parsed.is_none() {
             process::exit(1);
         } else {
