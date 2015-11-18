@@ -14,29 +14,29 @@ use rustc_serialize::json::ToJson;
 #[cfg_attr(rustfmt, rustfmt_skip)]
 const USAGE: &'static str = "
 Usage:
-    human_name -p <name>
-    human_name -p -
-    human_name -e '<name1>' '<name2>'
-    human_name -e '<name>' -
+    human_name parse <name>
+    human_name parse -
+    human_name eq '<name1>' '<name2>'
+    human_name eq '<name>' -
 
-If given the -e option, human_name will check names for equality, If '-' is the
+With the `eq` command, human_name will check names for equality, If '-' is the
 first argument, it will expect newline-separated names from stdin to compare to
 the second argument, and will print each which matches. Otherwise, it will compare
 the two arguments, exiting with status 0 if the names are equal, and status 1 if
 not.
 
-If given the -p option, it will run in parsing mode. If `-` is the argument, it
-will expect newline-separated names to parse from stdin. Otherwise, it will try
-to parse the arguments as a name. In either case it will print parsed output as
-JSON if it succeeds, or exit with status 1 if not.
+With the `parse` command, it will run in parsing mode. If `-` is the argument,
+it will expect newline-separated names to parse from stdin. Otherwise, it will
+try to parse the arguments as a name, exiting with status 0 if it succeeds, and
+status 1 otherwise. In either case it will print parsed output as JSON.
 ";
 
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() == 4 && args[1] == "-e" {
+    if args.len() == 4 && args[1] == "eq" {
         equality_mode(&args);
-    } else if args.len() > 2 && args[1] == "-p" {
+    } else if args.len() > 2 && args[1] == "parse" {
         parse_mode(&args);
     } else {
         writeln!(&mut std::io::stderr(), "{}", USAGE).ok().unwrap();
