@@ -20,8 +20,9 @@ mod parse;
 
 use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
+use std::collections::BTreeMap;
 use itertools::Itertools;
-use rustc_serialize::json::{self, ToJson, Json};
+use rustc_serialize::json::{ToJson, Json};
 use unicode_segmentation::UnicodeSegmentation;
 use utils::*;
 
@@ -387,31 +388,23 @@ impl Hash for Name {
     }
 }
 
-#[derive(RustcEncodable)]
-struct SerializeableName {
-    pub given_name: Option<String>,
-    pub surname: String,
-    pub middle_names: Option<String>,
-    pub first_initial: char,
-    pub middle_initials: Option<String>,
-    pub suffix: Option<String>,
-}
-
-impl SerializeableName {
-    pub fn new(name: &Name) -> SerializeableName {
-        SerializeableName {
-            given_name: name.given_name().map(|s| s.to_string()),
-            surname: name.surname().to_string(),
-            middle_names: name.middle_name().map(|s| s.to_string()),
-            first_initial: name.first_initial(),
-            middle_initials: name.middle_initials().map(|s| s.to_string()),
-            suffix: name.suffix().map(|s| s.to_string()),
-        }
-    }
-}
-
 impl ToJson for Name {
     fn to_json(&self) -> Json {
-        Json::String(json::encode(&SerializeableName::new(self)).unwrap())
+        let mut d = BTreeMap::new();
+        d.insert("surname".to_string(), self.surname().to_json());
+        d.insert("first_initial".to_string(), format!("{}", self.first_initial()).to_json());
+        if self.given_name().is_some() {
+            d.insert("given_name".to_string(), self.given_name().unwrap().to_json());
+        }
+        if self.middle_initials().is_some() {
+            d.insert("middle_initial".to_string(), self.middle_initials().unwrap().to_json());
+        }
+        if self.middle_names().is_some() {
+            d.insert("middle_names".to_string(), self.middle_name().unwrap().to_json());
+        }
+        if self.suffix().is_some() {
+            d.insert("suffix".to_string(), self.suffix().unwrap().to_json());
+        }
+        Json::Object(d)
     }
 }

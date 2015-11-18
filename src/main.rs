@@ -115,7 +115,7 @@ fn parse_mode(args: &Vec<String>) {
         if parsed.is_none() {
             process::exit(1);
         } else {
-            println!("{}", parsed.unwrap().to_json());
+            println!("{}", parsed.unwrap().to_json().to_string());
         }
     }
 }
