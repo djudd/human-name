@@ -2,7 +2,6 @@ use std::ascii::AsciiExt;
 use unicode_normalization::char::canonical_combining_class;
 use unicode_normalization::UnicodeNormalization;
 
-pub const MIN_CHARS_FOR_EQ_BY_CONTAINS: usize = 4;
 const VOWELS: [char; 12] = ['a', 'e', 'i', 'o', 'u', 'y', 'A', 'E', 'I', 'O', 'U', 'Y'];
 const HYPHENS: [char; 11] = ['-', '\u{2010}', '‑', '‒','–', '—', '―', '−','－','﹘','﹣'];
 
@@ -107,37 +106,4 @@ pub fn has_sequential_alphas(word: &str) -> bool {
     }
 
     false
-}
-
-#[macro_export]
-macro_rules! eq_or_starts_with_ignoring_accents_nonalpha_and_case {
-    ($chars_a:expr, $chars_b:expr) => {
-        {
-            let result;
-
-            let mut iter_a = $chars_a.filter_map(lowercase_if_alpha);
-            let mut iter_b = $chars_b.filter_map(lowercase_if_alpha);
-            let mut matching_chars = 0;
-
-            loop {
-                let ca = iter_a.next();
-                let cb = iter_b.next();
-
-                if ca.is_none() && cb.is_none() {
-                    result = true;
-                    break;
-                } else if ca.is_none() != cb.is_none() {
-                    result = matching_chars >= MIN_CHARS_FOR_EQ_BY_CONTAINS;
-                    break;
-                } else if ca != cb {
-                    result = false;
-                    break;
-                }
-
-                matching_chars += 1;
-            }
-
-            result
-        }
-    };
 }

@@ -76,10 +76,16 @@ Mew O'Malley|Bartholomew O'Malley|!=
 Jianfei Liu|Jian Liu|==
 Jianpeng Liu|Jian Liu|==
 Jianpeng Liu|Jianfei Liu|!=
-#Jinli Cao|Jin-Li Cao|==
+Jinli Cao|Jin-Li Cao|==
 Jinli Cao|Jin-Yi Cao|!=
+DeAndre Jordan|De-Andre Jordan|==
+DAngelo Jordan|D'Angelo Jordan|==
+D'Angelo Jordan|D-Angelo Jordan|==
+D'Andre Jordan|D'Angelo Jordan|!=
+D-Andre Jordan|D-Angelo Jordan|!=
+DeAndre Jordan|D-Angelo Jordan|!=
 Jong Kyung Kim|Jong‐Suk Kim|!=
-#Xiaopeng Zhang|Xiao Feng Zhang|!=
+Xiaopeng Zhang|Xiao Feng Zhang|!=
 B. O'Malley|B. O'Mal|!=
 A Souza|Aline Coelho de Souza|==
 Ahmad M F Alam|M Firoz Alam|!=
@@ -116,3 +122,5 @@ M A de Boer-van den Berg|M de Boer-Vandenberg|==
 M A de Boer-Ye|M Drachmann-Ye|!=
 M A de Boer-Ye|M Ye|!=
 Paul von Ragué Schleyer|Paul v. R. Schleyer|==
+Ben Lund|Benjamin Lund|==
+Be Lund|Benjamin Lund|!=
