@@ -153,6 +153,8 @@ pennie von bergen wessels|von Bergen Wessels|Pennie||P||
 pennie von bergen wessels iii|von Bergen Wessels|Pennie||P||III
 pennie von bergen wessels, iii|von Bergen Wessels|Pennie||P||III
 von bergen wessels, pennie III|von Bergen Wessels|Pennie||P||III
+Éleuthère Irénée du Pont|du Pont|Éleuthère|Irénée|E|I|
+Steven Den Beste|Den Beste|Steven||S||
 
 # other prefix and postfix titles
 John Doe, CLU, CFP, LUTC|Doe|John||J||
@@ -328,8 +330,9 @@ Duke Martin Luther King, Jr.|King|Martin|Luther|M|L|Jr.
 John King|King|John||J||
 Jane Doctor|Doctor|Jane||J||
 
-# first and middle names that could be titles
-Anwar al Awlaki|Awlaki|Anwar|Al|A|A|
+# first and middle names and particles that could be titles
+Anwar al Awlaki|Al Awlaki|Anwar||A||
+Smith, John Und|Smith|John|Und|J|U||
 Al Yankovic|Yankovic|Al||A||
 #Maj Vinberg|Vinberg|Maj||M||
 
