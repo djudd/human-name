@@ -111,6 +111,7 @@ Jens O Drachmann Bukh|J. D. Bukh|==
 M A van den Berg|M Van Den Berg|==
 M A van den Berg|M Vandenberg|==
 M A van den Berg|M de Boer-van den Berg|==
+M A van den Berg|M de Boer-van den|!=
 M A de Boer-van den Berg|M de Boer-Vandenberg|==
 M A de Boer-Ye|M Drachmann-Ye|!=
 M A de Boer-Ye|M Ye|!=
