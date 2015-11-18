@@ -85,18 +85,22 @@ A Souza|Aline Coelho de Souza|==
 #Ahmad M F Alam|M Firoz Alam|!=
 Byung Se Choi|Byung-Cheul Choi|!=
 Chyi Tsong Chen|CHYI-TSONG CHEN|==
-#D. Hebert|Didier Bert|!=
-#D. Orris|Douglas N Morris|!=
-#Douglas Michael Strong|D. ARMSTRONG|!=
-#S. Hara|Syuichi Kurihara|!=
-#A. Manikumar|Adarsh M. Kumar|!=
-#A. Manikumar|Amit Kumar|!=
+D. Hebert|Didier Bert|!=
+D. Orris|Douglas N Morris|!=
+Douglas Michael Strong|D. ARMSTRONG|!=
+S. Hara|Syuichi Kurihara|!=
+A. Manikumar|Adarsh M. Kumar|!=
+A. Manikumar|Amit Kumar|!=
 F De Pinto|Francisco Pinto|==
 F Delle Monache|F. Delle Monache|==
 F Delle Monache|Franco Delle Monache|==
 H.-T. Lee|Hyuk-Jae Lee|!=
 J-L LEFAIX|Jean-Louis Lefaix|==
-#J.-M. Baribeau|Jean-Marie Beau|!=
+J-M. LEFAIX|Jean-Louis Lefaix|!=
+J.-M. Baribeau|Jean-Marie Beau|!=
+J.-B. Baribeau|Jean-Marie Beau|!=
+Jean-Bari Beau|Jean-Marie Beau|!=
+Jean-Bari Beau|Jean Baribeau|!=
 I. K K Deurloo|Inger-Karine K Kolkman-Deurloo|==
 J. J Connors III|J. J Connors|==
 J. J Connors III|J. J Connors III|==
@@ -104,5 +108,10 @@ J. J Connors II|J. J Connors III|!=
 JF Chen|Jing’an Chen|==
 Jennifer MacAllen|Jennifer Macallen|==
 Jens O Drachmann Bukh|J. D. Bukh|==
+M A van den Berg|M Van Den Berg|==
+M A van den Berg|M Vandenberg|==
+M A van den Berg|M de Boer-van den Berg|==
 M A de Boer-van den Berg|M de Boer-Vandenberg|==
+M A de Boer-Ye|M Drachmann-Ye|!=
+M A de Boer-Ye|M Ye|!=
 Paul von Ragué Schleyer|Paul v. R. Schleyer|==

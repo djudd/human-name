@@ -45,6 +45,17 @@ pub fn is_combining(c: char) -> bool {
     canonical_combining_class(c) > 0
 }
 
+#[inline]
+pub fn lowercase_if_alpha(c: char) -> Option<char> {
+    if c.is_uppercase() {
+        c.to_lowercase().next()
+    } else if c.is_alphabetic() {
+        Some(c)
+    } else {
+        None
+    }
+}
+
 pub fn capitalize_and_normalize(word: &str) -> String {
     let mut capitalize_next = true;
 
@@ -99,30 +110,14 @@ pub fn has_sequential_alphas(word: &str) -> bool {
 }
 
 #[macro_export]
-macro_rules! lowercase_alpha_without_accents {
-    ($chars:expr) => {
-        $chars.filter_map( |c|
-            if c.is_uppercase() {
-                c.to_lowercase().next()
-            } else if c.is_alphabetic() {
-                Some(c)
-            } else {
-                None
-            }
-        )
-    }
-}
-
-#[macro_export]
 macro_rules! eq_or_starts_with_ignoring_accents_nonalpha_and_case {
     ($chars_a:expr, $chars_b:expr) => {
         {
             let result;
 
-            let mut iter_a = lowercase_alpha_without_accents!($chars_a);
-            let mut iter_b = lowercase_alpha_without_accents!($chars_b);
-
-            let mut compared = 0;
+            let mut iter_a = $chars_a.filter_map(lowercase_if_alpha);
+            let mut iter_b = $chars_b.filter_map(lowercase_if_alpha);
+            let mut matching_chars = 0;
 
             loop {
                 let ca = iter_a.next();
@@ -132,16 +127,14 @@ macro_rules! eq_or_starts_with_ignoring_accents_nonalpha_and_case {
                     result = true;
                     break;
                 } else if ca.is_none() != cb.is_none() {
-                    // Only allow containment, vs equality, when contained
-                    // string has at least four characters
-                    result = compared >= MIN_CHARS_FOR_EQ_BY_CONTAINS;
+                    result = matching_chars >= MIN_CHARS_FOR_EQ_BY_CONTAINS;
                     break;
                 } else if ca != cb {
                     result = false;
                     break;
                 }
 
-                compared += 1;
+                matching_chars += 1;
             }
 
             result

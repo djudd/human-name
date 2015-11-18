@@ -22,6 +22,7 @@ use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
 use itertools::Itertools;
 use rustc_serialize::json::{self, ToJson, Json};
+use unicode_segmentation::UnicodeSegmentation;
 use utils::*;
 
 pub struct Name {
@@ -251,9 +252,88 @@ impl Name {
     }
 
     fn surname_consistent(&self, other: &Name) -> bool {
-        let mine = self.surnames().iter().flat_map(|w| w.chars()).rev();
-        let theirs = other.surnames().iter().flat_map(|w| w.chars()).rev();
-        eq_or_starts_with_ignoring_accents_nonalpha_and_case!(mine, theirs)
+        let mut my_words = self
+            .surnames()
+            .iter()
+            .flat_map(|w| w.unicode_words() )
+            .rev();
+
+        let mut their_words = other
+            .surnames()
+            .iter()
+            .flat_map(|w| w.unicode_words() )
+            .rev();
+
+        let mut my_word = my_words.next();
+        let mut their_word = their_words.next();
+        let mut matching_chars = 0;
+
+        // Require either an exact match (ignoring case etc), or a partial match
+        // of len >= MIN_CHARS_FOR_EQ_BY_CONTAINS and breaking on a word boundary
+        loop {
+            // No words remaining for some surname - that's ok if it's true of
+            // both, or if the components that match are long enough
+            if my_word.is_none() || their_word.is_none() {
+                return my_word == their_word || matching_chars >= MIN_CHARS_FOR_EQ_BY_CONTAINS;
+            }
+
+            macro_rules! reverse_lowercase_alpha_chars {
+                ($word:expr) => {
+                    $word.unwrap().chars().rev().filter_map(lowercase_if_alpha)
+                }
+            }
+
+            let mut my_chars = reverse_lowercase_alpha_chars!(my_word);
+            let mut their_chars = reverse_lowercase_alpha_chars!(their_word);
+
+            let mut my_char = my_chars.next();
+            let mut their_char = their_chars.next();
+
+            loop {
+                if my_char.is_none() && their_char.is_none() {
+                    // The words matched exactly, try the next word
+                    my_word = my_words.next();
+                    their_word = their_words.next();
+                    break;
+                } else if my_char.is_none() {
+                    // My word is a suffix of their word, check my next word
+                    // against the rest of their word
+                    my_word = my_words.next();
+                    if my_word.is_none() {
+                        // There is no next word, so this is a suffix-only match,
+                        // and we don't allow those
+                        return false;
+                    } else {
+                        // Continue the inner loop but incrementing through my
+                        // next word
+                        my_chars = reverse_lowercase_alpha_chars!(my_word);
+                        my_char = my_chars.next();
+                    }
+                } else if their_char.is_none() {
+                    // Their word is a suffix of my word, check their next word
+                    // against the rest of my_words
+                    their_word = their_words.next();
+                    if their_word.is_none() {
+                        // There is no next word, so this is a suffix-only match,
+                        // and we don't allow those
+                        return false;
+                    } else {
+                        // Continue the inner loop but incrementing through their
+                        // next word
+                        their_chars = reverse_lowercase_alpha_chars!(their_word);
+                        their_char = their_chars.next();
+                    }
+                } else if my_char != their_char {
+                    // We found a conflict and can short-circuit
+                    return false;
+                } else {
+                    // Characters matched, continue the inner loop
+                    matching_chars += 1;
+                    my_char = my_chars.next();
+                    their_char = their_chars.next();
+                }
+            }
+        }
     }
 
     fn suffix_consistent(&self, other: &Name) -> bool {
@@ -301,7 +381,7 @@ impl PartialEq for Name {
 impl Hash for Name {
     fn hash<H: Hasher>(&self, state: &mut H) {
         let surname_chars = self.surnames().iter().flat_map(|w| w.chars()).rev();
-        for c in lowercase_alpha_without_accents!(surname_chars).take(MIN_CHARS_FOR_EQ_BY_CONTAINS) {
+        for c in surname_chars.filter_map(lowercase_if_alpha).take(MIN_CHARS_FOR_EQ_BY_CONTAINS) {
             c.hash(state);
         }
     }
