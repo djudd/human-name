@@ -65,8 +65,7 @@ impl Name {
                 suffix_index_in_names -= 1;
             } else if i < surname_index {
                 initials.extend(word.namecased.split('-')
-                    .filter_map(|w| w.chars().find(|c| c.is_alphabetic()))
-                    .filter_map(|c| c.to_uppercase().next()));
+                    .filter_map(|w| w.chars().find(|c| c.is_alphabetic())));
 
                 let owned: String = word.namecased.into_owned();
                 names.push(owned);
