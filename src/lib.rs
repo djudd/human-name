@@ -59,7 +59,7 @@ impl Name {
             if word.is_initials() && i < surname_index {
                 initials.extend(word.namecased.chars()
                     .filter(|c| c.is_alphabetic())
-                    .filter_map(|c| c.to_uppercase().next()));
+                    .flat_map(|c| c.to_uppercase()));
 
                 surname_index_in_names -= 1;
                 suffix_index_in_names -= 1;

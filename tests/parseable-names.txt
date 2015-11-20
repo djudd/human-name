@@ -421,3 +421,7 @@ Kim, P-H.|Kim|||P|H|
 # missing whitespace
 X.Gironés|Gironés|||X||
 F.Joachim Weyl|Weyl|Joachim||F|J|
+
+# combined characters
+ﬂorence whitney|Whitney|Florence||F||
+ﬂ whitney|Whitney|||F|L|
