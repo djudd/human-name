@@ -67,11 +67,9 @@ impl Name {
                 initials.extend(word.namecased.split('-')
                     .filter_map(|w| w.chars().find(|c| c.is_alphabetic())));
 
-                let owned: String = word.namecased.into_owned();
-                names.push(owned);
+                names.push(word.namecased.into_owned());
             } else if i < suffix_index {
-                let owned: String = word.namecased.into_owned();
-                names.push(owned);
+                names.push(word.namecased.into_owned());
             } else {
                 names.push(suffix::namecase(&word));
             }
