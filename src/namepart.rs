@@ -114,8 +114,9 @@ impl <'a>NamePart<'a> {
 
     pub fn from_word(word: &str, trust_capitalization: bool, location: Location) -> NamePart {
         let chars = word.chars().count();
+        let ascii = word.chars().all(|c| c.is_ascii());
 
-        let category = if chars == 1 && word.chars().nth(0).unwrap().is_ascii() {
+        let category = if chars == 1 && ascii {
             Category::Initials
         } else if chars == 1 {
             Category::Name
@@ -148,7 +149,7 @@ impl <'a>NamePart<'a> {
             }
         };
 
-        let namecased = if trust_capitalization && is_capitalized_and_normalized(word) {
+        let namecased = if trust_capitalization && ascii && is_capitalized(word) {
             Cow::Borrowed(word)
         } else {
             let might_be_particle = location == Location::Middle;

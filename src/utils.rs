@@ -24,10 +24,10 @@ pub fn is_mixed_case(s: &str) -> bool {
     false
 }
 
-pub fn is_capitalized_and_normalized(word: &str) -> bool {
+pub fn is_capitalized(word: &str) -> bool {
     match word.chars().nth(0) {
         Some(c) => {
-            if !c.is_ascii() || !c.is_uppercase() {
+            if !c.is_uppercase() {
                 return false;
             }
         }
@@ -36,7 +36,7 @@ pub fn is_capitalized_and_normalized(word: &str) -> bool {
         }
     }
 
-    word.chars().skip(1).all(|c| c.is_ascii() && (c.is_lowercase() || !c.is_alphabetic()))
+    word.chars().skip(1).all(|c| c.is_lowercase() || !c.is_alphabetic())
 }
 
 #[inline]
