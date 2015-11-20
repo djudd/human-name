@@ -57,7 +57,7 @@ impl Name {
 
         for (i, word) in words.into_iter().enumerate() {
             if word.is_initials() && i < surname_index {
-                initials.extend(word.word.chars()
+                initials.extend(word.namecased.chars()
                     .filter(|c| c.is_alphabetic())
                     .filter_map(|c| c.to_uppercase().next()));
 
