@@ -7,12 +7,57 @@ pub const MIN_GIVEN_NAME_CHAR_MATCH: usize = 3;
 
 impl Name {
 
-    // Order matters, both for efficiency (initials check is the fastest,
-    // coincidentally-identical surnames are less likely than for given names),
-    // and for correctness (the given/middle names check assumes a positive result
-    // for the middle initials check)
+    /// Might this name represent the same person as another name?
+    ///
+    /// # Examples
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let j_doe = Name::parse("J. Doe").unwrap();
+    /// let jane_doe = Name::parse("Jane Doe").unwrap();
+    /// let john_m_doe = Name::parse("John M. Doe").unwrap();
+    /// let john_l_doe = Name::parse("John L. Doe").unwrap();
+    ///
+    /// assert!(j_doe.consistent_with(&john_m_doe));
+    /// assert!(j_doe.consistent_with(&john_l_doe));
+    /// assert!(j_doe.consistent_with(&jane_doe));
+    /// assert!(j_doe.consistent_with(&j_doe));
+    /// assert!(!john_m_doe.consistent_with(&john_l_doe));
+    /// assert!(!jane_doe.consistent_with(&john_l_doe));
+    /// ```
+    ///
+    /// # Defining "consistency"
+    ///
+    /// Requires that all known parts are consistent, which means at minimum,
+    /// the final words of the surnames match, and one ordered set of first
+    /// and middle initials is a superset of the other. If given and/or middle
+    /// names and/or suffixes are present in both names, they must match as well.
+    ///
+    /// Ignores case and non-alphanumeric characters, as well as accents and
+    /// other combining marks. In the case of given and middle names, allows
+    /// one name to be a prefix of the other, without requiring the prefix
+    /// end at a word boundary as we do with surname suffix matches (this
+    /// captures cases like "Jin Li"/"Jinli"/"Jin-Li", where the same name
+    /// may be transliterated in different ways, as well as *some* nicknames).
+    ///
+    /// # Limitations
+    ///
+    /// There will be false positives "Jan Doe" is probably not "Jane Doe",
+    /// and false negatives "Dave Judd" might be "David Judd". And, of course,
+    /// even identical names do not necessarily represent the same person.
+    ///
+    /// Given limited information, we err on the side of false positives. This
+    /// kind of matching will be most useful in cases where we already have
+    /// reason to believe that a single individual's name appears twice, and we
+    /// are trying to figure out exactly where, e.g. a particular author's index
+    /// in the list of authors of a co-authored paper.
+    ///
     #[cfg_attr(rustfmt, rustfmt_skip)]
     pub fn consistent_with(&self, other: &Name) -> bool {
+        // Order matters, both for efficiency (initials check is the fastest,
+        // coincidentally-identical surnames are less likely than for given names),
+        // and for correctness (the given/middle names check assumes a positive result
+        // for the middle initials check)
         self.initials_consistent(other) &&
         self.surname_consistent(other) &&
         self.given_and_middle_names_consistent(other) &&
