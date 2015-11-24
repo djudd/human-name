@@ -11,5 +11,9 @@ rustc-serialize = "0.3.*"
 phf = "0.7.*"
 phf_macros = "0.7.*"
 
+[features]
+default = ["name_eq_hash"]
+name_eq_hash = []
+
 [profile.release]
 debug = true

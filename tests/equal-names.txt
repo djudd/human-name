@@ -42,6 +42,9 @@ H. Manuel Alperin|L.H.M. Alperin|!=
 H. Manuel X. Alperin|H. Manuel Xavier Alperin|==
 H. Manuel X. Alperin|H. Manuel Q. Alperin|!=
 H. Manuel Alperin|H. Mendoza Alperin|!=
+#H. Hernan Alperin|Hernan Alperin|==
+#H. Hernan Alperin|Haidee Alperin|==
+#H. Haidee Alperin|H. Hernan Alperin|!=
 H.M. Alperin|M. Alperin|!=
 H. A. Alperin|H. M. Alperin|!=
 H.M.T. Alperin|H. M. Alperin|==
