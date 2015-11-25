@@ -32,6 +32,11 @@ Hernan Manuel Torrés Alperin|Hernan M. Torres Alperin|==
 Hernan Manuel Torrés Alperin|Hernan Emanuel Torres Alperin|!=
 Hernan Manuel L. Alperin|Hernan M. Torres Alperin|!=
 Hernan Manuel Alperin|Hernan Torres Alperin|!=
+Hernan Hakan Alperin|Hernan H Alperin|==
+Hernan Hakan Haidee Alperin|Hernan H. H. Alperin|==
+#Hernan Hakan Haidee Alperin|Hernan Hakan H. Alperin|==
+#Hernan Hakan Haidee Alperin|Hernan H. Haidee Alperin|==
+Hernan Manuel Alperin|Hernan Torres Alperin|!=
 H. Manuel Alperin|Manuel Alperin|==
 H. Manuel Alperin|H.M. Alperin|==
 H. Manuel Alperin|Hernan M. Alperin|==
@@ -42,9 +47,10 @@ H. Manuel Alperin|L.H.M. Alperin|!=
 H. Manuel X. Alperin|H. Manuel Xavier Alperin|==
 H. Manuel X. Alperin|H. Manuel Q. Alperin|!=
 H. Manuel Alperin|H. Mendoza Alperin|!=
-#H. Hernan Alperin|Hernan Alperin|==
+H. Hernan Alperin|Hernan Alperin|==
 #H. Hernan Alperin|Haidee Alperin|==
-#H. Haidee Alperin|H. Hernan Alperin|!=
+H. Haidee Alperin|H. Hernan Alperin|!=
+#H. Haidee Alperin|Hernan H. Alperin|==
 H.M. Alperin|M. Alperin|!=
 H. A. Alperin|H. M. Alperin|!=
 H.M.T. Alperin|H. M. Alperin|==

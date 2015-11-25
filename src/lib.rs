@@ -31,6 +31,7 @@ pub struct Name {
     surname_index: usize,
     suffix_index: usize,
     initials: String,
+    word_indices_in_initials: Vec<(usize,usize)>,
 }
 
 impl Name {
@@ -113,6 +114,7 @@ impl Name {
         let mut initials = String::with_capacity(surname_index);
         let mut surname_index_in_names = surname_index;
         let mut suffix_index_in_names = suffix_index;
+        let mut word_indices_in_initials: Vec<(usize,usize)> = Vec::with_capacity(surname_index);
 
         for (i, word) in words.into_iter().enumerate() {
             if word.is_initials() && i < surname_index {
@@ -123,10 +125,13 @@ impl Name {
                 surname_index_in_names -= 1;
                 suffix_index_in_names -= 1;
             } else if i < surname_index {
+                let prior_len = initials.len();
+
                 initials.extend(word.namecased.split('-')
                     .filter_map(|w| w.chars().find(|c| c.is_alphabetic())));
 
                 names.push(word.namecased.into_owned());
+                word_indices_in_initials.push((prior_len, initials.len()));
             } else if i < suffix_index {
                 names.push(word.namecased.into_owned());
             } else {
@@ -135,12 +140,14 @@ impl Name {
         }
 
         names.shrink_to_fit();
+        word_indices_in_initials.shrink_to_fit();
 
         Some(Name {
             words: names,
             surname_index: surname_index_in_names,
             suffix_index: suffix_index_in_names,
             initials: initials,
+            word_indices_in_initials: word_indices_in_initials,
         })
     }
 
@@ -160,7 +167,7 @@ impl Name {
 
     /// Does this person use a middle name in place of their given name (e.g., T. Boone Pickens)?
     pub fn goes_by_middle_name(&self) -> bool {
-        self.given_name().is_some() && !self.given_name().unwrap().starts_with(self.first_initial())
+        !self.word_indices_in_initials.is_empty() && self.word_indices_in_initials[0].0 > 0
     }
 
     /// First and middle initials as a string (always present)
@@ -254,28 +261,37 @@ impl Name {
     pub fn display_full(&self) -> String {
         let mut results: Vec<Cow<str>> = Vec::with_capacity(self.words.len());
 
-        if let Some(name) = self.given_name() {
-            results.push(Cow::Borrowed(name));
-        }
-
-        let mut middle_names = self.words[1..self.surname_index].iter().peekable();
-        let mut middle_initials = self.middle_initials().unwrap_or("").chars();
+        let mut initials = self.initials.chars().enumerate();
+        let mut known_names = self.words[0..self.surname_index].iter();
+        let mut known_name_indices = self.word_indices_in_initials.iter().peekable();
 
         loop {
-            match middle_initials.next() {
-                Some(initial) => {
-                    let mut matches_next_name = false;
-                    if let Some(name) = middle_names.peek() {
-                        matches_next_name = name.starts_with(initial);
+            match initials.next() {
+                Some((i,initial)) => {
+                    let mut next_name = None;
+                    if let Some(&&(j,k)) = known_name_indices.peek() {
+                        if j == i {
+                            known_name_indices.next();
+                            next_name = known_names.next();
+
+                            // Handle case of hyphenated name for which we have 2+ initials
+                            let mut num_initials_for_name = k-j;
+                            while num_initials_for_name > 1 {
+                                initials.next();
+                                num_initials_for_name -= 1;
+                            }
+                        }
                     }
 
-                    if matches_next_name {
-                        results.push(Cow::Borrowed(middle_names.next().unwrap()));
+                    if let Some(name) = next_name {
+                        results.push(Cow::Borrowed(name));
                     } else {
                         results.push(Cow::Owned(format!("{}.", initial)));
                     }
                 },
-                None => { break; }
+                None => {
+                    break;
+                }
             }
         }
 
