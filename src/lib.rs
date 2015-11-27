@@ -34,6 +34,11 @@ pub struct Name {
     word_indices_in_initials: Vec<(usize,usize)>,
 }
 
+enum NameWordOrInitial<'a> {
+    Word(&'a str),
+    Initial(char),
+}
+
 impl Name {
 
     /// Parses a string represent a single person's full name into a canonical
@@ -229,38 +234,7 @@ impl Name {
         }
     }
 
-    /// Given name and surname, if given name is known, otherwise first initial
-    /// and surname.
-    ///
-    /// ```
-    /// use human_name::Name;
-    ///
-    /// let name = Name::parse("JOHN ALLEN Q MACDONALD JR").unwrap();
-    /// assert_eq!("John MacDonald", name.display_short());
-    /// ```
-    pub fn display_short(&self) -> String {
-        match self.given_name() {
-            Some(ref name) => {
-                format!("{} {}", name, self.surname())
-            }
-            None => {
-                format!("{}. {}", self.first_initial(), self.surname())
-            }
-        }
-    }
-
-    /// The full name, or as much of it as was preserved from the input,
-    /// including given name, middle names, surname and suffix.
-    ///
-    /// ```
-    /// use human_name::Name;
-    ///
-    /// let name = Name::parse("JOHN ALLEN Q MACDONALD JR").unwrap();
-    /// assert_eq!("John Allen Q. MacDonald, Jr.", name.display_full());
-    /// ```
-    pub fn display_full(&self) -> String {
-        let mut results: Vec<Cow<str>> = Vec::with_capacity(self.words.len());
-
+    fn with_each_given_name_or_initial<F: FnMut(NameWordOrInitial, usize)>(&self, cb: &mut F) {
         let mut initials = self.initials.chars().enumerate();
         let mut known_names = self.words[0..self.surname_index].iter();
         let mut known_name_indices = self.word_indices_in_initials.iter().peekable();
@@ -284,9 +258,9 @@ impl Name {
                     }
 
                     if let Some(name) = next_name {
-                        results.push(Cow::Borrowed(name));
+                        cb(NameWordOrInitial::Word(name), i);
                     } else {
-                        results.push(Cow::Owned(format!("{}.", initial)));
+                        cb(NameWordOrInitial::Initial(initial), i);
                     }
                 },
                 None => {
@@ -294,15 +268,69 @@ impl Name {
                 }
             }
         }
+    }
 
-        for surname in self.surnames() {
-            results.push(Cow::Borrowed(&surname));
+    /// Given name and surname, if given name is known, otherwise first initial
+    /// and surname.
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let name = Name::parse("JOHN ALLEN Q DE LA MACDONALD JR").unwrap();
+    /// assert_eq!("John de la MacDonald", name.display_short());
+    /// ```
+    pub fn display_short(&self) -> String {
+        match self.given_name() {
+            Some(ref name) => {
+                format!("{} {}", name, self.surname())
+            }
+            None => {
+                format!("{}. {}", self.first_initial(), self.surname())
+            }
         }
+    }
 
-        let mut result = results.join(" ");
+    /// The full name, or as much of it as was preserved from the input,
+    /// including given name, middle names, surname and suffix.
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let name = Name::parse("JOHN ALLEN Q DE LA MACDONALD JR").unwrap();
+    /// assert_eq!("John Allen Q. de la MacDonald, Jr.", name.display_full());
+    /// ```
+    pub fn display_full(&self) -> String {
+        // This will be correct assuming only ASCII and only words, no initials,
+        // no suffix, otherwise it'll be too short, which is ok
+        let min_len = self.words.iter().fold(self.words.len()-1, |sum,ref word| sum + word.len());
+
+        let mut result = String::with_capacity(min_len);
+
+        self.with_each_given_name_or_initial( &mut |part, _|
+            match part {
+                NameWordOrInitial::Word(name) => {
+                    result.push_str(name);
+                    result.push(' ');
+                },
+                NameWordOrInitial::Initial(initial) => {
+                    result.push(initial);
+                    result.push_str(". ");
+                },
+            }
+        );
+
+        let surnames = self.surnames();
+        if surnames.len() > 1 {
+            for word in surnames[0..surnames.len() - 1].iter() {
+                result.push_str(word);
+                result.push(' ');
+            }
+        }
+        result.push_str(&surnames[surnames.len() - 1]);
 
         if let Some(suffix) = self.suffix() {
-            result = result + &format!(", {}", suffix);
+            result.push_str(", ");
+            result.push_str(suffix);
         }
 
         result
