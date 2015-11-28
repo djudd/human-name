@@ -17,3 +17,7 @@ name_eq_hash = []
 
 [profile.release]
 debug = true
+
+[[bin]]
+name = "human_name"
+doc = false
