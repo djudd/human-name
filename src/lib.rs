@@ -1,3 +1,5 @@
+#![doc(html_root_url = "https://djudd.github.io/human-name/")]
+
 #![feature(drain)]
 #![feature(plugin)]
 #![plugin(phf_macros)]
