@@ -1,0 +1,10 @@
+language: rust
+rust:
+  - stable
+  - beta
+  - nightly
+matrix:
+  # We depend on phf's compiler plugin & plugins are not yet stable
+  allow_failures:
+    - rust: stable
+    - rust: beta
