@@ -111,23 +111,62 @@ impl Name {
         // the word for both names, require that the words are an exact match
         // (ignoring case etc), or that one is a prefix of the other with length
         // >= MIN_GIVEN_NAME_CHAR_MATCH.
-        //
-        // TODO In cases where we have a word for name A but not for name B, if the
-        // prior word for name A was just a prefix of the prior word for name B,
-        // require the current word for name A to match the rest of the prior
-        // word for name B (to catch cases like Jinli == Jin-Li == Jin Li,
-        // != Jin-Yi).
 
         let mut their_initials = other.initials().chars().peekable();
         let mut their_initial_index = 0;
         let mut their_word_indices = other.word_indices_in_initials.iter().peekable();
         let mut their_words = other.words[0..other.suffix_index].iter();
+        let mut suffix_for_prior_prefix_match: Option<&str> = None;
         let mut consistency_refuted = false;
 
         self.with_each_given_name_or_initial( &mut |part, _| {
             if consistency_refuted {
                 // We already found words that fail to match
                 return;
+            }
+
+            macro_rules! require_word_match {
+                ($my_word:expr, $their_word:expr) => { {
+                    let mut my_chars = $my_word.chars().filter_map(lowercase_if_alpha);
+                    let mut their_chars = $their_word.chars().filter_map(lowercase_if_alpha);
+                    let mut matched = 0;
+
+                    loop {
+                        let my_char = my_chars.next();
+                        let their_char = their_chars.next();
+
+                        if my_char.is_none() && their_char.is_none() {
+                            // Exact match; continue
+                            break;
+                        } else if (my_char.is_none() || their_char.is_none()) && matched >= MIN_GIVEN_NAME_CHAR_MATCH {
+                            // Prefix match; continue
+                            if my_char.is_none() && their_initials.peek().is_none() {
+                                // We'll only use this when the name with fewer words
+                                // (theirs) is out, but the last matching part of
+                                // the name with more words (ours) was only a prefix
+                                // (see comment below)
+                                suffix_for_prior_prefix_match = Some(&$their_word[matched..]);
+                            }
+                            break;
+                        } else if my_char != their_char {
+                            // Failed match; abort
+                            consistency_refuted = true;
+                            return;
+                        } else {
+                            matched += 1;
+                        }
+                    }
+                } }
+            }
+
+            if suffix_for_prior_prefix_match.is_some() && their_initials.peek().is_none() {
+                // Edge case: where we have a word and they don't, if our prior
+                // word was just a prefix of their prior word, require our current
+                // word to match the rest of their prior word (to catch cases
+                // like Jinli == Jin-Li == Jin Li, != Jin Yi).
+                if let NameWordOrInitial::Word(my_word) = part {
+                    require_word_match!(my_word, suffix_for_prior_prefix_match.unwrap());
+                }
             }
 
             if their_initials.peek().is_none() || their_word_indices.peek().is_none() {
@@ -144,6 +183,7 @@ impl Name {
             // The initials match, so we know we'll want to increment both
             their_initials.next();
             their_initial_index += 1;
+            suffix_for_prior_prefix_match = None;
 
             if their_word_indices.peek().unwrap().0 != their_initial_index - 1 {
                 // They don't have a word for this initial
@@ -168,28 +208,7 @@ impl Name {
                 },
                 NameWordOrInitial::Word(my_word) => {
                     // Both have words for this initial, so check if they match
-                    let mut their_chars = their_word.chars().filter_map(lowercase_if_alpha);
-                    let mut my_chars = my_word.chars().filter_map(lowercase_if_alpha);
-                    let mut matched = 0;
-
-                    loop {
-                        let my_char = my_chars.next();
-                        let their_char = their_chars.next();
-
-                        if my_char.is_none() && their_char.is_none() {
-                            // Exact match; continue
-                            break;
-                        } else if (my_char.is_none() || their_char.is_none()) && matched >= MIN_GIVEN_NAME_CHAR_MATCH {
-                            // Prefix match; continue
-                            break;
-                        } else if my_char != their_char {
-                            // Failed match; abort
-                            consistency_refuted = true;
-                            return;
-                        } else {
-                            matched += 1;
-                        }
-                    }
+                    require_word_match!(my_word, their_word);
                 },
             }
         });
