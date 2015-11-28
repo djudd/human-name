@@ -77,8 +77,7 @@ fn equality_mode(args: &Vec<String>) {
         } else if parsed_a.unwrap() != parsed_b.unwrap() {
             writeln!(&mut std::io::stdout(), "not equal!").ok();
             process::exit(1);
-        }
-        else {
+        } else {
             writeln!(&mut std::io::stdout(), "equal").ok();
             process::exit(0);
         }
@@ -175,9 +174,7 @@ mod bench {
         let x = Name::parse("Jane Doe");
         let y = Name::parse("Jane H. Doe");
 
-        b.iter(|| {
-            black_box(x == y)
-        })
+        b.iter(|| black_box(x == y))
     }
 
     #[bench]
@@ -185,9 +182,7 @@ mod bench {
         let x = Name::parse("Jane Doe");
         let y = Name::parse("Foo Bar");
 
-        b.iter(|| {
-            black_box(x == y)
-        })
+        b.iter(|| black_box(x == y))
     }
 
     #[bench]
@@ -195,9 +190,7 @@ mod bench {
         let x = Name::parse("Jane Doe");
         let y = Name::parse("John Doe");
 
-        b.iter(|| {
-            black_box(x == y)
-        })
+        b.iter(|| black_box(x == y))
     }
 
     #[bench]
@@ -228,10 +221,9 @@ mod bench {
     fn bench_equality_many(b: &mut Bencher) {
         let f = File::open("tests/benchmark-names.txt").ok().unwrap();
         let reader = BufReader::new(f);
-        let names: Vec<Name> = reader
-            .lines()
-            .filter_map(|l| Name::parse(&l.ok().unwrap()))
-            .collect();
+        let names: Vec<Name> = reader.lines()
+                                     .filter_map(|l| Name::parse(&l.ok().unwrap()))
+                                     .collect();
 
         let mut deduped = HashSet::with_capacity(names.len() / 4);
         b.iter(|| {
