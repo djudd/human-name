@@ -238,7 +238,7 @@ impl Name {
         }
     }
 
-    fn with_each_given_name_or_initial<F: FnMut(NameWordOrInitial, usize)>(&self, cb: &mut F) {
+    fn with_each_given_name_or_initial<F: FnMut(NameWordOrInitial)>(&self, cb: &mut F) {
         let mut initials = self.initials.chars().enumerate();
         let mut known_names = self.words[0..self.surname_index].iter();
         let mut known_name_indices = self.word_indices_in_initials.iter().peekable();
@@ -260,9 +260,9 @@ impl Name {
                     }
 
                     if let Some(name) = next_name {
-                        cb(NameWordOrInitial::Word(name), i);
+                        cb(NameWordOrInitial::Word(name));
                     } else {
-                        cb(NameWordOrInitial::Initial(initial), i);
+                        cb(NameWordOrInitial::Initial(initial));
                     }
                 }
                 None => {
@@ -310,7 +310,7 @@ impl Name {
 
         let mut result = String::with_capacity(min_len);
 
-        self.with_each_given_name_or_initial(&mut |part, _| {
+        self.with_each_given_name_or_initial(&mut |part| {
             match part {
                 NameWordOrInitial::Word(name) => {
                     result.push_str(name);

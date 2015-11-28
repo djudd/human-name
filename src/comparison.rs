@@ -119,7 +119,7 @@ impl Name {
         let mut suffix_for_prior_prefix_match: Option<&str> = None;
         let mut consistency_refuted = false;
 
-        self.with_each_given_name_or_initial( &mut |part, _| {
+        self.with_each_given_name_or_initial(&mut |part| {
             macro_rules! require_word_match {
                 ($my_word:expr, $their_word:expr) => { {
                     let mut my_chars = $my_word.chars().filter_map(lowercase_if_alpha);
