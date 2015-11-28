@@ -4,7 +4,7 @@ extern crate unicode_normalization;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
-use std::hash::{Hash,Hasher,SipHasher};
+use std::hash::{Hash, Hasher, SipHasher};
 use unicode_normalization::UnicodeNormalization;
 
 fn none_if_empty(s: &str) -> Option<&str> {
@@ -72,7 +72,7 @@ fn parsing() {
                 input,
                 given_name,
                 name.given_name());
-        assert!(name.middle_name().map(|w|w.to_string()) == middle_names.map(|w|w.to_string()),
+        assert!(name.middle_name().map(|w| w.to_string()) == middle_names.map(|w| w.to_string()),
                 "[{}] Expected middle names {:?}, got {:?}",
                 input,
                 middle_names,
