@@ -1,9 +1,10 @@
 use super::utils::*;
-use super::Name;
+use super::{Name,NameWordOrInitial};
 use unicode_segmentation::UnicodeSegmentation;
 
 pub const MIN_SURNAME_CHAR_MATCH: usize = 4;
 pub const MIN_GIVEN_NAME_CHAR_MATCH: usize = 3;
+
 
 impl Name {
 
@@ -97,123 +98,103 @@ impl Name {
         }
 
         // We know the initials are equal or one is a superset of the other if
-        // we've got this far, so we know the longer string includes the first
-        // letters of all the given & middle names
-        let initials = if self.initials().len() > other.initials().len() {
-            self.initials()
+        // we've got this far
+        if self.initials().len() >= other.initials().len() {
+            self.given_and_middle_names_consistent_with_less_complete(other)
         } else {
-            other.initials()
-        };
+            other.given_and_middle_names_consistent_with_less_complete(self)
+        }
+    }
 
-        // We split on hyphens, but not other word boundaries that weren't already
-        // split on, because we have done the same when setting initials
-        let mut my_words = self
-            .words[0..self.surname_index]
-            .iter()
-            .flat_map(|w|w.split('-'))
-            .peekable();
-
-        let mut their_words = other
-            .words[0..other.surname_index]
-            .iter()
-            .flat_map(|w|w.split('-'))
-            .peekable();
-
+    fn given_and_middle_names_consistent_with_less_complete(&self, other: &Name) -> bool {
         // Align words using their initials, and for each initial where we know
         // the word for both names, require that the words are an exact match
         // (ignoring case etc), or that one is a prefix of the other with length
         // >= MIN_GIVEN_NAME_CHAR_MATCH.
         //
-        // In cases where we have a word for name A but not for name B, if the
+        // TODO In cases where we have a word for name A but not for name B, if the
         // prior word for name A was just a prefix of the prior word for name B,
         // require the current word for name A to match the rest of the prior
         // word for name B (to catch cases like Jinli == Jin-Li == Jin Li,
-        // != Jin-Yi)
-        for initial in initials.chars() {
-            if my_words.peek().is_none() || their_words.peek().is_none() {
-                // None of the name-words were inconsistent
-                return true;
+        // != Jin-Yi).
+
+        let mut their_initials = other.initials().chars().peekable();
+        let mut their_initial_index = 0;
+        let mut their_word_indices = other.word_indices_in_initials.iter().peekable();
+        let mut their_words = other.words[0..other.suffix_index].iter();
+        let mut consistency_refuted = false;
+
+        self.with_each_given_name_or_initial( &mut |part, _| {
+            if consistency_refuted {
+                // We already found words that fail to match
+                return;
             }
 
-            // Only look at a name-word that corresponds to this initial; if the
-            // next word doesn't, it means we only have an initial for this word
-            // in a given version of the name
-            let mut my_word: Option<&str> = if my_words.peek().unwrap().starts_with(initial) {
-                my_words.next()
-            } else {
-                None
-            };
-
-            let mut their_word: Option<&str> = if their_words.peek().unwrap().starts_with(initial) {
-                their_words.next()
-            } else {
-                None
-            };
-
-            // If we have two names for the same initial, require that they are
-            // equal, ignoring case, accents, and non-alphabetic chars, or
-            // that one starts with the other with an overlap of at least three
-            // characters
-            if my_word.is_some() && their_word.is_some() {
-                macro_rules! lowercase_alpha_chars {
-                    ($word:expr) => {
-                        $word.unwrap().chars().filter_map(lowercase_if_alpha)
-                    }
-                }
-
-                let mut my_chars = lowercase_alpha_chars!(my_word);
-                let mut their_chars = lowercase_alpha_chars!(their_word);
-                let mut matching_chars = 0;
-
-                let mut my_char = my_chars.next();
-                let mut their_char = their_chars.next();
-                let mut exact_match = false;
-
-                loop {
-                    if my_char.is_none() && their_char.is_none() {
-                        // The words matched exactly, try the next word
-                        exact_match = true;
-                        break;
-                    } else if my_char.is_none() {
-                        // My word is a prefix of their word, check my next word
-                        // against the rest of their word *iff* they're out of
-                        // words and I'm not
-                        if their_words.peek().is_none() && !my_words.peek().is_none() {
-                            my_word = my_words.next();
-                            my_chars = lowercase_alpha_chars!(my_word);
-                            my_char = my_chars.next();
-                        } else {
-                            break;
-                        }
-                    } else if their_char.is_none() {
-                        // Their word is a prefix of my word, check their next
-                        // word against the rest of my word *iff* I'm out of
-                        // words and they're not
-                        if my_words.peek().is_none() && !their_words.peek().is_none() {
-                            their_word = their_words.next();
-                            their_chars = lowercase_alpha_chars!(their_word);
-                            their_char = their_chars.next();
-                        } else {
-                            break;
-                        }
-                    } else if my_char != their_char {
-                        // We found a conflict and can short-circuit
-                        return false;
-                    } else {
-                        // Characters matched, continue the inner loop
-                        matching_chars += 1;
-                        my_char = my_chars.next();
-                        their_char = their_chars.next();
-                    }
-                }
-
-                if !exact_match && matching_chars < MIN_GIVEN_NAME_CHAR_MATCH {
-                    return false;
-                }
+            if their_initials.peek().is_none() || their_word_indices.peek().is_none() {
+                // We've matched everything available
+                return;
             }
-        }
 
-        true
+            let my_initial = part.initial();
+            if my_initial != *their_initials.peek().unwrap() {
+                // We have an initial they don't, continue
+                return;
+            }
+
+            // The initials match, so we know we'll want to increment both
+            their_initials.next();
+            their_initial_index += 1;
+
+            if their_word_indices.peek().unwrap().0 != their_initial_index - 1 {
+                // They don't have a word for this initial
+                return;
+            }
+
+            let &(j, k) = their_word_indices.next().unwrap();
+
+            // Edge case: Their word is hyphenated and so corresponds to
+            // multiple initials
+            for _ in j+1..k {
+                their_initials.next();
+                their_initial_index += 1;
+            }
+
+            let their_word = their_words.next().unwrap();
+
+            match part {
+                NameWordOrInitial::Initial(_) => {
+                    // We don't have a word for this initial
+                    return;
+                },
+                NameWordOrInitial::Word(my_word) => {
+                    // Both have words for this initial, so check if they match
+                    let mut their_chars = their_word.chars().filter_map(lowercase_if_alpha);
+                    let mut my_chars = my_word.chars().filter_map(lowercase_if_alpha);
+                    let mut matched = 0;
+
+                    loop {
+                        let my_char = my_chars.next();
+                        let their_char = their_chars.next();
+
+                        if my_char.is_none() && their_char.is_none() {
+                            // Exact match; continue
+                            break;
+                        } else if (my_char.is_none() || their_char.is_none()) && matched >= MIN_GIVEN_NAME_CHAR_MATCH {
+                            // Prefix match; continue
+                            break;
+                        } else if my_char != their_char {
+                            // Failed match; abort
+                            consistency_refuted = true;
+                            return;
+                        } else {
+                            matched += 1;
+                        }
+                    }
+                },
+            }
+        });
+
+        !consistency_refuted
     }
 
     fn surname_consistent(&self, other: &Name) -> bool {
@@ -303,5 +284,18 @@ impl Name {
 
     fn suffix_consistent(&self, other: &Name) -> bool {
         self.suffix().is_none() || other.suffix().is_none() || self.suffix() == other.suffix()
+    }
+}
+
+impl<'a> NameWordOrInitial<'a> {
+    pub fn initial(&self) -> char {
+        match self {
+            &NameWordOrInitial::Word(word) => {
+                word.chars().nth(0).unwrap()
+            },
+            &NameWordOrInitial::Initial(initial) => {
+                initial
+            },
+        }
     }
 }

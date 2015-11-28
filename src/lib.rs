@@ -34,7 +34,7 @@ pub struct Name {
     word_indices_in_initials: Vec<(usize,usize)>,
 }
 
-enum NameWordOrInitial<'a> {
+pub enum NameWordOrInitial<'a> {
     Word(&'a str),
     Initial(char),
 }
@@ -249,10 +249,8 @@ impl Name {
                             next_name = known_names.next();
 
                             // Handle case of hyphenated name for which we have 2+ initials
-                            let mut num_initials_for_name = k-j;
-                            while num_initials_for_name > 1 {
+                            for _ in j+1..k {
                                 initials.next();
-                                num_initials_for_name -= 1;
                             }
                         }
                     }
