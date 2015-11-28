@@ -120,11 +120,6 @@ impl Name {
         let mut consistency_refuted = false;
 
         self.with_each_given_name_or_initial( &mut |part, _| {
-            if consistency_refuted {
-                // We already found words that fail to match
-                return;
-            }
-
             macro_rules! require_word_match {
                 ($my_word:expr, $their_word:expr) => { {
                     let mut my_chars = $my_word.chars().filter_map(lowercase_if_alpha);
@@ -137,7 +132,7 @@ impl Name {
 
                         if my_char.is_none() && their_char.is_none() {
                             // Exact match; continue
-                            break;
+                            return;
                         } else if (my_char.is_none() || their_char.is_none()) && matched >= MIN_GIVEN_NAME_CHAR_MATCH {
                             // Prefix match; continue
                             if my_char.is_none() && their_initials.peek().is_none() {
@@ -147,7 +142,7 @@ impl Name {
                                 // (see comment below)
                                 suffix_for_prior_prefix_match = Some(&$their_word[matched..]);
                             }
-                            break;
+                            return;
                         } else if my_char != their_char {
                             // Failed match; abort
                             consistency_refuted = true;
@@ -159,20 +154,25 @@ impl Name {
                 } }
             }
 
-            if suffix_for_prior_prefix_match.is_some() && their_initials.peek().is_none() {
-                // Edge case: where we have a word and they don't, if our prior
-                // word was just a prefix of their prior word, require our current
-                // word to match the rest of their prior word (to catch cases
-                // like Jinli == Jin-Li == Jin Li, != Jin Yi).
-                //
-                // This logic is imperfect in the presence of middle initials,
-                // but that's an edge case to an edge case.
-                if let NameWordOrInitial::Word(my_word) = part {
-                    require_word_match!(my_word, suffix_for_prior_prefix_match.unwrap());
-                }
+            if consistency_refuted {
+                // We already found words that fail to match
+                return;
             }
 
             if their_initials.peek().is_none() || their_word_indices.peek().is_none() {
+                if suffix_for_prior_prefix_match.is_some() {
+                    // Edge case: where we have a word and they don't, if our prior
+                    // word was just a prefix of their prior word, require our current
+                    // word to match the rest of their prior word (to catch cases
+                    // like Jinli == Jin-Li == Jin Li, != Jin Yi).
+                    //
+                    // This logic is imperfect in the presence of middle initials,
+                    // but that's an edge case to an edge case.
+                    if let NameWordOrInitial::Word(my_word) = part {
+                        require_word_match!(my_word, suffix_for_prior_prefix_match.unwrap());
+                    }
+                }
+
                 // We've matched everything available
                 return;
             }
