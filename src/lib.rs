@@ -31,7 +31,7 @@ pub struct Name {
     surname_index: usize,
     suffix_index: usize,
     initials: String,
-    word_indices_in_initials: Vec<(usize,usize)>,
+    word_indices_in_initials: Vec<(usize, usize)>,
 }
 
 pub enum NameWordOrInitial<'a> {
@@ -119,21 +119,23 @@ impl Name {
         let mut initials = String::with_capacity(surname_index);
         let mut surname_index_in_names = surname_index;
         let mut suffix_index_in_names = suffix_index;
-        let mut word_indices_in_initials: Vec<(usize,usize)> = Vec::with_capacity(surname_index);
+        let mut word_indices_in_initials: Vec<(usize, usize)> = Vec::with_capacity(surname_index);
 
         for (i, word) in words.into_iter().enumerate() {
             if word.is_initials() && i < surname_index {
-                initials.extend(word.namecased.chars()
-                    .filter(|c| c.is_alphabetic())
-                    .flat_map(|c| c.to_uppercase()));
+                initials.extend(word.namecased
+                                    .chars()
+                                    .filter(|c| c.is_alphabetic())
+                                    .flat_map(|c| c.to_uppercase()));
 
                 surname_index_in_names -= 1;
                 suffix_index_in_names -= 1;
             } else if i < surname_index {
                 let prior_len = initials.len();
 
-                initials.extend(word.namecased.split('-')
-                    .filter_map(|w| w.chars().find(|c| c.is_alphabetic())));
+                initials.extend(word.namecased
+                                    .split('-')
+                                    .filter_map(|w| w.chars().find(|c| c.is_alphabetic())));
 
                 names.push(word.namecased.into_owned());
                 word_indices_in_initials.push((prior_len, initials.len()));
@@ -241,15 +243,15 @@ impl Name {
 
         loop {
             match initials.next() {
-                Some((i,initial)) => {
+                Some((i, initial)) => {
                     let mut next_name = None;
-                    if let Some(&&(j,k)) = known_name_indices.peek() {
+                    if let Some(&&(j, k)) = known_name_indices.peek() {
                         if j == i {
                             known_name_indices.next();
                             next_name = known_names.next();
 
                             // Handle case of hyphenated name for which we have 2+ initials
-                            for _ in j+1..k {
+                            for _ in j + 1..k {
                                 initials.next();
                             }
                         }
@@ -260,7 +262,7 @@ impl Name {
                     } else {
                         cb(NameWordOrInitial::Initial(initial), i);
                     }
-                },
+                }
                 None => {
                     break;
                 }
@@ -300,22 +302,24 @@ impl Name {
     pub fn display_full(&self) -> String {
         // This will be correct assuming only ASCII and only words, no initials,
         // no suffix, otherwise it'll be too short, which is ok
-        let min_len = self.words.iter().fold(self.words.len()-1, |sum,ref word| sum + word.len());
+        let min_len = self.words
+                          .iter()
+                          .fold(self.words.len() - 1, |sum, ref word| sum + word.len());
 
         let mut result = String::with_capacity(min_len);
 
-        self.with_each_given_name_or_initial( &mut |part, _|
+        self.with_each_given_name_or_initial(&mut |part, _| {
             match part {
                 NameWordOrInitial::Word(name) => {
                     result.push_str(name);
                     result.push(' ');
-                },
+                }
                 NameWordOrInitial::Initial(initial) => {
                     result.push(initial);
                     result.push_str(". ");
-                },
+                }
             }
-        );
+        });
 
         let surnames = self.surnames();
         if surnames.len() > 1 {

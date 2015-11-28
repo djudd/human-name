@@ -1,5 +1,5 @@
 use super::utils::*;
-use super::{Name,NameWordOrInitial};
+use super::{Name, NameWordOrInitial};
 use unicode_segmentation::UnicodeSegmentation;
 
 pub const MIN_SURNAME_CHAR_MATCH: usize = 4;
@@ -57,8 +57,8 @@ impl Name {
     pub fn consistent_with(&self, other: &Name) -> bool {
         // Order matters, both for efficiency (initials check is the fastest,
         // coincidentally-identical surnames are less likely than for given names),
-        // and for correctness (the given/middle names check assumes a positive result
-        // for the middle initials check)
+        // and for correctness (the given/middle names check assumes a positive
+        // result for the middle initials check)
         self.initials_consistent(other) &&
         self.surname_consistent(other) &&
         self.given_and_middle_names_consistent(other) &&
@@ -78,8 +78,8 @@ impl Name {
             let their_middle = other.middle_initials();
 
             my_middle.is_none() || their_middle.is_none() ||
-                my_middle.unwrap().contains(their_middle.unwrap()) ||
-                their_middle.unwrap().contains(my_middle.unwrap())
+            my_middle.unwrap().contains(their_middle.unwrap()) ||
+            their_middle.unwrap().contains(my_middle.unwrap())
         } else if self.goes_by_middle_name() {
             // Otherwise, we stop requiring the first initial to be the same,
             // because it might have been included in one context and omitted
@@ -142,8 +142,8 @@ impl Name {
                             // Prefix match; continue
                             if my_char.is_none() && their_initials.peek().is_none() {
                                 // We'll only use this when the name with fewer words
-                                // (theirs) is out, but the last matching part of
-                                // the name with more words (ours) was only a prefix
+                                // (theirs) is out of words, but the last matching part
+                                // of the name with more words (ours) was only a prefix
                                 // (see comment below)
                                 suffix_for_prior_prefix_match = Some(&$their_word[matched..]);
                             }
@@ -164,6 +164,9 @@ impl Name {
                 // word was just a prefix of their prior word, require our current
                 // word to match the rest of their prior word (to catch cases
                 // like Jinli == Jin-Li == Jin Li, != Jin Yi).
+                //
+                // This logic is imperfect in the presence of middle initials,
+                // but that's an edge case to an edge case.
                 if let NameWordOrInitial::Word(my_word) = part {
                     require_word_match!(my_word, suffix_for_prior_prefix_match.unwrap());
                 }
@@ -217,17 +220,15 @@ impl Name {
     }
 
     fn surname_consistent(&self, other: &Name) -> bool {
-        let mut my_words = self
-            .surnames()
-            .iter()
-            .flat_map(|w| w.unicode_words() )
-            .rev();
+        let mut my_words = self.surnames()
+                               .iter()
+                               .flat_map(|w| w.unicode_words())
+                               .rev();
 
-        let mut their_words = other
-            .surnames()
-            .iter()
-            .flat_map(|w| w.unicode_words() )
-            .rev();
+        let mut their_words = other.surnames()
+                                   .iter()
+                                   .flat_map(|w| w.unicode_words())
+                                   .rev();
 
         let mut my_word = my_words.next();
         let mut their_word = their_words.next();
@@ -311,10 +312,10 @@ impl<'a> NameWordOrInitial<'a> {
         match self {
             &NameWordOrInitial::Word(word) => {
                 word.chars().nth(0).unwrap()
-            },
+            }
             &NameWordOrInitial::Initial(initial) => {
                 initial
-            },
+            }
         }
     }
 }

@@ -126,7 +126,9 @@ impl <'a>NamePart<'a> {
             } else {
                 Category::Initials
             }
-        } else if word.chars().filter(|c| !c.is_alphabetic() && !is_combining(*c)).count() > 2 {
+        } else if word.chars()
+                              .filter(|c| !c.is_alphabetic() && !is_combining(*c))
+                              .count() > 2 {
             Category::Other
         } else if is_missing_vowels(word) {
             if trust_capitalization &&

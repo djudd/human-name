@@ -43,7 +43,8 @@ impl PartialEq for Name {
 impl Hash for Name {
     fn hash<H: Hasher>(&self, state: &mut H) {
         let surname_chars = self.surnames().iter().flat_map(|w| w.chars()).rev();
-        for c in surname_chars.filter_map(lowercase_if_alpha).take(comparison::MIN_SURNAME_CHAR_MATCH) {
+        for c in surname_chars.filter_map(lowercase_if_alpha)
+                              .take(comparison::MIN_SURNAME_CHAR_MATCH) {
             c.hash(state);
         }
     }

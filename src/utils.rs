@@ -3,7 +3,8 @@ use unicode_normalization::char::canonical_combining_class;
 use unicode_normalization::UnicodeNormalization;
 
 const VOWELS: [char; 12] = ['a', 'e', 'i', 'o', 'u', 'y', 'A', 'E', 'I', 'O', 'U', 'Y'];
-const HYPHENS: [char; 11] = ['-', '\u{2010}', '‑', '‒','–', '—', '―', '−','－','﹘','﹣'];
+const HYPHENS: [char; 11] = ['-', '\u{2010}', '‑', '‒', '–', '—', '―', '−', '－',
+                             '﹘', '﹣'];
 
 pub fn is_mixed_case(s: &str) -> bool {
     let mut has_lowercase = false;
@@ -60,16 +61,15 @@ pub fn capitalize_and_normalize(word: &str) -> String {
 
     word.chars()
         .filter_map(|c| {
-            let result =
-                if HYPHENS.contains(&c) {
-                    Some('-')
-                } else if !c.is_alphanumeric() {
-                    Some(c)
-                } else if capitalize_next {
-                    c.to_uppercase().next()
-                } else {
-                    c.to_lowercase().next()
-                };
+            let result = if HYPHENS.contains(&c) {
+                Some('-')
+            } else if !c.is_alphanumeric() {
+                Some(c)
+            } else if capitalize_next {
+                c.to_uppercase().next()
+            } else {
+                c.to_lowercase().next()
+            };
 
             capitalize_next = !c.is_alphanumeric() && !is_combining(c);
 
