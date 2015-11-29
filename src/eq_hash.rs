@@ -5,7 +5,7 @@ use super::utils::lowercase_if_alpha;
 
 /// Might this name represent the same person as another name?
 ///
-/// # WARNING
+/// ### WARNING
 ///
 /// This is technically an invalid implementation of PartialEq because it is
 /// not transitive - "J. Doe" == "Jane Doe", and "J. Doe" == "John Doe", but
@@ -22,7 +22,7 @@ impl PartialEq for Name {
 /// Implements a hash for a name that is always identical for two names that
 /// may be equal.
 ///
-/// # WARNING
+/// ### WARNING
 ///
 /// This hash function is prone to collisions!
 ///

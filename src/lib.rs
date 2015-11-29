@@ -1,3 +1,7 @@
+//! A library for parsing and comparing human names.
+//!
+//! See the documentation of the `Name` struct for details.
+
 #![doc(html_root_url = "https://djudd.github.io/human-name/")]
 
 #![feature(drain)]
@@ -28,6 +32,23 @@ use std::borrow::Cow;
 use itertools::Itertools;
 use utils::is_mixed_case;
 
+/// Represents a parsed human name.
+///
+/// Guaranteed to contain (what we think is) a surname, a first initial, and
+/// nothing more. May also contain given & middle names, middle initials, and/or
+/// a generational suffix.
+///
+/// Construct a Name using `parse`:
+///
+/// ```
+/// use human_name::Name;
+///
+/// let name = Name::parse("Jane Doe").unwrap();
+/// ```
+///
+/// Once you have a Name, you may extract is components, convert it to JSON,
+/// or compare it with another Name to see if they are consistent with representing
+/// the same person (see docs on `consistent_with` for details).
 pub struct Name {
     words: Vec<String>,
     surname_index: usize,
@@ -36,7 +57,7 @@ pub struct Name {
     word_indices_in_initials: Vec<(usize, usize)>,
 }
 
-pub enum NameWordOrInitial<'a> {
+enum NameWordOrInitial<'a> {
     Word(&'a str),
     Initial(char),
 }
