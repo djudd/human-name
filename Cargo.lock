@@ -3,8 +3,8 @@ name = "human_name"
 version = "0.0.1"
 dependencies = [
  "itertools 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "phf 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "phf_macros 0.7.8 (git+https://github.com/djudd/rust-phf?branch=rustc-plugin-rename)",
+ "phf 0.7.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "phf_macros 0.7.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.16 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-normalization 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-segmentation 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -31,38 +31,33 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "phf"
-version = "0.7.8"
+version = "0.7.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "phf_shared 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "phf_shared 0.7.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "phf_generator"
-version = "0.7.8"
-source = "git+https://github.com/djudd/rust-phf?branch=rustc-plugin-rename#ba8d7019599cb779b9f7ab983f6cc2aa4f422991"
+version = "0.7.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "phf_shared 0.7.8 (git+https://github.com/djudd/rust-phf?branch=rustc-plugin-rename)",
+ "phf_shared 0.7.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.12 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "phf_macros"
-version = "0.7.8"
-source = "git+https://github.com/djudd/rust-phf?branch=rustc-plugin-rename#ba8d7019599cb779b9f7ab983f6cc2aa4f422991"
+version = "0.7.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "phf_generator 0.7.8 (git+https://github.com/djudd/rust-phf?branch=rustc-plugin-rename)",
- "phf_shared 0.7.8 (git+https://github.com/djudd/rust-phf?branch=rustc-plugin-rename)",
+ "phf_generator 0.7.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "phf_shared 0.7.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "phf_shared"
-version = "0.7.8"
-source = "git+https://github.com/djudd/rust-phf?branch=rustc-plugin-rename#ba8d7019599cb779b9f7ab983f6cc2aa4f422991"
-
-[[package]]
-name = "phf_shared"
-version = "0.7.8"
+version = "0.7.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
