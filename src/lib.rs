@@ -6,6 +6,7 @@
 
 #![feature(drain)]
 #![feature(plugin)]
+#![feature(libc)]
 #![plugin(phf_macros)]
 
 extern crate phf;
@@ -24,6 +25,8 @@ mod namepart;
 mod parse;
 mod comparison;
 mod serialization;
+
+pub mod external;
 
 #[cfg(feature = "name_eq_hash")]
 mod eq_hash;

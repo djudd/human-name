@@ -25,3 +25,7 @@ debug = true
 [[bin]]
 name = "human_name"
 doc = false
+
+[lib]
+name = "human_name"
+crate-type = ["rlib", "dylib"]
