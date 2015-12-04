@@ -30,4 +30,5 @@ deploy:
     - target/release/human_name
   skip_cleanup: true
   on:
-    tags: true
+    branch: master
+    rust: nightly
