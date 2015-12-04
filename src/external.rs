@@ -1,10 +1,10 @@
 extern crate libc;
 
 use self::libc::c_char;
-use std::ffi::{CString,CStr};
+use std::ffi::{CString, CStr};
 use std::mem;
 use std::ptr;
-use std::hash::{Hash,Hasher,SipHasher};
+use std::hash::{Hash, Hasher, SipHasher};
 use super::Name;
 
 macro_rules! str_to_char_star {
@@ -28,9 +28,7 @@ macro_rules! option_str_to_char_star {
 
 #[no_mangle]
 pub extern "C" fn human_name_parse(input: *const libc::c_char) -> Option<Box<Name>> {
-    let s = unsafe {
-        CStr::from_ptr(input).to_string_lossy()
-    };
+    let s = unsafe { CStr::from_ptr(input).to_string_lossy() };
     Name::parse(&*s).map(|n| Box::new(n))
 }
 
