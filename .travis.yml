@@ -3,6 +3,9 @@ rust:
 - stable
 - beta
 - nightly
+os:
+- linux
+- osx
 matrix:
   # We depend on phf's compiler plugin & plugins are not yet stable
   allow_failures:
@@ -27,6 +30,7 @@ deploy:
   api_key: $GH_TOKEN
   file:
     - target/release/libhuman_name.so
+    - target/release/libhuman_name.dylib
     - target/release/human_name
   skip_cleanup: true
   on:
