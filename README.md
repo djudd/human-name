@@ -105,7 +105,7 @@ Jay Smith
 
 # Bindings in other languages
 
-Ruby bindings using the `ffi` gem are available at (github.com/djudd/human-name-rb)[https://github.com/djudd/human-name-rb].
+Ruby bindings using the `ffi` gem are available at [github.com/djudd/human-name-rb](https://github.com/djudd/human-name-rb)
 
 Python bindings are planned, but not yet available.
 
@@ -118,8 +118,8 @@ Inspiration, heuristics, and test cases were taken from:
 * [`namae` (Ruby)](https://github.com/berkmancenter/namae)
 * [`Lingua::EN::NameParse` (Perl)](http://search.cpan.org/~kimryan/Lingua-EN-NameParse-1.33/lib/Lingua/EN/NameParse.pm) (probably the original for some of the other ports as well)
 
-In terms of name formats, `human_name` covers all the cases these libraries do,
-and more. However, at the moment, unlike most of them, it throws away titles and
+In terms of name formats, `human_name` covers just about all the cases these libraries
+do, and more. However, at the moment, unlike most of them, it throws away titles and
 nicknames, rather than merely separating them.
 
 I wrote this mostly as a side project to learn Rust (so apologies for any
