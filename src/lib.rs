@@ -296,6 +296,18 @@ impl Name {
         }
     }
 
+    /// First initial (with period) and surname.
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let name = Name::parse("JOHN ALLEN Q DE LA MACDONALD JR").unwrap();
+    /// assert_eq!("J. de la MacDonald", name.display_initial_surname());
+    /// ```
+    pub fn display_initial_surname(&self) -> String {
+        format!("{}. {}", self.first_initial(), self.surname())
+    }
+
     /// Given name and surname, if given name is known, otherwise first initial
     /// and surname.
     ///
@@ -303,17 +315,51 @@ impl Name {
     /// use human_name::Name;
     ///
     /// let name = Name::parse("JOHN ALLEN Q DE LA MACDONALD JR").unwrap();
-    /// assert_eq!("John de la MacDonald", name.display_short());
+    /// assert_eq!("John de la MacDonald", name.display_first_last());
     /// ```
-    pub fn display_short(&self) -> String {
+    pub fn display_first_last(&self) -> String {
         match self.given_name() {
             Some(ref name) => {
                 format!("{} {}", name, self.surname())
             }
             None => {
-                format!("{}. {}", self.first_initial(), self.surname())
+                self.display_initial_surname()
             }
         }
+    }
+
+    /// Number of bytes in the full name as UTF-8 in NFKD normal form, including
+    /// spaces and punctuation.
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let short_name = Name::parse("John Doe").unwrap();
+    /// assert_eq!("John Doe".len(), short_name.byte_len());
+    ///
+    /// let long_name = Name::parse("JOHN ALLEN Q DE LA MACDÖNALD JR").unwrap();
+    /// assert_eq!("John Allen Q. de la MacDönald, Jr.".len(), long_name.byte_len());
+    /// ```
+    pub fn byte_len(&self) -> usize {
+        // Words plus spaces
+        let mut len = self.words
+                          .iter()
+                          .fold(self.words.len() - 1, |sum, ref word| sum + word.len());
+
+        if self.suffix_index < self.words.len() {
+            len += 1; // Comma
+        }
+
+        let extra_initials = self.initials.chars().count() - self.surname_index;
+        if extra_initials > 0 {
+            len += self.initials.len() - self.words[0..self.surname_index]
+                .iter()
+                .fold(0, |sum, ref word| sum + word.chars().nth(0).unwrap().len_utf8());
+
+            len += 2 * extra_initials; // Period and space for each initial
+        }
+
+        len
     }
 
     /// The full name, or as much of it as was preserved from the input,
@@ -326,13 +372,7 @@ impl Name {
     /// assert_eq!("John Allen Q. de la MacDonald, Jr.", name.display_full());
     /// ```
     pub fn display_full(&self) -> String {
-        // This will be correct assuming only ASCII and only words, no initials,
-        // no suffix, otherwise it'll be too short, which is ok
-        let min_len = self.words
-                          .iter()
-                          .fold(self.words.len() - 1, |sum, ref word| sum + word.len());
-
-        let mut result = String::with_capacity(min_len);
+        let mut result = String::with_capacity(self.byte_len());
 
         self.with_each_given_name_or_initial(&mut |part| {
             match part {

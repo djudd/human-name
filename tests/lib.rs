@@ -121,7 +121,7 @@ fn unparseable() {
         assert!(result.is_none(),
                 "'Parsed' junk name: '{}' as '{}'",
                 line,
-                result.unwrap().display_short());
+                result.unwrap().display_first_last());
 
         writeln!(&mut std::io::stderr(), "Correctly discarded '{}'", line).ok().unwrap();
     }

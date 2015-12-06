@@ -99,11 +99,21 @@ pub extern "C" fn human_name_suffix(name: &Name) -> *const c_char {
 }
 
 #[no_mangle]
-pub extern "C" fn human_name_display_short(name: &Name) -> *const c_char {
-    str_to_char_star!(name.display_short())
+pub extern "C" fn human_name_display_first_last(name: &Name) -> *const c_char {
+    str_to_char_star!(name.display_first_last())
+}
+
+#[no_mangle]
+pub extern "C" fn human_name_display_initial_surname(name: &Name) -> *const c_char {
+    str_to_char_star!(name.display_initial_surname())
 }
 
 #[no_mangle]
 pub extern "C" fn human_name_display_full(name: &Name) -> *const c_char {
     str_to_char_star!(name.display_full())
+}
+
+#[no_mangle]
+pub extern "C" fn human_name_byte_len(name: &Name) -> u32 {
+    name.byte_len() as u32
 }
