@@ -53,12 +53,18 @@ impl Name {
     /// are trying to figure out exactly where, e.g. a particular author's index
     /// in the list of authors of a co-authored paper.
     ///
+    /// However, currently we don't use Soundex or a nickname database or
+    /// anything like that, so "Dave" != "David" and "Hansen" != "Hanson".
+    ///
     #[cfg_attr(rustfmt, rustfmt_skip)]
     pub fn consistent_with(&self, other: &Name) -> bool {
         // Order matters, both for efficiency (initials check is the fastest,
         // coincidentally-identical surnames are less likely than for given names),
         // and for correctness (the given/middle names check assumes a positive
         // result for the middle initials check)
+        //
+        // TODO See if we can add any rules from https://github.com/brianary/Lingua-EN-MatchNames/blob/master/MatchNames.pm
+        // without excessive false positives, or breaking hashes.
         self.initials_consistent(other) &&
         self.surname_consistent(other) &&
         self.given_and_middle_names_consistent(other) &&

@@ -1,3 +1,5 @@
+//! A C API for interacting with `Name` objects.
+
 extern crate libc;
 
 use self::libc::c_char;
