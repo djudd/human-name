@@ -30,8 +30,7 @@ deploy:
   api_key: $GH_TOKEN
   file_glob: true
   file:
-    - target/release/libhuman_name.*
-    - target/release/human_name
+    - target/release/*
   skip_cleanup: true
   on:
     branch: master
