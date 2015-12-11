@@ -352,9 +352,10 @@ impl Name {
 
         let extra_initials = self.initials.chars().count() - self.surname_index;
         if extra_initials > 0 {
-            len += self.initials.len() - self.words[0..self.surname_index]
-                .iter()
-                .fold(0, |sum, ref word| sum + word.chars().nth(0).unwrap().len_utf8());
+            len += self.initials.len() -
+                   self.words[0..self.surname_index]
+                       .iter()
+                       .fold(0, |sum, ref word| sum + word.chars().nth(0).unwrap().len_utf8());
 
             len += 2 * extra_initials; // Period and space for each initial
         }

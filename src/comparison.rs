@@ -1,4 +1,5 @@
 use super::utils::*;
+use super::nickname::are_matching_nicknames;
 use super::{Name, NameWordOrInitial};
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -41,10 +42,12 @@ impl Name {
     /// captures cases like "Jin Li"/"Jinli"/"Jin-Li", where the same name
     /// may be transliterated in different ways, as well as *some* nicknames).
     ///
+    /// We also use a small nickname database for given names.
+    ///
     /// # Limitations
     ///
-    /// There will be false positives "Jan Doe" is probably not "Jane Doe",
-    /// and false negatives "Dave Judd" might be "David Judd". And, of course,
+    /// There will be false positives ("Jan Doe" is probably not "Jane Doe"),
+    /// and false negatives ("Dave Judd" might be "David Judd"). And, of course,
     /// even identical names do not necessarily represent the same person.
     ///
     /// Given limited information, we err on the side of false positives. This
@@ -52,9 +55,6 @@ impl Name {
     /// reason to believe that a single individual's name appears twice, and we
     /// are trying to figure out exactly where, e.g. a particular author's index
     /// in the list of authors of a co-authored paper.
-    ///
-    /// However, currently we don't use Soundex or a nickname database or
-    /// anything like that, so "Dave" != "David" and "Hansen" != "Hanson".
     ///
     #[cfg_attr(rustfmt, rustfmt_skip)]
     pub fn consistent_with(&self, other: &Name) -> bool {
@@ -124,6 +124,7 @@ impl Name {
         let mut their_words = other.words[0..other.suffix_index].iter();
         let mut suffix_for_prior_prefix_match: Option<&str> = None;
         let mut consistency_refuted = false;
+        let mut looked_up_nicknames = false;
 
         self.with_each_given_name_or_initial(&mut |part| {
             macro_rules! require_word_match {
@@ -150,8 +151,10 @@ impl Name {
                             }
                             return;
                         } else if my_char != their_char {
-                            // Failed match; abort
-                            consistency_refuted = true;
+                            // Failed match; abort, but first, if we haven't before,
+                            // try nickname database
+                            consistency_refuted = looked_up_nicknames || !are_matching_nicknames($my_word, $their_word);
+                            looked_up_nicknames = true;
                             return;
                         } else {
                             matched += 1;
