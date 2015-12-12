@@ -1,5 +1,5 @@
 use super::utils::*;
-use super::nickname::are_matching_nicknames;
+use super::nickname::{are_matching_nicknames, is_possible_alt_initial};
 use super::{Name, NameWordOrInitial};
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -74,10 +74,24 @@ impl Name {
     fn initials_consistent(&self, other: &Name) -> bool {
         if self.goes_by_middle_name() == other.goes_by_middle_name() {
             // Normal case: neither goes by a middle name (as far as we know)
-            // or both do, so we require the first initial to be the same
-            // and one set of middle initials to equal or contain the other
+            // or both do, so we require the first initials to match and
+            // one set of middle initials to equal or contain the other
             if self.first_initial() != other.first_initial() {
-                return false;
+                let might_match_nickname = {
+                    match self.given_name() {
+                        Some(name) => is_possible_alt_initial(name, other.first_initial()),
+                        None => false,
+                    }
+                } || {
+                    match other.given_name() {
+                        Some(name) => is_possible_alt_initial(name, self.first_initial()),
+                        None => false,
+                    }
+                };
+
+                if !might_match_nickname {
+                    return false;
+                }
             }
 
             let my_middle = self.middle_initials();
@@ -91,7 +105,10 @@ impl Name {
             // because it might have been included in one context and omitted
             // elsewhere, but instead we assume that the name with the initial
             // prior to the middle name includes a full set of initials, so
-            // we require the other version to be equal or included
+            // we require the other version to be equal or included.
+            //
+            // We also don't support nicknames in this case, for simplicity and
+            // since we know they go by a middle name anyway.
             self.initials().contains(other.initials())
         } else {
             other.initials().contains(self.initials())

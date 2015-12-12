@@ -162,6 +162,6 @@ Ben Daniel Lund|Benjamin Gabriel Lund|!=
 Be Lund|Benjamin Lund|!=
 Dave Judd|David Judd|==
 Rick Allen|Richard Allen|==
-#Rick Allen|Dick Allen|==
+Rick Allen|Dick Allen|==
 Rick Allen|Rich Allen|==
 Rick Allen|Rachael Allen|!=

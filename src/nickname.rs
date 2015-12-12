@@ -100,10 +100,17 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
     Cow::Borrowed(input)
 }
 
+pub fn is_possible_alt_initial(possible_nick: &str, initial: char) -> bool {
+    if let Some(names) = NAMES_BY_NICK.get(possible_nick) {
+        names.iter().any(|n| n.starts_with(initial))
+    } else {
+        false
+    }
+}
+
 pub fn are_matching_nicknames(a: &str, b: &str) -> bool {
     macro_rules! have_prefix_match {
         ($a:expr, $b:expr) => { {
-            println!("comparing: {:?} * {:?}", $a, $b);
             let mut chars_a = $a.chars().filter_map(lowercase_if_alpha);
             let mut chars_b = $b.chars().filter_map(lowercase_if_alpha);
             let result;
