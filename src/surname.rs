@@ -55,6 +55,7 @@ static SURNAME_PREFIXES: phf::Set<&'static str> = phf_set! {
     "Do",
     "Dos",
     "Du",
+    "El",
     "Ibn",
     "La",
     "Le",
