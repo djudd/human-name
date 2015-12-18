@@ -2,9 +2,8 @@ use std::ascii::AsciiExt;
 use unicode_normalization::char::canonical_combining_class;
 use unicode_normalization::UnicodeNormalization;
 
-const VOWELS: [char; 12] = ['a', 'e', 'i', 'o', 'u', 'y', 'A', 'E', 'I', 'O', 'U', 'Y'];
-const HYPHENS: [char; 11] = ['-', '\u{2010}', '‑', '‒', '–', '—', '―', '−', '－',
-                             '﹘', '﹣'];
+const VOWELS: &'static str = "aeiouyAEIOUY";
+const HYPHENS: &'static str = "-\u{2010}‑‒–—―−－﹘﹣";
 
 pub fn is_mixed_case(s: &str) -> bool {
     let mut has_lowercase = false;
@@ -61,7 +60,7 @@ pub fn capitalize_and_normalize(word: &str) -> String {
 
     word.chars()
         .filter_map(|c| {
-            let result = if HYPHENS.contains(&c) {
+            let result = if HYPHENS.contains(c) {
                 Some('-')
             } else if !c.is_alphanumeric() {
                 Some(c)
@@ -80,7 +79,14 @@ pub fn capitalize_and_normalize(word: &str) -> String {
 }
 
 pub fn is_missing_vowels(word: &str) -> bool {
-    word.chars().all(|c| !c.is_alphabetic() || (c.is_ascii() && !VOWELS.contains(&c)))
+    word.chars().all(|c| !c.is_alphabetic() || (c.is_ascii() && !VOWELS.contains(c)))
+}
+
+pub fn starts_with_consonant(word: &str) -> bool {
+    match word.chars().nth(0) {
+        Some(c) => c.is_alphabetic() && c.is_ascii() && (c == 'y' || c == 'Y' || !VOWELS.contains(c)),
+        None => false
+    }
 }
 
 pub fn has_sequential_alphas(word: &str) -> bool {
