@@ -113,3 +113,51 @@ pub fn has_sequential_alphas(word: &str) -> bool {
 
     false
 }
+
+#[macro_export]
+macro_rules! have_prefix_match {
+    ($a:expr, $b:expr) => { {
+        let mut chars_a = $a.chars().filter_map(lowercase_if_alpha);
+        let mut chars_b = $b.chars().filter_map(lowercase_if_alpha);
+        let result;
+
+        loop {
+            let a = chars_a.next();
+            let b = chars_b.next();
+
+            if a.is_none() || b.is_none() {
+                result = true;
+                break;
+            } else if a != b {
+                result = false;
+                break;
+            }
+        }
+
+        result
+    } }
+}
+
+#[macro_export]
+macro_rules! is_suffix_of {
+    ($needle:expr, $haystack:expr) => { {
+        let mut n_chars= $needle.chars().rev().filter_map(lowercase_if_alpha);
+        let mut h_chars = $haystack.chars().rev().filter_map(lowercase_if_alpha);
+        let result;
+
+        loop {
+            let n = n_chars.next();
+            let h = h_chars.next();
+
+            if n.is_none() {
+                result = true;
+                break;
+            } else if n != h {
+                result = false;
+                break;
+            }
+        }
+
+        result
+    } }
+}

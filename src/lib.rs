@@ -15,6 +15,7 @@ extern crate unicode_segmentation;
 extern crate unicode_normalization;
 extern crate rustc_serialize;
 
+#[macro_use]
 mod utils;
 mod suffix;
 mod nickname;

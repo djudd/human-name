@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::iter;
 use phf;
 use super::utils::*;
 
@@ -100,58 +101,79 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
     Cow::Borrowed(input)
 }
 
-pub fn is_possible_alt_initial(possible_nick: &str, initial: char) -> bool {
-    if let Some(names) = NAMES_BY_NICK.get(possible_nick) {
-        names.iter().any(|n| n.starts_with(initial))
-    } else {
-        false
+struct AlternativeNames<'a> {
+    name: &'a str,
+    direct_alternatives: Option<&'a phf::Set<&'static str>>,
+    prefix_alternatives: Option<&'a phf::Set<&'static str>>,
+}
+
+impl <'a>AlternativeNames<'a> {
+    pub fn for_name(name: &'a str) -> AlternativeNames<'a> {
+        AlternativeNames {
+            name: name,
+            direct_alternatives: NAMES_BY_IRREGULAR_NICK.get(name),
+            prefix_alternatives: {
+                if name.len() >= 4 && (name.ends_with("ie") || name.ends_with("ey")) {
+                    NAMES_BY_NICK_PREFIX.get(&name[0..name.len() - 2])
+                } else if name.len() >= 3 && name.ends_with('y') {
+                    NAMES_BY_NICK_PREFIX.get(&name[0..name.len() - 1])
+                } else {
+                    None
+                }
+            },
+        }
+    }
+
+    pub fn has_alternatives(&self) -> bool {
+        self.direct_alternatives.is_some() || self.prefix_alternatives.is_some()
+    }
+
+    pub fn iter_with_original(&self) -> AltNamesIter {
+        AltNamesIter {
+            name_iter: iter::once(self.name),
+            direct_alts_iter: self.direct_alternatives.map(|names| names.iter()),
+            prefix_alts_iter: self.prefix_alternatives.map(|names| names.iter()),
+        }
+    }
+
+    pub fn iter_without_original(&self) -> iter::Skip<AltNamesIter> {
+        self.iter_with_original().skip(1)
     }
 }
 
-macro_rules! have_prefix_match {
-    ($a:expr, $b:expr) => { {
-        let mut chars_a = $a.chars().filter_map(lowercase_if_alpha);
-        let mut chars_b = $b.chars().filter_map(lowercase_if_alpha);
-        let result;
-
-        loop {
-            let a = chars_a.next();
-            let b = chars_b.next();
-
-            if a.is_none() || b.is_none() {
-                result = true;
-                break;
-            } else if a != b {
-                result = false;
-                break;
-            }
-        }
-
-        result
-    } }
+struct AltNamesIter<'a> {
+    name_iter: iter::Once<&'a str>,
+    direct_alts_iter: Option<phf::set::Iter<'a, &'static str>>,
+    prefix_alts_iter: Option<phf::set::Iter<'a, &'static str>>,
 }
 
-macro_rules! is_suffix {
-    ($needle:expr, $haystack:expr) => { {
-        let mut n_chars= $needle.chars().rev().filter_map(lowercase_if_alpha);
-        let mut h_chars = $haystack.chars().rev().filter_map(lowercase_if_alpha);
-        let result;
+impl <'a>Iterator for AltNamesIter<'a> {
+    type Item = &'a str;
 
-        loop {
-            let n = n_chars.next();
-            let h = h_chars.next();
+    fn next(&mut self) -> Option<&'a str> {
+        if let Some(name) = self.name_iter.next() {
+            return Some(name);
+        }
 
-            if n.is_none() {
-                result = true;
-                break;
-            } else if n != h {
-                result = false;
-                break;
+        if let Some(ref mut iter) = self.direct_alts_iter {
+            if let Some(name) = iter.next() {
+                return Some(name);
             }
         }
 
-        result
-    } }
+        if let Some(ref mut iter) = self.prefix_alts_iter {
+            if let Some(name) = iter.next() {
+                return Some(name);
+            }
+        }
+
+        None
+    }
+}
+
+pub fn is_possible_alt_initial(possible_nick: &str, initial: char) -> bool {
+    let alts = AlternativeNames::for_name(possible_nick);
+    alts.has_alternatives() && alts.iter_without_original().any(|alt| alt.starts_with(initial))
 }
 
 pub fn are_matching_nicknames(a: &str, b: &str) -> bool {
@@ -162,29 +184,31 @@ pub fn are_matching_nicknames(a: &str, b: &str) -> bool {
         return true;
     }
 
-    if let Some(names) = NAMES_BY_NICK.get(a) {
-        if names.iter().any(|n| have_prefix_match!(n, b)) {
-            return true;
-        } else if let Some(more_names) = NAMES_BY_NICK.get(b) {
-            return more_names.iter().any(|n| {
-                have_prefix_match!(n, a) || names.iter().any(|m| have_prefix_match!(n, m))
-            });
-        }
-    } else if let Some(names) = NAMES_BY_NICK.get(b) {
-        return names.iter().any(|n| have_prefix_match!(n, a));
-    }
+    let a_alts = AlternativeNames::for_name(a);
+    let b_alts = AlternativeNames::for_name(b);
 
-    false
+    if a_alts.has_alternatives() || b_alts.has_alternatives() {
+        a_alts.iter_with_original().any(|a_alt| {
+            b_alts.iter_with_original().any(|b_alt| have_prefix_match!(a_alt, b_alt))
+        })
+    } else {
+        false
+    }
 }
 
 pub fn matches_without_diminutive(a: &str, b: &str) -> bool {
-    if a.len() > 2 && (a.ends_with('y') || a.ends_with('e')) && have_prefix_match!(a[0..a.len()-1], b) {
+    if a.len() > 2 && b.len() >= a.len() - 1 && (a.ends_with('y') || a.ends_with('e')) &&
+       have_prefix_match!(a[0..a.len() - 1], b) {
         true
-    } else if a.len() > 4 && a.ends_with("ie") && have_prefix_match!(a[0..a.len()-2], b) {
+    } else if a.len() > 4 && b.len() >= a.len() - 2 && (a.ends_with("ie") || a.ends_with("ey")) &&
+       have_prefix_match!(a[0..a.len() - 2], b) {
         true
-    } else if a.len() > 5 && b.ends_with('a') && (a.ends_with("ita") || a.ends_with("ina")) && have_prefix_match!(a[0..a.len()-3], b) {
+    } else if a.len() > 5 && b.len() >= a.len() - 3 && b.ends_with('a') &&
+       (a.ends_with("ita") || a.ends_with("ina")) &&
+       have_prefix_match!(a[0..a.len() - 3], b) {
         true
-    } else if a.len() > 5 && b.ends_with('o') && a.ends_with("ito") && have_prefix_match!(a[0..a.len()-3], b) {
+    } else if a.len() > 5 && b.len() >= a.len() - 3 && b.ends_with('o') && a.ends_with("ito") &&
+       have_prefix_match!(a[0..a.len() - 3], b) {
         true
     } else {
         false
@@ -192,14 +216,17 @@ pub fn matches_without_diminutive(a: &str, b: &str) -> bool {
 }
 
 pub fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
-    if needle.len() == haystack.len() - 1 && !starts_with_consonant(haystack) && is_suffix!(needle, haystack) {
+    if needle.len() == haystack.len() - 1 && !starts_with_consonant(haystack) &&
+       is_suffix_of!(needle, haystack) {
         true
     } else if haystack.len() < 4 || needle.len() < 2 || needle.len() > haystack.len() - 2 {
         false
     } else {
-        starts_with_consonant(needle) && is_suffix!(needle, haystack)
+        starts_with_consonant(needle) && is_suffix_of!(needle, haystack)
     }
 }
+
+
 
 #[cfg(test)]
 mod tests {
@@ -209,30 +236,356 @@ mod tests {
     fn nick_and_name() {
         assert!(are_matching_nicknames("Dave", "David"));
         assert!(are_matching_nicknames("David", "Dave"));
+        assert!(are_matching_nicknames("Kenneth", "Kenny"));
+        assert!(are_matching_nicknames("Kenny", "Kenneth"));
+        assert!(are_matching_nicknames("Edward", "Eddie"));
+        assert!(are_matching_nicknames("Eddie", "Edward"));
+        assert!(are_matching_nicknames("Dot", "Dorothy"));
+        assert!(are_matching_nicknames("Dorothy", "Dot"));
+        assert!(are_matching_nicknames("Leroy", "Roy"));
+        assert!(are_matching_nicknames("Roy", "Leroy"));
     }
 
     #[test]
     fn matching_nicks() {
         assert!(are_matching_nicknames("Trisha", "Trix"));
         assert!(are_matching_nicknames("Trix", "Trisha"));
+        assert!(are_matching_nicknames("Kenny", "Ken"));
+        assert!(are_matching_nicknames("Ken", "Kenny"));
+        assert!(are_matching_nicknames("Ned", "Eddie"));
+        assert!(are_matching_nicknames("Eddie", "Ned"));
+        assert!(are_matching_nicknames("Davy", "Dave"));
+        assert!(are_matching_nicknames("Dave", "Davy"));
+        // assert!(are_matching_nicknames("Lonzo", "Al"));
+        // assert!(are_matching_nicknames("Al", "Lonzo"));
+        assert!(are_matching_nicknames("Lon", "Al")); // Alonzo
+        assert!(are_matching_nicknames("Al", "Lon")); // Alonzo
     }
 
     #[test]
     fn nonmatching_nicks() {
         assert!(!are_matching_nicknames("Xina", "Xander"));
         assert!(!are_matching_nicknames("Xander", "Xina"));
+        assert!(!are_matching_nicknames("Andy", "Xander"));
+        assert!(!are_matching_nicknames("Xander", "Andy"));
     }
 
     #[test]
     fn nonmatching_names() {
         assert!(!are_matching_nicknames("Antoinette", "Luanne"));
         assert!(!are_matching_nicknames("Luanne", "Antoinette"));
+        assert!(!are_matching_nicknames("Jane", "John"));
+        assert!(!are_matching_nicknames("John", "Jane"));
     }
 }
 
 // There's no reason not to just use arrays for the values except that it won't compile :(
-pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_map! {
-    "Abbey" => phf_set! { "Abiodun" },
+pub static NAMES_BY_NICK_PREFIX: phf::Map<&'static str, phf::Set<&'static str>> = phf_map! {
+    "Babb" => phf_set! { "Barbara" },
+    "Bais" => phf_set! { "Elizabeth" },
+    "Baiss" => phf_set! { "Elizabeth" },
+    "Bald" => phf_set! { "Archibald" },
+    "Barber" => phf_set! { "Barbara" },
+    "Beck" => phf_set! { "Rebecca" },
+    "Beed" => phf_set! { "Obedience" },
+    "Bern" => phf_set! { "Barnabas" },
+    "Bess" => phf_set! { "Elizabeth" },
+    "Bets" => phf_set! { "Elizabeth" },
+    "Bett" => phf_set! { "Elizabeth" },
+    "Bill" => phf_set! { "William" },
+    "Bird" => phf_set! { "Roberta" },
+    "Bits" => phf_set! { "Elizabeth" },
+    "Bonn" => phf_set! { "Bonita" },
+    "Brad" => phf_set! { "Broderick" },
+    "Bradl" => phf_set! { "Bradford" },
+    "Cadd" => phf_set! { "Caroline" },
+    "Camm" => phf_set! { "Camille" },
+    "Cath" => phf_set! { "Katherine" },
+    "Cecel" => phf_set! { "Cecilia" },
+    "Creas" => phf_set! { "Lucretia" },
+    "Criss" => phf_set! { "Christiana" },
+    "Dac" => phf_set! { "Candace" },
+    "Dais" => phf_set! { "Margaret" },
+    "Darr" => phf_set! { "Darlene" },
+    "Deann" => phf_set! { "Geraldine" },
+    "Debb" => phf_set! { "Deborah" },
+    "Dell" => phf_set! { "Deliverance" },
+    "Dens" => phf_set! { "Prudence" },
+    "Desr" => phf_set! { "Desiree" },
+    "Dill" => phf_set! { "Deliverance" },
+    "Doll" => phf_set! { "Dorothy" },
+    "Donn" => phf_set! { "Donald" },
+    "Dos" => phf_set! { "Eudoris" },
+    "Doss" => phf_set! { "Eudoris" },
+    "Dott" => phf_set! { "Dorothy" },
+    "Edd" => phf_set! { "Edmund", "Edward", "Edgar" },
+    "Edn" => phf_set! { "Edith" },
+    "Eff" => phf_set! { "Euphemia" },
+    "Emm" => phf_set! { "Emeline" },
+    "Ern" => phf_set! { "Earnest" },
+    "Fall" => phf_set! { "Eliphalet" },
+    "Fan" => phf_set! { "Estefania" },
+    "Fann" => phf_set! { "Frances" },
+    "Ferb" => phf_set! { "Pharaba" },
+    "Finn" => phf_set! { "Phineas" },
+    "Floss" => phf_set! { "Florence" },
+    "Gats" => phf_set! { "Augustus" },
+    "Gatsb" => phf_set! { "Augustus" },
+    "Gatt" => phf_set! { "Gertrude" },
+    "Gen" => phf_set! { "Eugenia" },
+    "Genc" => phf_set! { "Genevieve" },
+    "Geoffr" => phf_set! { "Jefferson" },
+    "Ginn" => phf_set! { "Virginia" },
+    "Gus" => phf_set! { "Augusta" },
+    "Hall" => phf_set! { "Mahalla" },
+    "Happ" => phf_set! { "Karonhappuck" },
+    "Hatt" => phf_set! { "Harriet" },
+    "Heid" => phf_set! { "Adelaide" },
+    "Helm" => phf_set! { "Wilhelmina" },
+    "Hess" => phf_set! { "Hester" },
+    "Hil" => phf_set! { "Hiram" },
+    "Hitt" => phf_set! { "Mehitabel" },
+    "Horr" => phf_set! { "Horace" },
+    "Hum" => phf_set! { "Posthuma" },
+    "Igg" => phf_set! { "Ignatius" },
+    "Izz" => phf_set! { "Isidore", "Isabelle", "Isobel" },
+    "Jak" => phf_set! { "Jacqueline" },
+    "Jeffr" => phf_set! { "Jefferson" },
+    "Jimm" => phf_set! { "James" },
+    "Jin" => phf_set! { "Virginia" },
+    "Jinc" => phf_set! { "Jane" },
+    "Kar" => phf_set! { "Caroline" },
+    "Kas" => phf_set! { "Casey" },
+    "Kenj" => phf_set! { "Kendra" },
+    "Ker" => phf_set! { "Caroline" },
+    "Kerst" => phf_set! { "Christiana" },
+    "Kezz" => phf_set! { "Keziah" },
+    "Kimm" => phf_set! { "Kimberly" },
+    "Kiss" => phf_set! { "Calista" },
+    "Kits" => phf_set! { "Katherine" },
+    "Kitt" => phf_set! { "Katherine" },
+    "Krist" => phf_set! { "Christiana" },
+    "Kymberl" => phf_set! { "Kimberly" },
+    "Laff" => phf_set! { "Lafayette" },
+    "Lain" => phf_set! { "Elaine" },
+    "Lann" => phf_set! { "Roland" },
+    "Larr" => phf_set! { "Lawrence" },
+    "Laur" => phf_set! { "Lawrence" },
+    "Leaf" => phf_set! { "Relief" },
+    "Leff" => phf_set! { "Lafayette" },
+    "Lenn" => phf_set! { "Leonard" },
+    "Less" => phf_set! { "Celeste" },
+    "Lev" => phf_set! { "Aleva" },
+    "Liv" => phf_set! { "Olivia" },
+    "Lizz" => phf_set! { "Elizabeth" },
+    "Lod" => phf_set! { "Melody" },
+    "Lonn" => phf_set! { "Lawrence" },
+    "Lyd" => phf_set! { "Linda" },
+    "Lydd" => phf_set! { "Linda" },
+    "Madd" => phf_set! { "Madeline", "Madeleine" },
+    "Mais" => phf_set! { "Margaret" },
+    "Malach" => phf_set! { "Malcolm" },
+    "Mam" => phf_set! { "Mary" },
+    "Marger" => phf_set! { "Margaret" },
+    "Marjor" => phf_set! { "Margaret" },
+    "Maver" => phf_set! { "Mavine" },
+    "Midd" => phf_set! { "Madeline" },
+    "Morr" => phf_set! { "Seymour" },
+    "Moss" => phf_set! { "Maurice" },
+    "Nabb" => phf_set! { "Abigail" },
+    "Napp" => phf_set! { "Napoleon" },
+    "Nepp" => phf_set! { "Penelope" },
+    "Ness" => phf_set! { "Agnes" },
+    "Nibb" => phf_set! { "Isabella" },
+    "Nic" => phf_set! { "Vernisee" },
+    "Nikk" => phf_set! { "Nicolena" },
+    "Noll" => phf_set! { "Olivia" },
+    "Non" => phf_set! { "Joanna" },
+    "Norr" => phf_set! { "Honora" },
+    "Onn" => phf_set! { "Iona" },
+    "Oph" => phf_set! { "Theophilus" },
+    "Oss" => phf_set! { "Oswald" },
+    "Ozz" => phf_set! { "Oswald" },
+    "Padd" => phf_set! { "Patrick" },
+    "Parsun" => phf_set! { "Parthenia" },
+    "Pasoon" => phf_set! { "Parthenia" },
+    "Pedd" => phf_set! { "Experience" },
+    "Pegg" => phf_set! { "Margaret" },
+    "Pen" => phf_set! { "Philipina" },
+    "Penn" => phf_set! { "Penelope" },
+    "Perr" => phf_set! { "Pelegrine" },
+    "Phill" => phf_set! { "Adelphia" },
+    "Phoen" => phf_set! { "Tryphena" },
+    "Phos" => phf_set! { "Tryphosia" },
+    "Pok" => phf_set! { "Pocahontas" },
+    "Pon" => phf_set! { "Napoleon" },
+    "Priss" => phf_set! { "Priscilla" },
+    "Quill" => phf_set! { "Aquilla" },
+    "Rodd" => phf_set! { "Rodney" },
+    "Roll" => phf_set! { "Roland" },
+    "Rox" => phf_set! { "Roseanne" },
+    "Rub" => phf_set! { "Reuben" },
+    "Rust" => phf_set! { "Russell" },
+    "Sad" => phf_set! { "Sarah" },
+    "Sall" => phf_set! { "Sarah" },
+    "Samm" => phf_set! { "Samuel", "Samantha" },
+    "Scott" => phf_set! { "Prescott" },
+    "Sen" => phf_set! { "Eseneth" },
+    "Sharr" => phf_set! { "Sharon" },
+    "Sher" => phf_set! { "Sharon" },
+    "Sl" => phf_set! { "Sylvester" },
+    "Smitt" => phf_set! { "Smith" },
+    "Soll" => phf_set! { "Solomon" },
+    "Such" => phf_set! { "Susannah" },
+    "Surr" => phf_set! { "Sarah" },
+    "Suz" => phf_set! { "Susannah", "Susan" },
+    "Sydn" => phf_set! { "Sidney" },
+    "Tabb" => phf_set! { "Tabitha" },
+    "Tall" => phf_set! { "Natalie" },
+    "Tamm" => phf_set! { "Tamara" },
+    "Tell" => phf_set! { "Aristotle" },
+    "Tens" => phf_set! { "Hortense" },
+    "Tent" => phf_set! { "Content" },
+    "Tess" => phf_set! { "Theresa" },
+    "Then" => phf_set! { "Parthenia" },
+    "Tibb" => phf_set! { "Isabella" },
+    "Tic" => phf_set! { "Theresa" },
+    "Timm" => phf_set! { "Timothy" },
+    "Tipp" => phf_set! { "Tipton" },
+    "Tips" => phf_set! { "Tipton" },
+    "Tomm" => phf_set! { "Thomas" },
+    "Tor" => phf_set! { "Victoria" },
+    "Torr" => phf_set! { "Victoria" },
+    "Trac" => phf_set! { "Theresa" },
+    "Trud" => phf_set! { "Gertrude" },
+    "Valer" => phf_set! { "Valentina" },
+    "Vall" => phf_set! { "Valentina" },
+    "Vang" => phf_set! { "Evangeline" },
+    "Vann" => phf_set! { "Vanessa" },
+    "Verg" => phf_set! { "Virginia" },
+    "Vess" => phf_set! { "Sylvester" },
+    "Vic" => phf_set! { "Lewvisa" },
+    "Vin" => phf_set! { "Lavinia" },
+    "Vonn" => phf_set! { "Veronica" },
+    "Wend" => phf_set! { "Gwendolyn" },
+    "Zad" => phf_set! { "Isaiah" },
+    "Zadd" => phf_set! { "Arzada" },
+    "Zoll" => phf_set! { "Solomon" },
+    "Abb" => phf_set! { "Abigail", "Abner", "Absalom", "Abiodun" },
+    "Add" => phf_set! { "Adaline", "Adelaide", "Adelphia", "Agatha" },
+    "Agg" => phf_set! { "Agatha", "Agnes", "Augusta" },
+    "All" => phf_set! { "Aileen", "Alberta", "Alice", "Almena", "Alison" },
+    "Ann" => phf_set! { "Luann", "Maryanne" },
+    "Arr" => phf_set! { "Arabella", "Armena" },
+    "Benn" => phf_set! { "Benedict", "Benjamin", "Benedetta" },
+    "Berr" => phf_set! { "Barry", "Greenberry", "Littleberry" },
+    "Bert" => phf_set! { "Alberta", "Roberta" },
+    "Bidd" => phf_set! { "Bridget", "Obedience" },
+    "Bobb" => phf_set! { "Barbara", "Robert", "Roberta" },
+    "Brid" => phf_set! { "Bertha" },
+    "Call" => phf_set! { "Caldonia", "California", "Calpurnia", "Caroline" },
+    "Carr" => phf_set! { "Caroline", "Karonhappuck" },
+    "Cass" => phf_set! { "Alexandria", "Caroline", "Katherine" },
+    "Cind" => phf_set! { "Cynthia", "Luciana", "Lucinda" },
+    "Ciss" => phf_set! { "Cecilia", "Clarissa", "Frances", "Priscilla" },
+    "Conn" => phf_set! { "Conrad", "Constance", "Cornelius", "Cornelia", "Constanza" },
+    "Dann" => phf_set! { "Daniel", "Sheridan" },
+    "Dic" => phf_set! { "Diana", "Edith", "Eurydice", "Laodicia" },
+    "Dod" => phf_set! { "Delores", "Dorothy" },
+    "Ebb" => phf_set! { "Abel", "Ebenezer" },
+    "Ed" => phf_set! { "Adam" },
+    "El" => phf_set! { "Alice" },
+    "Ell" => phf_set! { "Alexandria", "Eleanor", "Elmira", "Elwood" },
+    "Els" => phf_set! { "Alice", "Elizabeth" },
+    "Emil" => phf_set! { "Amelia", "Emeline" },
+    "Ess" => phf_set! { "Estella", "Hester" },
+    "Ett" => phf_set! { "Carthaette", "Henrietta" },
+    "Frank" => phf_set! { "Francis", "Veronica", "Francesca" },
+    "Fredd" => phf_set! { "Alfred", "Alfreda", "Frederica", "Frederick", "Winifred" },
+    "Fron" => phf_set! { "Sophronia", "Veronica" },
+    "Gabb" => phf_set! { "Gabriel", "Gabrielle" },
+    "Gerr" => phf_set! { "Gerald", "Geraldine", "Gerard", "Gerardo" },
+    "Guss" => phf_set! { "Augusta", "Augustus" },
+    "Harr" => phf_set! { "Harold", "Henry" },
+    "Hett" => phf_set! { "Henrietta", "Hester", "Mehitabel" },
+    "Iss" => phf_set! { "Isabella", "Isidora" },
+    "Jack" => phf_set! { "Jacqueline", "Jaclyn", "Jacquelyn" },
+    "Jazz" => phf_set! { "Jazmin", "Jasmine" },
+    "Jenn" => phf_set! { "Eugenia", "Genevieve", "Jane", "Virginia" },
+    "Jerr" => phf_set! { "Gerald", "Geraldine", "Jeremiah" },
+    "Jins" => phf_set! { "Genevieve", "Jane" },
+    "Jod" => phf_set! { "Joanna", "Joseph", "Josephine" },
+    "Johnn" => phf_set! { "John", "Jonathan" },
+    "Lett" => phf_set! { "Charlotte", "Letitia" },
+    "Libb" => phf_set! { "Elizabeth", "Libuse" },
+    "Lidd" => phf_set! { "Elizabeth", "Linda" },
+    "Lind" => phf_set! { "Celinda", "Lyndon", "Melinda" },
+    "Loll" => phf_set! { "Charlotte", "Delores", "Lillian" },
+    "Lorr" => phf_set! { "Lauryn", "Lawrence", "Loretta" },
+    "Lott" => phf_set! { "Carlotta", "Charlotte" },
+    "Lynd" => phf_set! { "Linda" },
+    "Magg" => phf_set! { "Madeline", "Margaret" },
+    "Mand" => phf_set! { "Amanda", "Miranda" },
+    "Mann" => phf_set! { "Emanuel", "Manuel" },
+    "Mar" => phf_set! { "Maureen", "Miriam", "Mitzi", "Maura", "Moira" },
+    "Matt" => phf_set! { "Martha", "Matilda" },
+    "Mell" => phf_set! { "Amelia", "Melinda", "Permelia" },
+    "Merc" => phf_set! { "Mary" },
+    "Mick" => phf_set! { "Michael", "Michelle" },
+    "Mill" => phf_set! { "Amelia", "Armilda", "Camille", "Emeline", "Melissa", "Mildred", "Permelia" },
+    "Mim" => phf_set! { "Jemima", "Mary", "Mildred", "Miriam" },
+    "Mind" => phf_set! { "Arminda", "Melinda" },
+    "Minn" => phf_set! { "Almina", "Mary", "Minerva", "Wilhelmina" },
+    "Miss" => phf_set! { "Melissa", "Millicent" },
+    "Mitt" => phf_set! { "Mehitabel", "Submit" },
+    "Mitz" => phf_set! { "Mary", "Miriam" },
+    "Moll" => phf_set! { "Amalia", "Amelia", "Martha", "Mary" },
+    "Mont" => phf_set! { "Lamont" },
+    "Mor" => phf_set! { "Maurice", "Seymour" },
+    "Nanc" => phf_set! { "Agnes", "Anna" },
+    "Nann" => phf_set! { "Anna", "Hannah", "Nancy" },
+    "Natt" => phf_set! { "Asenath", "Natalie", "Nathaniel" },
+    "Neel" => phf_set! { "Cornelia", "Cornelius" },
+    "Nell" => phf_set! { "Cornelia", "Eleanor", "Helena" },
+    "Nerv" => phf_set! { "Manerva", "Minerva" },
+    "Nett" => phf_set! { "Antoinette", "Henrietta", "Jane", "Juanita", "Natalie", "Ninell", "Pernetta" },
+    "Nick" => phf_set! { "Nicholas", "Nicolena" },
+    "Oll" => phf_set! { "Oliver", "Olivia" },
+    "Pats" => phf_set! { "Martha", "Patricia", "Patrick" },
+    "Patt" => phf_set! { "Martha", "Matilda", "Parthenia", "Patience", "Patricia" },
+    "Phen" => phf_set! { "Josephine", "Parthenia", "Tryphena" },
+    "Poll" => phf_set! { "Mary", "Paulina" },
+    "Rand" => phf_set! { "Miranda" },
+    "Reen" => phf_set! { "Irene", "Maureen", "Sabrina" },
+    "Regg" => phf_set! { "Regina", "Reginald" },
+    "Renn" => phf_set! { "Irene", "Reginald" },
+    "Rich" => phf_set! { "Alderick", "Derrick" },
+    "Rick" => phf_set! { "Broderick", "Cedrick", "Eric", "Richard" },
+    "Rill" => phf_set! { "Aurelia", "Aurilla" },
+    "Robb" => phf_set! { "Robert", "Roberta" },
+    "Ronn" => phf_set! { "Aaron", "Cameron", "Ronald", "Veronica" },
+    "Ros" => phf_set! { "Euphrosina" },
+    "Sand" => phf_set! { "Alexander", "Alexandria" },
+    "Shell" => phf_set! { "Michelle", "Rachel", "Sheldon" },
+    "Sherr" => phf_set! { "Charlotte", "Shirley" },
+    "Sonn" => phf_set! { "Anderson", "Jefferson", "Judson" },
+    "Stac" => phf_set! { "Anastasia", "Eustacia" },
+    "Suk" => phf_set! { "Sarah", "Susannah" },
+    "Tedd" => phf_set! { "Edward", "Theodore" },
+    "Terr" => phf_set! { "Theresa" },
+    "Till" => phf_set! { "Matilda", "Temperance", "Tilford" },
+    "Ton" => phf_set! { "Anthony", "Antoinette", "Clifton", "Sheldon", "Antonio", "Antoni" },
+    "Triss" => phf_set! { "Beatrice", "Theresa" },
+    "Trix" => phf_set! { "Beatrice", "Patricia" },
+    "Vick" => phf_set! { "Veronica", "Victoria" },
+    "Vinn" => phf_set! { "Calvin", "Lavinia", "Vincent" },
+    "Will" => phf_set! { "Wilda", "Wilfred", "Wilhelmina" },
+    "Winn" => phf_set! { "Edwina", "Winfield", "Winifred" },
+    "Wood" => phf_set! { "Elwood" },
+};
+
+// There's no reason not to just use arrays for the values except that it won't compile :(
+pub static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_map! {
     "Abdo" => phf_set! { "Abdelrahman" },
     "Abertina" => phf_set! { "Alberta" },
     "Abiah" => phf_set! { "Abijah" },
@@ -262,14 +615,12 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Alex" => phf_set! { "Alejandro" },
     "Alexandra" => phf_set! { "Alexandria" },
     "Alexei" => phf_set! { "Alexander" },
-    "Alexey" => phf_set! { "Alexander" },
     "Alice" => phf_set! { "Alisha", "Alison" },
     "Alim" => phf_set! { "Salim" },
     "Alina" => phf_set! { "Alyna" },
     "Aline" => phf_set! { "Adaline", "Alline" },
     "Alla" => phf_set! { "Alexandria" },
     "Alle" => phf_set! { "Alessandra" },
-    "Ally" => phf_set! { "Alison" },
     "Alonzo" => phf_set! { "Alphonzo" },
     "Alphus" => phf_set! { "Alphinias" },
     "Amabel" => phf_set! { "Mehitabel" },
@@ -337,14 +688,12 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Bea" => phf_set! { "Blanche" },
     "Bear" => phf_set! { "Barry" },
     "Beck" => phf_set! { "Rebecca" },
-    "Becky" => phf_set! { "Rebeca" },
     "Bede" => phf_set! { "Obedience" },
     "Bela" => phf_set! { "William" },
     "Bell" => phf_set! { "Arabella", "Belinda" },
     "Bella" => phf_set! { "Mehitabel" },
     "Belle" => phf_set! { "Arabella", "Belinda", "Isabella", "Rosabella" },
     "Bennett" => phf_set! { "Benedict" },
-    "Benny" => phf_set! { "Benedetta", "Benjamin" },
     "Bernard" => phf_set! { "Barnabas" },
     "Bert" => phf_set! { "Alberta", "Elbertson", "Roberta" },
     "Bess" => phf_set! { "Elizabeth" },
@@ -416,8 +765,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Cliff" => phf_set! { "Clifton" },
     "Clo" => phf_set! { "Chloe" },
     "Clum" => phf_set! { "Columbus" },
-    "Connie" => phf_set! { "Constance", "Constanza" },
-    "Conny" => phf_set! { "Cornelia" },
     "Cono" => phf_set! { "Cornelius" },
     "Cora" => phf_set! { "Corinne" },
     "Crece" => phf_set! { "Lucretia" },
@@ -432,7 +779,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Danelle" => phf_set! { "Danielle" },
     "Danial" => phf_set! { "Daniel" },
     "Danni" => phf_set! { "Danielle" },
-    "Danny" => phf_set! { "Daniel" },
     "Darek" => phf_set! { "Dariusz" },
     "Daria" => phf_set! { "Dasha" },
     "Daz" => phf_set! { "Darren" },
@@ -491,8 +837,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Dyche" => phf_set! { "Aphrodite" },
     "Dyer" => phf_set! { "Jedediah", "Obadiah", "Zedediah" },
     "Eb" => phf_set! { "Abel" },
-    "Edd" => phf_set! { "Edmund", "Edward", "Edgar" },
-    "Eddie" => phf_set! { "Edmund", "Edward", "Edgar" },
     "Eddy" => phf_set! { "Reddy" },
     "Edgar" => phf_set! { "Edward" },
     "Edith" => phf_set! { "Adaline" },
@@ -513,16 +857,15 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Elicia" => phf_set! { "Alice" },
     "Elinamifia" => phf_set! { "Eleanor" },
     "Elis" => phf_set! { "Elizabeth" },
+    "Elisabeth" => phf_set! { "Elizabeth" },
     "Elisha" => phf_set! { "Alice" },
     "Elissa" => phf_set! { "Elizabeth" },
     "Ella" => phf_set! { "Eleanor", "Gabrielle", "Helena", "Luella" },
     "Ellen" => phf_set! { "Eleanor", "Helena", "Maryellen" },
     "Ellender" => phf_set! { "Helena" },
-    "Ellie" => phf_set! { "Eleanor" },
     "Ellis" => phf_set! { "Alice" },
     "Ells" => phf_set! { "Elwood" },
     "Elnora" => phf_set! { "Eleanor" },
-    "Elsie" => phf_set! { "Alice", "Elizabeth" },
     "Ema" => phf_set! { "Emma" },
     "Emiline" => phf_set! { "Emeline" },
     "Emm" => phf_set! { "Emeline" },
@@ -548,8 +891,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Fadi" => phf_set! { "Fahad" },
     "Faisal" => phf_set! { "Faysal" },
     "Fan" => phf_set! { "Frances" },
-    "Fanny" => phf_set! { "Frances" },
-    "Fany" => phf_set! { "Estefania" },
     "Farah" => phf_set! { "Farrah" },
     "Fate" => phf_set! { "Lafayette" },
     "Felicia" => phf_set! { "Felicity" },
@@ -565,7 +906,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Floss" => phf_set! { "Florence" },
     "Franco" => phf_set! { "Franko" },
     "Frank" => phf_set! { "Francis" },
-    "Frankie" => phf_set! { "Francesca", "Francis" },
     "Frankisek" => phf_set! { "Francis" },
     "Franklin" => phf_set! { "Francis" },
     "Franz" => phf_set! { "Francis", "Francesco" },
@@ -588,14 +928,12 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Gene" => phf_set! { "Eugenia" },
     "Geoff" => phf_set! { "Jefferson" },
     "Geri" => phf_set! { "Geraldine" },
-    "Gerry" => phf_set! { "Gerald", "Gerard", "Gerardo" },
     "Ghia" => phf_set! { "Nghia" },
     "Giang" => phf_set! { "Huong" },
     "Gib" => phf_set! { "Gilbert" },
     "Gigi" => phf_set! { "Gisele" },
     "Gina" => phf_set! { "Virginia" },
     "Ginger" => phf_set! { "Virginia" },
-    "Ginny" => phf_set! { "Virginia" },
     "Goes" => phf_set! { "Bagus" },
     "Gosia" => phf_set! { "Malgorzata" },
     "Gram" => phf_set! { "Graham" },
@@ -617,7 +955,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Hank" => phf_set! { "Harold", "Henrietta", "Henry" },
     "Hans" => phf_set! { "John" },
     "Harman" => phf_set! { "Herman" },
-    "Hattie" => phf_set! { "Harriet" },
     "Hebsabeth" => phf_set! { "Hepsabah" },
     "Heide" => phf_set! { "Adelaide" },
     "Helen" => phf_set! { "Aileen", "Elaine", "Eleanor" },
@@ -661,13 +998,10 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Isham" => phf_set! { "Hisham" },
     "Ivan" => phf_set! { "John" },
     "Ivi" => phf_set! { "Ivana" },
-    "Izzy" => phf_set! { "Isabelle", "Isobel" },
     "Jaap" => phf_set! { "Jacob" },
     "Jack" => phf_set! { "John" },
-    "Jackie" => phf_set! { "Jaclyn", "Jacquelyn", "Jacqueline" },
     "Jacklin" => phf_set! { "Jacqueline" },
     "Jacklyn" => phf_set! { "Jacqueline" },
-    "Jacky" => phf_set! { "Jaclyn", "Jacquelyn", "Jacqueline" },
     "Jaclin" => phf_set! { "Jacqueline" },
     "Jaclyn" => phf_set! { "Jacqueline" },
     "Jake" => phf_set! { "Jacob" },
@@ -677,14 +1011,12 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Jaroslaw" => phf_set! { "Jarosław" },
     "Jayce" => phf_set! { "Jane" },
     "Jayhugh" => phf_set! { "Jehu" },
-    "Jazz" => phf_set! { "Jazmin" },
-    "Jazzy" => phf_set! { "Jasmine" },
+    "Jazz" => phf_set! { "Jazmin", "Jasmine" },
     "Jean" => phf_set! { "Genevieve", "Jane", "Joanna", "John" },
     "Jeanne" => phf_set! { "Jane" },
     "Jedidiah" => phf_set! { "Jedediah" },
     "Jem" => phf_set! { "James" },
     "Jemma" => phf_set! { "Jemima" },
-    "Jerry" => phf_set! { "Jeremiah" },
     "Jill" => phf_set! { "Julia" },
     "Jim" => phf_set! { "James" },
     "Jitu" => phf_set! { "Jitendra" },
@@ -730,7 +1062,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Kez" => phf_set! { "Kerry" },
     "Khushi" => phf_set! { "Khushboo" },
     "Kid" => phf_set! { "Keziah" },
-    "Kimmy" => phf_set! { "Kimberley", "Kimberly" },
     "Kit" => phf_set! { "Christian", "Christopher", "Katherine" },
     "Kizza" => phf_set! { "Keziah" },
     "Knowell" => phf_set! { "Noel" },
@@ -752,7 +1083,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Latha" => phf_set! { "Hemal" },
     "Laura" => phf_set! { "Laurinda", "Loretta", "Lauri" },
     "Laurence" => phf_set! { "Lawrence" },
-    "Laurie" => phf_set! { "Lawrence" },
     "Lazar" => phf_set! { "Eleazer" },
     "Lb" => phf_set! { "Littleberry" },
     "Leafa" => phf_set! { "Relief" },
@@ -793,7 +1123,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Lissa" => phf_set! { "Larissa" },
     "Liz" => phf_set! { "Elizabeth" },
     "Liza" => phf_set! { "Adelaide", "Elizabeth" },
-    "Lizzy" => phf_set! { "Elizabeth" },
     "Lloyd" => phf_set! { "Floyd" },
     "Loenore" => phf_set! { "Leonora" },
     "Lois" => phf_set! { "Heloise", "Louise" },
@@ -805,7 +1134,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Lorne" => phf_set! { "Lawrence" },
     "Los" => phf_set! { "Angeles" },
     "Lotta" => phf_set! { "Charlotte" },
-    "Lottie" => phf_set! { "Charlotte" },
     "Lou" => phf_set! { "Luann", "Lucille", "Lucinda" },
     "Louann" => phf_set! { "Luann" },
     "Louanne" => phf_set! { "Luann" },
@@ -828,7 +1156,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Mabel" => phf_set! { "Mehitabel" },
     "Mac" => phf_set! { "Malcolm" },
     "Maciek" => phf_set! { "Maciej" },
-    "Maddy" => phf_set! { "Madeleine", "Madeline" },
     "Madeleine" => phf_set! { "Madeline" },
     "Madge" => phf_set! { "Madeline", "Magdelina", "Margaret" },
     "Magda" => phf_set! { "Madeline", "Magdelina" },
@@ -840,7 +1167,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Malgorzata" => phf_set! { "Małgorzata" },
     "Malik" => phf_set! { "Malick" },
     "Malu" => phf_set! { "Luiza" },
-    "Mandy" => phf_set! { "Amanda" },
     "Manh" => phf_set! { "Hung" },
     "Manu" => phf_set! { "Manoj", "Emmanuel", "Emanuela", "Emanuele" },
     "Manuel" => phf_set! { "Manolo" },
@@ -855,7 +1181,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Marisol" => phf_set! { "Marysol" },
     "Mark" => phf_set! { "Marcus", "Marco" },
     "Marx" => phf_set! { "Marques" },
-    "Mary" => phf_set! { "Maura", "Maureen", "Moira" },
     "Maryam" => phf_set! { "Mariam" },
     "Mat" => phf_set! { "Martha" },
     "Mathilda" => phf_set! { "Matilda" },
@@ -899,7 +1224,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Minerva" => phf_set! { "Manerva" },
     "Miriam" => phf_set! { "Mirian", "Mairim" },
     "Misra" => phf_set! { "Mishra" },
-    "Missy" => phf_set! { "Melissa" },
     "Mock" => phf_set! { "Democrates" },
     "Mohd" => phf_set! { "Mohamad", "Mohamed", "Mohammad", "Mohammed" },
     "Moll" => phf_set! { "Mary" },
@@ -955,7 +1279,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Ola" => phf_set! { "Aleksandra" },
     "Olga" => phf_set! { "Olia" },
     "Oliver" => phf_set! { "Oliveira" },
-    "Ollie" => phf_set! { "Oliver" },
     "Olph" => phf_set! { "Rudolphus" },
     "Ondra" => phf_set! { "Ondrej" },
     "Ono" => phf_set! { "Tono", "Margono", "Martono", "Hartono" },
@@ -975,7 +1298,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Pati" => phf_set! { "Patrycja" },
     "Pato" => phf_set! { "Patricio" },
     "Patricia" => phf_set! { "Patrick" },
-    "Patty" => phf_set! { "Patrizia" },
     "Pauli" => phf_set! { "Paula" },
     "Pawel" => phf_set! { "Paweł" },
     "Peg" => phf_set! { "Margaret" },
@@ -1016,7 +1338,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Ray" => phf_set! { "Regina" },
     "Reba" => phf_set! { "Rebecca" },
     "Refina" => phf_set! { "Rufina" },
-    "Reggie" => phf_set! { "Reginald" },
     "Regis" => phf_set! { "Reginaldo" },
     "Rena" => phf_set! { "Irene", "Maureen", "Sabrina" },
     "Renaldo" => phf_set! { "Reginald" },
@@ -1060,7 +1381,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Salmon" => phf_set! { "Solomon" },
     "Samantha" => phf_set! { "Samuel" },
     "Samson" => phf_set! { "Sampson" },
-    "Sammy" => phf_set! { "Samantha", "Samuel" },
     "Sandra" => phf_set! { "Alexandria" },
     "Sangi" => phf_set! { "Sangeetha" },
     "Sanz" => phf_set! { "Sanchez" },
@@ -1077,7 +1397,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Sharyn" => phf_set! { "Sharon" },
     "Shawn" => phf_set! { "Shaun" },
     "Shayne" => phf_set! { "Shaun" },
-    "Shelly" => phf_set! { "Michelle" },
     "Shelton" => phf_set! { "Sheldon" },
     "Sher" => phf_set! { "Sharon" },
     "Sheron" => phf_set! { "Sharon" },
@@ -1095,7 +1414,6 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Sis" => phf_set! { "Frances" },
     "Siti" => phf_set! { "Fatimah", "City" },
     "Siva" => phf_set! { "Shiva" },
-    "Sly" => phf_set! { "Sylvester" },
     "Smit" => phf_set! { "Mitchell" },
     "Sophia" => phf_set! { "Sophronia" },
     "Soren" => phf_set! { "Søren" },
@@ -1107,13 +1425,11 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Susi" => phf_set! { "Susan", "Susannah" },
     "Susana" => phf_set! { "Susannah" },
     "Suzanne" => phf_set! { "Susannah" },
-    "Suzy" => phf_set! { "Susan", "Susannah" },
     "Swene" => phf_set! { "Cyrenius" },
     "Syah" => phf_set! { "Firman" },
     "Sybrina" => phf_set! { "Sabrina" },
     "Syd" => phf_set! { "Sidney" },
     "Sylvanus" => phf_set! { "Sylvester" },
-    "Tabby" => phf_set! { "Tabitha" },
     "Tad" => phf_set! { "Thaddeus", "Theodore" },
     "Tamarra" => phf_set! { "Tamara" },
     "Tamzine" => phf_set! { "Thomasine" },
@@ -1136,16 +1452,13 @@ pub static NAMES_BY_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_m
     "Thursa" => phf_set! { "Theresa" },
     "Tiah" => phf_set! { "Azariah" },
     "Tick" => phf_set! { "Felicity" },
-    "Tilly" => phf_set! { "Matilda" },
     "Timi" => phf_set! { "Timea" },
     "Tina" => phf_set! { "Augusta", "Christiana", "Ernestine" },
     "Tish" => phf_set! { "Letitia", "Patricia" },
     "Tom" => phf_set! { "Thomas" },
     "Tomek" => phf_set! { "Tomasz" },
     "Tomi" => phf_set! { "Tamas", "Tomas" },
-    "Tommy" => phf_set! { "Thomas" },
     "Toni" => phf_set! { "Antonia" },
-    "Tony" => phf_set! { "Anthony", "Antonio", "Antoni" },
     "Trina" => phf_set! { "Katherine" },
     "Trish" => phf_set! { "Patricia" },
     "Trisha" => phf_set! { "Beatrice" },
