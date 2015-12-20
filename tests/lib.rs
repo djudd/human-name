@@ -151,6 +151,9 @@ fn equality() {
         let parsed_a = human_name::Name::parse(&a);
         let parsed_b = human_name::Name::parse(&b);
 
+        assert!(parsed_a.is_some(), "{} was not parsed", a);
+        assert!(parsed_b.is_some(), "{} was not parsed", b);
+
         if expect == "==" {
             assert!(parsed_a == parsed_b,
                     "{} should be equal to {} but was not!",
