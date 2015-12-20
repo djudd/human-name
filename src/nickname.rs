@@ -101,18 +101,18 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
     Cow::Borrowed(input)
 }
 
-struct AlternativeNames<'a> {
-    name: &'a str,
-    direct_alternatives: Option<&'a phf::Set<&'static str>>,
-    prefix_alternatives: Option<&'a phf::Set<&'static str>>,
+struct NameVariants<'a> {
+    original: &'a str,
+    direct_variants: Option<&'a phf::Set<&'static str>>,
+    prefix_variants: Option<&'a phf::Set<&'static str>>,
 }
 
-impl <'a>AlternativeNames<'a> {
-    pub fn for_name(name: &'a str) -> AlternativeNames<'a> {
-        AlternativeNames {
-            name: name,
-            direct_alternatives: NAMES_BY_IRREGULAR_NICK.get(name),
-            prefix_alternatives: {
+impl <'a>NameVariants<'a> {
+    pub fn for_name(name: &'a str) -> NameVariants<'a> {
+        NameVariants {
+            original: name,
+            direct_variants: NAMES_BY_IRREGULAR_NICK.get(name),
+            prefix_variants: {
                 if name.len() >= 4 && (name.ends_with("ie") || name.ends_with("ey")) {
                     NAMES_BY_NICK_PREFIX.get(&name[0..name.len() - 2])
                 } else if name.len() >= 3 && name.ends_with('y') {
@@ -124,44 +124,44 @@ impl <'a>AlternativeNames<'a> {
         }
     }
 
-    pub fn has_alternatives(&self) -> bool {
-        self.direct_alternatives.is_some() || self.prefix_alternatives.is_some()
+    pub fn has_variants(&self) -> bool {
+        self.direct_variants.is_some() || self.prefix_variants.is_some()
     }
 
-    pub fn iter_with_original(&self) -> AltNamesIter {
-        AltNamesIter {
-            name_iter: iter::once(self.name),
-            direct_alts_iter: self.direct_alternatives.map(|names| names.iter()),
-            prefix_alts_iter: self.prefix_alternatives.map(|names| names.iter()),
+    pub fn iter_with_original(&self) -> NameVariantIter {
+        NameVariantIter {
+            original: iter::once(self.original),
+            direct_variants: self.direct_variants.map(|names| names.iter()),
+            prefix_variants: self.prefix_variants.map(|names| names.iter()),
         }
     }
 
-    pub fn iter_without_original(&self) -> iter::Skip<AltNamesIter> {
+    pub fn iter_without_original(&self) -> iter::Skip<NameVariantIter> {
         self.iter_with_original().skip(1)
     }
 }
 
-struct AltNamesIter<'a> {
-    name_iter: iter::Once<&'a str>,
-    direct_alts_iter: Option<phf::set::Iter<'a, &'static str>>,
-    prefix_alts_iter: Option<phf::set::Iter<'a, &'static str>>,
+struct NameVariantIter<'a> {
+    original: iter::Once<&'a str>,
+    direct_variants: Option<phf::set::Iter<'a, &'static str>>,
+    prefix_variants: Option<phf::set::Iter<'a, &'static str>>,
 }
 
-impl <'a>Iterator for AltNamesIter<'a> {
+impl <'a>Iterator for NameVariantIter<'a> {
     type Item = &'a str;
 
     fn next(&mut self) -> Option<&'a str> {
-        if let Some(name) = self.name_iter.next() {
+        if let Some(name) = self.original.next() {
             return Some(name);
         }
 
-        if let Some(ref mut iter) = self.direct_alts_iter {
+        if let Some(ref mut iter) = self.direct_variants {
             if let Some(name) = iter.next() {
                 return Some(name);
             }
         }
 
-        if let Some(ref mut iter) = self.prefix_alts_iter {
+        if let Some(ref mut iter) = self.prefix_variants {
             if let Some(name) = iter.next() {
                 return Some(name);
             }
@@ -172,31 +172,23 @@ impl <'a>Iterator for AltNamesIter<'a> {
 }
 
 pub fn is_possible_alt_initial(possible_nick: &str, initial: char) -> bool {
-    let alts = AlternativeNames::for_name(possible_nick);
-    alts.has_alternatives() && alts.iter_without_original().any(|alt| alt.starts_with(initial))
+    let alts = NameVariants::for_name(possible_nick);
+    alts.has_variants() && alts.iter_without_original().any(|alt| alt.starts_with(initial))
 }
 
-pub fn are_matching_nicknames(a: &str, b: &str) -> bool {
-    if is_final_syllables_of(a, b) || is_final_syllables_of(b, a) {
-        return true;
-    }
-    if matches_without_diminutive(a, b) || matches_without_diminutive(b, a) {
-        return true;
-    }
+pub fn are_matching_nicknames(original_a: &str, original_b: &str) -> bool {
+    let a_variants = NameVariants::for_name(original_a);
+    let b_variants = NameVariants::for_name(original_b);
 
-    let a_alts = AlternativeNames::for_name(a);
-    let b_alts = AlternativeNames::for_name(b);
-
-    if a_alts.has_alternatives() || b_alts.has_alternatives() {
-        a_alts.iter_with_original().any(|a_alt| {
-            b_alts.iter_with_original().any(|b_alt| have_prefix_match!(a_alt, b_alt))
+    a_variants.iter_with_original().any(|a| {
+        b_variants.iter_with_original().any(|b| {
+            have_prefix_match!(a, b) || is_final_syllables_of(a, b) || is_final_syllables_of(b, a) ||
+                matches_without_diminutive(a, b) || matches_without_diminutive(b, a)
         })
-    } else {
-        false
-    }
+    })
 }
 
-pub fn matches_without_diminutive(a: &str, b: &str) -> bool {
+fn matches_without_diminutive(a: &str, b: &str) -> bool {
     if a.len() > 2 && b.len() >= a.len() - 1 && (a.ends_with('y') || a.ends_with('e')) &&
        have_prefix_match!(a[0..a.len() - 1], b) {
         true
@@ -215,7 +207,7 @@ pub fn matches_without_diminutive(a: &str, b: &str) -> bool {
     }
 }
 
-pub fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
+fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
     if needle.len() == haystack.len() - 1 && !starts_with_consonant(haystack) &&
        is_suffix_of!(needle, haystack) {
         true
@@ -225,7 +217,6 @@ pub fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
         starts_with_consonant(needle) && is_suffix_of!(needle, haystack)
     }
 }
-
 
 
 #[cfg(test)]
@@ -256,8 +247,6 @@ mod tests {
         assert!(are_matching_nicknames("Eddie", "Ned"));
         assert!(are_matching_nicknames("Davy", "Dave"));
         assert!(are_matching_nicknames("Dave", "Davy"));
-        // assert!(are_matching_nicknames("Lonzo", "Al"));
-        // assert!(are_matching_nicknames("Al", "Lonzo"));
         assert!(are_matching_nicknames("Lon", "Al")); // Alonzo
         assert!(are_matching_nicknames("Al", "Lon")); // Alonzo
     }
@@ -280,7 +269,7 @@ mod tests {
 }
 
 // There's no reason not to just use arrays for the values except that it won't compile :(
-pub static NAMES_BY_NICK_PREFIX: phf::Map<&'static str, phf::Set<&'static str>> = phf_map! {
+static NAMES_BY_NICK_PREFIX: phf::Map<&'static str, phf::Set<&'static str>> = phf_map! {
     "Babb" => phf_set! { "Barbara" },
     "Bais" => phf_set! { "Elizabeth" },
     "Baiss" => phf_set! { "Elizabeth" },
@@ -585,7 +574,7 @@ pub static NAMES_BY_NICK_PREFIX: phf::Map<&'static str, phf::Set<&'static str>> 
 };
 
 // There's no reason not to just use arrays for the values except that it won't compile :(
-pub static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_map! {
+static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_map! {
     "Abdo" => phf_set! { "Abdu", "Abdul", "Abdullah" },
     "Abertina" => phf_set! { "Alberta" },
     "Abiah" => phf_set! { "Abijah" },
