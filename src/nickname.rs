@@ -586,7 +586,7 @@ pub static NAMES_BY_NICK_PREFIX: phf::Map<&'static str, phf::Set<&'static str>> 
 
 // There's no reason not to just use arrays for the values except that it won't compile :(
 pub static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> = phf_map! {
-    "Abdo" => phf_set! { "Abdelrahman" },
+    "Abdo" => phf_set! { "Abdu", "Abdul", "Abdullah" },
     "Abertina" => phf_set! { "Alberta" },
     "Abiah" => phf_set! { "Abijah" },
     "Abram" => phf_set! { "Abraham" },
