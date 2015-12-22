@@ -172,8 +172,9 @@ pub fn have_matching_variants(original_a: &str, original_b: &str) -> bool {
 
     a_variants.iter_with_original().any(|a| {
         b_variants.iter_with_original().any(|b| {
-            eq_or_starts_with!(a, b) || is_final_syllables_of(a, b) || is_final_syllables_of(b, a) ||
-                matches_without_diminutive(a, b) || matches_without_diminutive(b, a)
+            eq_or_starts_with!(a, b) || is_final_syllables_of(a, b) ||
+            is_final_syllables_of(b, a) || matches_without_diminutive(a, b) ||
+            matches_without_diminutive(b, a)
         })
     })
 }

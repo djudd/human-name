@@ -112,12 +112,11 @@ impl Name {
         // and/or initial.
         if self.middle_initials().is_none() && other.middle_initials().is_none() {
             if self.given_name().is_none() || other.given_name().is_none() {
-                return transliterate_initial!(self.first_initial()) == transliterate_initial!(other.first_initial())
+                return transliterate_initial!(self.first_initial()) ==
+                       transliterate_initial!(other.first_initial());
             } else {
-                return have_matching_variants(
-                    self.given_name().unwrap(),
-                    other.given_name().unwrap()
-                );
+                return have_matching_variants(self.given_name().unwrap(),
+                                              other.given_name().unwrap());
             }
         }
 
@@ -125,9 +124,9 @@ impl Name {
         // match (if we do have the names, we'll check for nicknames, etc,
         // which might violate this requirement.)
         let any_missing_given_name = self.given_name().is_none() ||
-            other.given_name().is_none() ||
-            self.goes_by_middle_name() ||
-            other.goes_by_middle_name();
+                                     other.given_name().is_none() ||
+                                     self.goes_by_middle_name() ||
+                                     other.goes_by_middle_name();
 
         let my_initials = &*transliterate_initials!(self.initials());
         let their_initials = &*transliterate_initials!(other.initials());

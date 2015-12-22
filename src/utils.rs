@@ -69,22 +69,21 @@ pub fn to_ascii(s: &str) -> Cow<str> {
     } else {
         let mut capitalized_any = false;
 
-        Cow::Owned(s
-            .chars()
-            .flat_map(transliterate)
-            .filter_map( |c| {
-                if !c.is_alphabetic() {
-                    None
-                } else if c.is_uppercase() && !capitalized_any {
-                    capitalized_any = true;
-                    Some(c)
-                } else if c.is_lowercase() && capitalized_any {
-                    Some(c)
-                } else {
-                    c.to_lowercase().next()
-                }
-            })
-            .collect())
+        Cow::Owned(s.chars()
+                    .flat_map(transliterate)
+                    .filter_map(|c| {
+                        if !c.is_alphabetic() {
+                            None
+                        } else if c.is_uppercase() && !capitalized_any {
+                            capitalized_any = true;
+                            Some(c)
+                        } else if c.is_lowercase() && capitalized_any {
+                            Some(c)
+                        } else {
+                            c.to_lowercase().next()
+                        }
+                    })
+                    .collect())
     }
 }
 
@@ -117,8 +116,10 @@ pub fn is_missing_vowels(word: &str) -> bool {
 
 pub fn starts_with_consonant(word: &str) -> bool {
     match word.chars().nth(0) {
-        Some(c) => c.is_alphabetic() && c.is_ascii() && (c == 'y' || c == 'Y' || !VOWELS.contains(c)),
-        None => false
+        Some(c) => {
+            c.is_alphabetic() && c.is_ascii() && (c == 'y' || c == 'Y' || !VOWELS.contains(c))
+        }
+        None => false,
     }
 }
 

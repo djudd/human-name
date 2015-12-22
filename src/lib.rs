@@ -37,7 +37,7 @@ use std::borrow::Cow;
 use std::cell::Cell;
 use std::hash::{Hash, Hasher, SipHasher};
 use itertools::Itertools;
-use utils::{is_mixed_case,transliterate,lowercase_if_alpha};
+use utils::{is_mixed_case, transliterate, lowercase_if_alpha};
 
 /// Represents a parsed human name.
 ///
@@ -433,7 +433,11 @@ impl Name {
     /// We can't use the first initial because we might ignore it if someone goes
     /// by a middle name or nickname, or due to transliteration.
     pub fn surname_hash<H: Hasher>(&self, state: &mut H) {
-        let surname_chars = self.surnames().iter().flat_map(|w| w.chars()).flat_map(transliterate).rev();
+        let surname_chars = self.surnames()
+                                .iter()
+                                .flat_map(|w| w.chars())
+                                .flat_map(transliterate)
+                                .rev();
         for c in surname_chars.filter_map(lowercase_if_alpha)
                               .take(comparison::MIN_SURNAME_CHAR_MATCH) {
             c.hash(state);
