@@ -41,6 +41,11 @@ Because the goals of this library include both name comparison and memory effici
 parsed names are Unicode NFKD-normalized and capitalized in a conventional way
 (handling "Mc" and a few other edge cases), and the raw input is not preserved.
 
+# Supported environments
+
+Anywhere that *nightly* Rust will run. (We depend on nightly Rust because we make
+use of [Rust-PHF](git@github.com:sfackler/rust-phf.git)'s syntax extensions.)
+
 # From Rust code
 
 ```rust
@@ -117,6 +122,7 @@ Inspiration, heuristics, and test cases were taken from:
 * [`HumanNameParse` (Java)](https://github.com/tupilabs/HumanNameParser.java)
 * [`namae` (Ruby)](https://github.com/berkmancenter/namae)
 * [`Lingua::EN::NameParse` (Perl)](http://search.cpan.org/~kimryan/Lingua-EN-NameParse-1.33/lib/Lingua/EN/NameParse.pm) (probably the original for some of the other ports as well)
+* [`Lingua::EN::Nickname` (Perl)](http://search.cpan.org/~brianl/Lingua-EN-Nickname-1.16/Nickname.pm)
 
 In terms of name formats, `human_name` covers just about all the cases these libraries
 do, and more. However, at the moment, unlike most of them, it throws away titles and
