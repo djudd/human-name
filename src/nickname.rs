@@ -124,20 +124,12 @@ impl <'a>NameVariants<'a> {
         }
     }
 
-    pub fn has_variants(&self) -> bool {
-        self.direct_variants.is_some() || self.prefix_variants.is_some()
-    }
-
     pub fn iter_with_original(&self) -> NameVariantIter {
         NameVariantIter {
             original: iter::once(self.original),
             direct_variants: self.direct_variants.map(|names| names.iter()),
             prefix_variants: self.prefix_variants.map(|names| names.iter()),
         }
-    }
-
-    pub fn iter_without_original(&self) -> iter::Skip<NameVariantIter> {
-        self.iter_with_original().skip(1)
     }
 }
 
@@ -171,18 +163,16 @@ impl <'a>Iterator for NameVariantIter<'a> {
     }
 }
 
-pub fn is_possible_alt_initial(possible_nick: &str, initial: char) -> bool {
-    let alts = NameVariants::for_name(possible_nick);
-    alts.has_variants() && alts.iter_without_original().any(|alt| alt.starts_with(initial))
-}
+pub fn have_matching_variants(original_a: &str, original_b: &str) -> bool {
+    let original_a = to_ascii(original_a);
+    let original_b = to_ascii(original_b);
 
-pub fn are_matching_nicknames(original_a: &str, original_b: &str) -> bool {
-    let a_variants = NameVariants::for_name(original_a);
-    let b_variants = NameVariants::for_name(original_b);
+    let a_variants = NameVariants::for_name(&*original_a);
+    let b_variants = NameVariants::for_name(&*original_b);
 
     a_variants.iter_with_original().any(|a| {
         b_variants.iter_with_original().any(|b| {
-            have_prefix_match!(a, b) || is_final_syllables_of(a, b) || is_final_syllables_of(b, a) ||
+            eq_or_starts_with!(a, b) || is_final_syllables_of(a, b) || is_final_syllables_of(b, a) ||
                 matches_without_diminutive(a, b) || matches_without_diminutive(b, a)
         })
     })
@@ -190,17 +180,17 @@ pub fn are_matching_nicknames(original_a: &str, original_b: &str) -> bool {
 
 fn matches_without_diminutive(a: &str, b: &str) -> bool {
     if a.len() > 2 && b.len() >= a.len() - 1 && (a.ends_with('y') || a.ends_with('e')) &&
-       have_prefix_match!(a[0..a.len() - 1], b) {
+       eq_or_starts_with!(a[0..a.len() - 1], b) {
         true
     } else if a.len() > 4 && b.len() >= a.len() - 2 && (a.ends_with("ie") || a.ends_with("ey")) &&
-       have_prefix_match!(a[0..a.len() - 2], b) {
+       eq_or_starts_with!(a[0..a.len() - 2], b) {
         true
     } else if a.len() > 5 && b.len() >= a.len() - 3 && b.ends_with('a') &&
        (a.ends_with("ita") || a.ends_with("ina")) &&
-       have_prefix_match!(a[0..a.len() - 3], b) {
+       eq_or_starts_with!(a[0..a.len() - 3], b) {
         true
     } else if a.len() > 5 && b.len() >= a.len() - 3 && b.ends_with('o') && a.ends_with("ito") &&
-       have_prefix_match!(a[0..a.len() - 3], b) {
+       eq_or_starts_with!(a[0..a.len() - 3], b) {
         true
     } else {
         false
@@ -209,12 +199,12 @@ fn matches_without_diminutive(a: &str, b: &str) -> bool {
 
 fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
     if needle.len() == haystack.len() - 1 && !starts_with_consonant(haystack) &&
-       is_suffix_of!(needle, haystack) {
+       eq_or_ends_with!(needle, haystack) {
         true
     } else if haystack.len() < 4 || needle.len() < 2 || needle.len() > haystack.len() - 2 {
         false
     } else {
-        starts_with_consonant(needle) && is_suffix_of!(needle, haystack)
+        starts_with_consonant(needle) && eq_or_ends_with!(needle, haystack)
     }
 }
 
@@ -225,46 +215,46 @@ mod tests {
 
     #[test]
     fn nick_and_name() {
-        assert!(are_matching_nicknames("Dave", "David"));
-        assert!(are_matching_nicknames("David", "Dave"));
-        assert!(are_matching_nicknames("Kenneth", "Kenny"));
-        assert!(are_matching_nicknames("Kenny", "Kenneth"));
-        assert!(are_matching_nicknames("Edward", "Eddie"));
-        assert!(are_matching_nicknames("Eddie", "Edward"));
-        assert!(are_matching_nicknames("Dot", "Dorothy"));
-        assert!(are_matching_nicknames("Dorothy", "Dot"));
-        assert!(are_matching_nicknames("Leroy", "Roy"));
-        assert!(are_matching_nicknames("Roy", "Leroy"));
+        assert!(have_matching_variants("Dave", "David"));
+        assert!(have_matching_variants("David", "Dave"));
+        assert!(have_matching_variants("Kenneth", "Kenny"));
+        assert!(have_matching_variants("Kenny", "Kenneth"));
+        assert!(have_matching_variants("Edward", "Eddie"));
+        assert!(have_matching_variants("Eddie", "Edward"));
+        assert!(have_matching_variants("Dot", "Dorothy"));
+        assert!(have_matching_variants("Dorothy", "Dot"));
+        assert!(have_matching_variants("Leroy", "Roy"));
+        assert!(have_matching_variants("Roy", "Leroy"));
     }
 
     #[test]
     fn matching_nicks() {
-        assert!(are_matching_nicknames("Trisha", "Trix"));
-        assert!(are_matching_nicknames("Trix", "Trisha"));
-        assert!(are_matching_nicknames("Kenny", "Ken"));
-        assert!(are_matching_nicknames("Ken", "Kenny"));
-        assert!(are_matching_nicknames("Ned", "Eddie"));
-        assert!(are_matching_nicknames("Eddie", "Ned"));
-        assert!(are_matching_nicknames("Davy", "Dave"));
-        assert!(are_matching_nicknames("Dave", "Davy"));
-        assert!(are_matching_nicknames("Lon", "Al")); // Alonzo
-        assert!(are_matching_nicknames("Al", "Lon")); // Alonzo
+        assert!(have_matching_variants("Trisha", "Trix"));
+        assert!(have_matching_variants("Trix", "Trisha"));
+        assert!(have_matching_variants("Kenny", "Ken"));
+        assert!(have_matching_variants("Ken", "Kenny"));
+        assert!(have_matching_variants("Ned", "Eddie"));
+        assert!(have_matching_variants("Eddie", "Ned"));
+        assert!(have_matching_variants("Davy", "Dave"));
+        assert!(have_matching_variants("Dave", "Davy"));
+        assert!(have_matching_variants("Lon", "Al")); // Alonzo
+        assert!(have_matching_variants("Al", "Lon")); // Alonzo
     }
 
     #[test]
     fn nonmatching_nicks() {
-        assert!(!are_matching_nicknames("Xina", "Xander"));
-        assert!(!are_matching_nicknames("Xander", "Xina"));
-        assert!(!are_matching_nicknames("Andy", "Xander"));
-        assert!(!are_matching_nicknames("Xander", "Andy"));
+        assert!(!have_matching_variants("Xina", "Xander"));
+        assert!(!have_matching_variants("Xander", "Xina"));
+        assert!(!have_matching_variants("Andy", "Xander"));
+        assert!(!have_matching_variants("Xander", "Andy"));
     }
 
     #[test]
     fn nonmatching_names() {
-        assert!(!are_matching_nicknames("Antoinette", "Luanne"));
-        assert!(!are_matching_nicknames("Luanne", "Antoinette"));
-        assert!(!are_matching_nicknames("Jane", "John"));
-        assert!(!are_matching_nicknames("John", "Jane"));
+        assert!(!have_matching_variants("Antoinette", "Luanne"));
+        assert!(!have_matching_variants("Luanne", "Antoinette"));
+        assert!(!have_matching_variants("Jane", "John"));
+        assert!(!have_matching_variants("John", "Jane"));
     }
 }
 
@@ -916,6 +906,7 @@ static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> =
     "Gen" => phf_set! { "Virginia" },
     "Gene" => phf_set! { "Eugenia" },
     "Geoff" => phf_set! { "Jefferson" },
+    "Georgios" => phf_set! { "George" },
     "Geri" => phf_set! { "Geraldine" },
     "Ghia" => phf_set! { "Nghia" },
     "Giang" => phf_set! { "Huong" },
@@ -980,6 +971,7 @@ static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> =
     "Ingrum" => phf_set! { "Ningrum" },
     "Ink" => phf_set! { "Link" },
     "Inta" => phf_set! { "Sinta" },
+    "Ioannis" => phf_set! { "Yanis" },
     "Iott" => phf_set! { "Elliott" },
     "Iran" => phf_set! { "Kiran" },
     "Irani" => phf_set! { "Khairani" },
@@ -1214,7 +1206,12 @@ static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> =
     "Miriam" => phf_set! { "Mirian", "Mairim" },
     "Misra" => phf_set! { "Mishra" },
     "Mock" => phf_set! { "Democrates" },
-    "Mohd" => phf_set! { "Mohamad", "Mohamed", "Mohammad", "Mohammed" },
+    "Mohd" => phf_set! { "Mohammed" },
+    "Mohamad" => phf_set! { "Mohammed" },
+    "Mohamed" => phf_set! { "Mohammed" },
+    "Mohammad" => phf_set! { "Mohammed" },
+    "Muhammed" => phf_set! { "Mohammed" },
+    "Muhammad" => phf_set! { "Mohammed" },
     "Moll" => phf_set! { "Mary" },
     "Montesque" => phf_set! { "Montgomery" },
     "Morris" => phf_set! { "Maurice" },

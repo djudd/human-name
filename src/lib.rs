@@ -13,6 +13,7 @@ extern crate phf;
 extern crate itertools;
 extern crate unicode_segmentation;
 extern crate unicode_normalization;
+extern crate unidecode;
 extern crate rustc_serialize;
 
 #[macro_use]

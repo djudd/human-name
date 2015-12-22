@@ -1,3 +1,11 @@
+John Doe|John Doe|==
+John Doe|Jane Doe|!=
+John Q. Doe|John Doe|==
+John Q. Doe|John Q. Doe|==
+John Q. Doe|John H. Doe|!=
+John Q. Doe|Jane Q. Doe|!=
+Jon Doe|Ron Doe|!=
+Jon Q. Doe|Ron Q. Doe|!=
 Hernan Alperin|Hernan Alperin|==
 Hernan Alperin|Herman Alperin|!=
 Hernan Alperin|Hernan Alpine|!=
@@ -43,7 +51,6 @@ H. Manuel Alperin|Hernan M. Alperin|==
 H. Manuel Alperin|M. Alperin|==
 H. Manuel Alperin|H. Alperin|==
 H. Manuel Alperin|L.H.M. Alperin|!=
-H. Manuel Alperin|L.H.M. Alperin|!=
 H. Manuel X. Alperin|H. Manuel Xavier Alperin|==
 H. Manuel X. Alperin|H. Manuel Q. Alperin|!=
 H. Manuel Alperin|H. Mendoza Alperin|!=
@@ -71,7 +78,15 @@ A. Ye|A. Ye|==
 A. Ye|A. Yu|!=
 鈴木|鈴木|==
 木鈴|鈴木|!=
-Poul-Henning Kemp|Poul Henning Kemp|==
+Poul-Henning Kemp|Poul Kemp|==
+#Poul-Henning Kemp|Poul Q. Kemp|==
+Poul-Henning Kemp|Poul-Lenning Kemp|!=
+Poul-Henning Q. Kemp|Poul-Henning Kemp|==
+Poul-Henning Q. Kemp|Poul Q. Kemp|==
+Poul-Henning Q. Kemp|Poul Henning Q. Kemp|==
+Poul-Henning Q. Kemp|Poul Henning Kemp|==
+Poul-Henning Q. Kemp|Poul H. Q. Kemp|==
+Poul-Henning Q. Kemp|Poul Q. H. Kemp|!=
 Poul Henning-Kemp|Poul Henning Kemp|==
 Poul Kemp Henning|Poul Henning Kemp|!=
 B. O'Malley|B OMalley|==
@@ -81,7 +96,8 @@ Bartolomeo O'Malley|Bart O'Malley|==
 Bartolomeo O'Malley|Bartholomew O'Malley|!=
 Bartolomeo O'Malley|Bartholomew O'Malley|!=
 Konertz, Wolfgang F.|Konertz, Wolf|==
-Mew O'Malley|Bartholomew O'Malley|!=
+Olomew O'Malley|Bartholomew O'Malley|!=
+Mew O'Malley|Bartholomew O'Malley|==
 Jianfei Liu|Jian Liu|==
 Jianpeng Liu|Jian Liu|==
 Jianpeng Liu|Jianfei Liu|!=
@@ -150,6 +166,7 @@ M A de Boer-Ye|M Drachmann-Ye|!=
 M A de Boer-Ye|M Ye|!=
 Paul von Ragué Schleyer|Paul v. R. Schleyer|==
 Ben Lund|Benjamin Lund|==
+Bobby Lund|Benjamin Lund|!=
 Ben D. Lund|Benjamin Lund|==
 Ben D. Lund|Benjamin D. Lund|==
 Ben D. Lund|Benjamin Q. Lund|!=
@@ -167,3 +184,9 @@ Rick Allen|Richard Allen|==
 Rick Allen|Dick Allen|==
 Rick Allen|Rich Allen|==
 Rick Allen|Rachael Allen|!=
+鄭和|Zheng He|==
+郑和|Zheng He|==
+郑和|鄭和|==
+#胡锦涛|Hu Jintao|==
+Γεώργιος Ανδρέας Παπανδρέου|George Papandreou|==
+Γεώργιος Ανδρέας Παπανδρέου|Ioannis Papandreou|!=

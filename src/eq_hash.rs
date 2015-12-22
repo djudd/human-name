@@ -1,7 +1,7 @@
 use std::hash::{Hash, Hasher};
 use super::Name;
 use super::comparison;
-use super::utils::lowercase_if_alpha;
+use super::utils::{lowercase_if_alpha, transliterate};
 
 /// Might this name represent the same person as another name?
 ///
@@ -42,7 +42,7 @@ impl PartialEq for Name {
 /// by a middle name, to catch cases like "H. Manuel Alperin" == "Manuel Alperin."
 impl Hash for Name {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        let surname_chars = self.surnames().iter().flat_map(|w| w.chars()).rev();
+        let surname_chars = self.surnames().iter().flat_map(|w| w.chars()).flat_map(transliterate).rev();
         for c in surname_chars.filter_map(lowercase_if_alpha)
                               .take(comparison::MIN_SURNAME_CHAR_MATCH) {
             c.hash(state);

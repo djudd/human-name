@@ -1,6 +1,9 @@
 use std::ascii::AsciiExt;
+use std::str::Chars;
+use std::borrow::Cow;
 use unicode_normalization::char::canonical_combining_class;
 use unicode_normalization::UnicodeNormalization;
+use unidecode::unidecode_char;
 
 const VOWELS: &'static str = "aeiouyAEIOUY";
 const HYPHENS: &'static str = "-\u{2010}‑‒–—―−－﹘﹣";
@@ -52,6 +55,36 @@ pub fn lowercase_if_alpha(c: char) -> Option<char> {
         Some(c)
     } else {
         None
+    }
+}
+
+#[inline]
+pub fn transliterate<'a>(c: char) -> Chars<'a> {
+    unidecode_char(c).chars()
+}
+
+pub fn to_ascii(s: &str) -> Cow<str> {
+    if s.is_ascii() {
+        Cow::Borrowed(s)
+    } else {
+        let mut capitalized_any = false;
+
+        Cow::Owned(s
+            .chars()
+            .flat_map(transliterate)
+            .filter_map( |c| {
+                if !c.is_alphabetic() {
+                    None
+                } else if c.is_uppercase() && !capitalized_any {
+                    capitalized_any = true;
+                    Some(c)
+                } else if c.is_lowercase() && capitalized_any {
+                    Some(c)
+                } else {
+                    c.to_lowercase().next()
+                }
+            })
+            .collect())
     }
 }
 
@@ -115,7 +148,7 @@ pub fn has_sequential_alphas(word: &str) -> bool {
 }
 
 #[macro_export]
-macro_rules! have_prefix_match {
+macro_rules! eq_or_starts_with {
     ($a:expr, $b:expr) => { {
         let mut chars_a = $a.chars().filter_map(lowercase_if_alpha);
         let mut chars_b = $b.chars().filter_map(lowercase_if_alpha);
@@ -139,10 +172,10 @@ macro_rules! have_prefix_match {
 }
 
 #[macro_export]
-macro_rules! is_suffix_of {
-    ($needle:expr, $haystack:expr) => { {
-        let mut n_chars= $needle.chars().rev().filter_map(lowercase_if_alpha);
-        let mut h_chars = $haystack.chars().rev().filter_map(lowercase_if_alpha);
+macro_rules! eq_or_ends_with {
+    ($a:expr, $b:expr) => { {
+        let mut n_chars = $a.chars().rev().filter_map(lowercase_if_alpha);
+        let mut h_chars = $b.chars().rev().filter_map(lowercase_if_alpha);
         let result;
 
         loop {
