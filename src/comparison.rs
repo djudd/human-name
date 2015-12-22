@@ -28,6 +28,10 @@ impl Name {
     /// assert!(j_doe.consistent_with(&j_doe));
     /// assert!(!john_m_doe.consistent_with(&john_l_doe));
     /// assert!(!jane_doe.consistent_with(&john_l_doe));
+    ///
+    /// let zheng_he = Name::parse("Zheng He").unwrap();
+    /// let han_chars = Name::parse("鄭和").unwrap();
+    /// assert!(han_chars.consistent_with(&zheng_he));
     /// ```
     ///
     /// # Defining "consistency"
