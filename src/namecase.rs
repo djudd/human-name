@@ -73,3 +73,55 @@ pub fn namecase(word: &str, might_be_particle: bool) -> String {
         result
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn simple() {
+        assert_eq!("Doe", namecase("doe", true));
+    }
+
+    #[test]
+    fn conjunction() {
+        assert_eq!("y", namecase("y", true));
+        assert_eq!("Y", namecase("y", false));
+    }
+
+    #[test]
+    fn particle() {
+        assert_eq!("de", namecase("de", true));
+        assert_eq!("De", namecase("de", false));
+    }
+
+    #[test]
+    fn mcallen() {
+        assert_eq!("McAllen", namecase("mcallen", true));
+    }
+
+    #[test]
+    fn macmurdo() {
+        assert_eq!("MacMurdo", namecase("macmurdo", true));
+    }
+
+    #[test]
+    fn machlin() {
+        assert_eq!("Machlin", namecase("machlin", true));
+    }
+
+    #[test]
+    fn maciej() {
+        assert_eq!("Maciej", namecase("maciej", true));
+    }
+
+    #[test]
+    fn mach() {
+        assert_eq!("Mach", namecase("mach", true));
+    }
+
+    #[test]
+    fn macadaidh() {
+        assert_eq!("MacAdaidh", namecase("macadaidh", true));
+    }
+}

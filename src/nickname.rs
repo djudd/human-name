@@ -43,6 +43,14 @@ fn starts_with_whitespace(text: &str) -> bool {
     text.chars().nth(0).unwrap().is_whitespace()
 }
 
+fn strip_from_index(nick_start_ix: usize, prev_char: char) -> usize {
+    if prev_char.is_whitespace() {
+        nick_start_ix - prev_char.len_utf8()
+    } else {
+        nick_start_ix
+    }
+}
+
 // Optimized for the case where there is no nickname, and secondarily for the
 // case where there is only one. Two or more probably means bad input.
 pub fn strip_nickname(input: &str) -> Cow<str> {
@@ -55,32 +63,34 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
     for (i, c) in input.char_indices() {
         if nick_start_ix.is_none() {
             let close = expected_close_char_if_opens_nickname(c, prev_char.is_whitespace());
-            if !close.is_none() {
+            if close.is_some() {
                 nick_start_ix = Some(i);
                 nick_open_char = c;
                 expected_close_char = close.unwrap().0;
                 must_precede_whitespace = close.unwrap().1
+            } else {
+                prev_char = c;
             }
         } else if c == expected_close_char {
             let j = i + c.len_utf8();
             if j >= input.len() {
                 return Cow::Borrowed(&input[0..nick_start_ix.unwrap()]);
             } else if !must_precede_whitespace || starts_with_whitespace(&input[j..]) {
-                return Cow::Owned(input[0..nick_start_ix.unwrap()].to_string() +
+                let strip_from = strip_from_index(nick_start_ix.unwrap(), prev_char);
+                return Cow::Owned(input[0..strip_from].to_string() +
                                   &strip_nickname(&input[j..]));
             } else {
                 return Cow::Owned(input[0..i].to_string() + &strip_nickname(&input[i..]));
             }
         }
-
-        prev_char = c;
     }
 
     if nick_start_ix.is_some() {
         if !must_precede_whitespace {
             // When there's, e.g., an opening parens, but no closing parens, strip the
             // rest of the string
-            return Cow::Borrowed(&input[0..nick_start_ix.unwrap()]);
+            let strip_from = strip_from_index(nick_start_ix.unwrap(), prev_char);
+            return Cow::Borrowed(&input[0..strip_from]);
         } else {
             let i = nick_start_ix.unwrap() + nick_open_char.len_utf8();
             // Otherwise, even if there's an unmatched opening quote, don't
@@ -256,6 +266,36 @@ mod tests {
         assert!(!have_matching_variants("Luanne", "Antoinette"));
         assert!(!have_matching_variants("Jane", "John"));
         assert!(!have_matching_variants("John", "Jane"));
+    }
+
+    #[test]
+    fn strip_nothing() {
+        assert_eq!("Robert Roberts", strip_nickname("Robert Roberts"));
+    }
+
+    #[test]
+    fn strip_parens() {
+        assert_eq!("Robert Roberts", strip_nickname("Robert (Mr. Bob) Roberts"));
+    }
+
+    #[test]
+    fn unmatched_parens() {
+        assert_eq!("Robert", strip_nickname("Robert (Mr. Bob"));
+    }
+
+    #[test]
+    fn strip_quotes() {
+        assert_eq!("Robert Roberts", strip_nickname("Robert 'Mr. Bob' Roberts"));
+    }
+
+    #[test]
+    fn unmatched_quote() {
+        assert_eq!("Robert Mr. Bob' Roberts", strip_nickname("Robert Mr. Bob' Roberts"));
+    }
+
+    #[test]
+    fn unspaced_quotes() {
+        assert_eq!("Ro'bert R'oberts", strip_nickname("Ro'bert R'oberts"));
     }
 }
 
