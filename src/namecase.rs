@@ -68,6 +68,8 @@ pub fn namecase(word: &str, might_be_particle: bool) -> String {
         "Mac".to_string() + &capitalize_and_normalize(&result[3..])
     } else if result.starts_with("Mc") && result.len() > 3 {
         "Mc".to_string() + &capitalize_and_normalize(&result[2..])
+    } else if result.starts_with("Al-") && result.len() > 3 {
+        "al-".to_string() + &result[3..]
     } else {
         // Normal case
         result
@@ -123,5 +125,10 @@ mod tests {
     #[test]
     fn macadaidh() {
         assert_eq!("MacAdaidh", namecase("macadaidh", true));
+    }
+
+    #[test]
+    fn al_amir() {
+        assert_eq!("al-Amir", namecase("al-amir", true));
     }
 }
