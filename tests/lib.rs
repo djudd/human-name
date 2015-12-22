@@ -4,7 +4,6 @@ extern crate unicode_normalization;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
-use std::hash::{Hash, Hasher, SipHasher};
 use unicode_normalization::UnicodeNormalization;
 
 fn none_if_empty(s: &str) -> Option<&str> {
@@ -15,22 +14,10 @@ fn none_if_empty(s: &str) -> Option<&str> {
     }
 }
 
-fn stderr_newline() {
-    writeln!(&mut std::io::stderr(), "").ok().unwrap();
-}
-
-fn hash<T: Hash>(t: &T) -> u64 {
-    let mut s = SipHasher::new();
-    t.hash(&mut s);
-    s.finish()
-}
-
 #[test]
 fn parsing() {
     let f = File::open("tests/parseable-names.txt").ok().unwrap();
     let reader = BufReader::new(f);
-
-    stderr_newline();
 
     for line in reader.lines() {
         let line: String = line.ok().unwrap().nfkd().collect();
@@ -87,28 +74,13 @@ fn parsing() {
                 input,
                 suffix,
                 name.suffix());
-
-        writeln!(&mut std::io::stderr(),
-                 "Parsed '{}' as '{}', {:?} {:?} ({:?}), {:?}",
-                 input,
-                 surname,
-                 given_name,
-                 middle_names,
-                 middle_initials,
-                 suffix)
-            .ok()
-            .unwrap();
     }
-
-    stderr_newline();
 }
 
 #[test]
 fn unparseable() {
     let f = File::open("tests/unparseable-names.txt").ok().unwrap();
     let reader = BufReader::new(f);
-
-    stderr_newline();
 
     for line in reader.lines() {
         let line = line.ok().unwrap();
@@ -122,19 +94,13 @@ fn unparseable() {
                 "'Parsed' junk name: '{}' as '{}'",
                 line,
                 result.unwrap().display_first_last());
-
-        writeln!(&mut std::io::stderr(), "Correctly discarded '{}'", line).ok().unwrap();
     }
-
-    stderr_newline();
 }
 
 #[test]
 fn equality() {
     let f = File::open("tests/equal-names.txt").ok().unwrap();
     let reader = BufReader::new(f);
-
-    stderr_newline();
 
     for line in reader.lines() {
         let line = line.ok().unwrap();
@@ -163,7 +129,7 @@ fn equality() {
                     "{} should be equal to {} but was not!",
                     b,
                     a);
-            assert!(hash(&parsed_a) == hash(&parsed_b),
+            assert!(parsed_a.unwrap().memoized_surname_hash() == parsed_b.unwrap().memoized_surname_hash(),
                     "{} should have the same hash as {} but did not!",
                     a,
                     b);
@@ -177,9 +143,5 @@ fn equality() {
                     b,
                     a);
         }
-
-        writeln!(&mut std::io::stderr(), "{} {} {}", a, expect, b).ok().unwrap();
     }
-
-    stderr_newline();
 }
