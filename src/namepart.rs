@@ -188,72 +188,95 @@ mod tests {
 
     #[test]
     fn one_word() {
-        assert_eq!(1, NamePart::all_from_text("John", true, Location::Start).count());
+        assert_eq!(1,
+                   NamePart::all_from_text("John", true, Location::Start).count());
     }
 
     #[test]
     fn two_words() {
-        assert_eq!(2, NamePart::all_from_text("&* John Doe! ☃", true, Location::Start).count());
+        assert_eq!(2,
+                   NamePart::all_from_text("&* John Doe! ☃", true, Location::Start).count());
     }
 
     #[test]
     fn only_junk() {
-        assert_eq!(0, NamePart::all_from_text(" ... 23 ", true, Location::Start).count());
+        assert_eq!(0,
+                   NamePart::all_from_text(" ... 23 ", true, Location::Start).count());
     }
 
     #[test]
     fn single_ascii() {
-        assert_eq!(Category::Initials, NamePart::from_word("I", true, Location::Start).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("I", true, Location::Start).category);
     }
 
     #[test]
     fn single_han() {
-        assert_eq!(Category::Name, NamePart::from_word("鄭", true, Location::Start).category);
+        assert_eq!(Category::Name,
+                   NamePart::from_word("鄭", true, Location::Start).category);
     }
 
     #[test]
     fn abbreviated_ascii() {
-        assert_eq!(Category::Initials, NamePart::from_word("I.", true, Location::Start).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("I.", true, Location::Start).category);
     }
 
     #[test]
     fn abbreviated_double_ascii() {
-        assert_eq!(Category::Abbreviation, NamePart::from_word("MI.", true, Location::Start).category);
+        assert_eq!(Category::Abbreviation,
+                   NamePart::from_word("MI.", true, Location::Start).category);
     }
 
     #[test]
     fn double_abbreviated_double_ascii() {
-        assert_eq!(Category::Initials, NamePart::from_word("M.I.", true, Location::Start).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("M.I.", true, Location::Start).category);
     }
 
     #[test]
     fn junk() {
-        assert_eq!(Category::Other, NamePart::from_word("503(a)", true, Location::Start).category);
+        assert_eq!(Category::Other,
+                   NamePart::from_word("503(a)", true, Location::Start).category);
     }
 
     #[test]
     fn no_vowels() {
-        assert_eq!(Category::Initials, NamePart::from_word("JM", true, Location::Start).category);
-        assert_eq!(Category::Initials, NamePart::from_word("jm", true, Location::Start).category);
-        assert_eq!(Category::Initials, NamePart::from_word("JM", false, Location::Start).category);
-        assert_eq!(Category::Initials, NamePart::from_word("JMMMMM", true, Location::Start).category);
-        assert_eq!(Category::Other, NamePart::from_word("jmmmmm", true, Location::Start).category);
-        assert_eq!(Category::Other, NamePart::from_word("JMMMMM", false, Location::Start).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("JM", true, Location::Start).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("jm", true, Location::Start).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("JM", false, Location::Start).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("JMMMMM", true, Location::Start).category);
+        assert_eq!(Category::Other,
+                   NamePart::from_word("jmmmmm", true, Location::Start).category);
+        assert_eq!(Category::Other,
+                   NamePart::from_word("JMMMMM", false, Location::Start).category);
     }
 
     #[test]
     fn vowelless_surname() {
-        assert_eq!(Category::Initials, NamePart::from_word("NG", true, Location::Start).category);
-        assert_eq!(Category::Initials, NamePart::from_word("Ng", true, Location::Start).category);
-        assert_eq!(Category::Name, NamePart::from_word("Ng", true, Location::End).category);
-        assert_eq!(Category::Name, NamePart::from_word("NG", false, Location::End).category);
-        assert_eq!(Category::Initials, NamePart::from_word("NG", true, Location::End).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("NG", true, Location::Start).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("Ng", true, Location::Start).category);
+        assert_eq!(Category::Name,
+                   NamePart::from_word("Ng", true, Location::End).category);
+        assert_eq!(Category::Name,
+                   NamePart::from_word("NG", false, Location::End).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("NG", true, Location::End).category);
     }
 
     #[test]
     fn word() {
-        assert_eq!(Category::Initials, NamePart::from_word("JEM", true, Location::Start).category);
-        assert_eq!(Category::Name, NamePart::from_word("Jem", true, Location::Start).category);
-        assert_eq!(Category::Name, NamePart::from_word("JEM", false, Location::Start).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("JEM", true, Location::Start).category);
+        assert_eq!(Category::Name,
+                   NamePart::from_word("Jem", true, Location::Start).category);
+        assert_eq!(Category::Name,
+                   NamePart::from_word("JEM", false, Location::Start).category);
     }
 }

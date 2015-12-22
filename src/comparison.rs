@@ -176,7 +176,7 @@ impl Name {
         let mut their_initials = their_initials.chars().peekable();
         let mut their_initial_index = 0;
         let mut their_word_indices = other.word_indices_in_initials.iter().peekable();
-        let mut their_words = other.words[0..other.suffix_index].iter();
+        let mut their_words = other.words.iter();
         let mut suffix_for_prior_prefix_match: Option<&str> = None;
         let mut consistency_refuted = false;
         let mut looked_up_nicknames = false;
@@ -394,7 +394,8 @@ impl Name {
     }
 
     fn suffix_consistent(&self, other: &Name) -> bool {
-        self.suffix().is_none() || other.suffix().is_none() || self.suffix() == other.suffix()
+        self.generation_from_suffix.is_none() || other.generation_from_suffix.is_none() ||
+        self.generation_from_suffix == other.generation_from_suffix
     }
 }
 

@@ -155,7 +155,9 @@ I. K K Deurloo|Inger-Karine K Kolkman-Deurloo|==
 J. J Connors III|J. J Connors|==
 J. J Connors III|J. J Connors III|==
 J. J Connors II|J. J Connors III|!=
-#J. J Connors II|J. J Connors Jr.|==
+J. J Connors II|J. J Connors Jr.|==
+J. J Connors I|J. J Connors Sr.|==
+J. J Connors II|J. J Connors Sr.|!=
 J. J Connors III|J. J Connors Jr.|!=
 JF Chen|Jing’an Chen|==
 Jennifer MacAllen|Jennifer Macallen|==

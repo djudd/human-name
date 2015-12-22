@@ -6,30 +6,29 @@ use super::namepart::{NamePart, Location, Category};
 
 struct ParseOp<'a> {
     surname_index: usize,
-    suffix: Option<NamePart<'a>>,
+    generation_from_suffix: Option<usize>,
     maybe_not_postfix: Option<NamePart<'a>>,
     use_capitalization: bool,
 }
 
-pub fn parse(name: &str, use_capitalization: bool) -> Option<(Vec<NamePart>, usize, usize)> {
+pub fn parse(name: &str,
+             use_capitalization: bool)
+             -> Option<(Vec<NamePart>, usize, Option<usize>)> {
     let op = ParseOp {
         surname_index: 0,
-        suffix: None,
+        generation_from_suffix: None,
         maybe_not_postfix: None,
         use_capitalization: use_capitalization,
     };
 
-    let (words, surname_index, suffix_index) = op.run(name);
+    let (words, surname_index, generation_from_suffix) = op.run(name);
 
-    let successful = words.len() >= 2 &&
-                     words[0..suffix_index].iter().all(|w| w.is_namelike() || w.is_initials()) &&
+    let successful = words.len() >= 2 && words.iter().all(|w| w.is_namelike() || w.is_initials()) &&
                      surname_index > 0 && surname_index < 6 &&
-                     suffix_index > surname_index &&
-                     suffix_index - surname_index < 6 &&
-                     words[surname_index..suffix_index].iter().any(|w| w.is_namelike());
+                     words[surname_index..].iter().any(|w| w.is_namelike());
 
     if successful {
-        Some((words, surname_index, suffix_index))
+        Some((words, surname_index, generation_from_suffix))
     } else {
         None
     }
@@ -37,7 +36,7 @@ pub fn parse(name: &str, use_capitalization: bool) -> Option<(Vec<NamePart>, usi
 
 impl <'a>ParseOp<'a> {
 
-    fn run(mut self, name: &'a str) -> (Vec<NamePart<'a>>, usize, usize) {
+    fn run(mut self, name: &'a str) -> (Vec<NamePart<'a>>, usize, Option<usize>) {
         let mut words: Vec<NamePart> = Vec::with_capacity(2);
 
         // Separate comma-separated titles and suffixes, then flip remaining words
@@ -79,7 +78,7 @@ impl <'a>ParseOp<'a> {
             // If the alternative is having less than two words and giving up,
             // check if we can treat the last word as a name if we just ignore
             // case; this handles the not-quite-rare-enough case of an all-caps
-            // last name (e.g. John SMITH), among others
+            // last name (e.g.Neto John SMITH), among others
             if self.use_capitalization && ParseOp::fixably_invalid(&words, self.surname_index) {
                 if NamePart::from_word(&*removed.namecased, false, Location::End).is_namelike() {
                     removed.category = Category::Name;
@@ -96,13 +95,7 @@ impl <'a>ParseOp<'a> {
             self.surname_index = surname::find_surname_index(&words[1..]) + 1;
         }
 
-        // Append the suffix last
-        let suffix_index = words.len();
-        if self.suffix.is_some() {
-            words.push(self.suffix.unwrap());
-        }
-
-        (words, self.surname_index, suffix_index)
+        (words, self.surname_index, self.generation_from_suffix)
     }
 
     fn fixably_invalid(words: &Vec<NamePart>, surname_index: usize) -> bool {
@@ -191,18 +184,18 @@ impl <'a>ParseOp<'a> {
         assert!(self.surname_index > 0,
                 "Invalid state for handle_after_surname!");
 
-        if self.maybe_not_postfix.is_some() && self.suffix.is_some() {
+        if self.maybe_not_postfix.is_some() && self.generation_from_suffix.is_some() {
             return;
         }
 
         let mut postfix_words = NamePart::all_from_text(part,
                                                         self.use_capitalization,
                                                         Location::End);
-        while self.maybe_not_postfix.is_none() || self.suffix.is_none() {
+        while self.maybe_not_postfix.is_none() || self.generation_from_suffix.is_none() {
             match postfix_words.next() {
                 Some(word) => {
-                    if suffix::is_suffix(&word, false) {
-                        self.found_suffix(word);
+                    if let Some(generation) = suffix::generation_from_suffix(&word, false) {
+                        self.found_suffix(word, generation);
                     } else {
                         self.found_postfix_title(word);
                     }
@@ -223,7 +216,7 @@ impl <'a>ParseOp<'a> {
         let expect_initials = after_comma && self.surname_index == 0;
 
         let last_nonpostfix_index = words[skip..].iter().rposition(|word| {
-            !suffix::is_suffix(&word, expect_initials) &&
+            suffix::generation_from_suffix(&word, expect_initials).is_none() &&
             !title::is_postfix_title(&word, expect_initials)
         });
 
@@ -245,20 +238,21 @@ impl <'a>ParseOp<'a> {
             }
 
             let first_postfix = words.pop().unwrap();
-            if suffix::is_suffix(&first_postfix, expect_initials) {
-                self.found_suffix(first_postfix);
+            if let Some(generation) = suffix::generation_from_suffix(&first_postfix,
+                                                                     expect_initials) {
+                self.found_suffix(first_postfix, generation);
             } else {
                 self.found_postfix_title(first_postfix);
             }
         }
     }
 
-    fn found_suffix(&mut self, suffix: NamePart<'a>) {
-        if self.suffix.is_none() {
-            self.suffix = Some(suffix);
-        } else {
-            self.found_postfix_title(suffix);
+    fn found_suffix(&mut self, suffix: NamePart<'a>, generation: usize) {
+        if self.generation_from_suffix.is_none() {
+            self.generation_from_suffix = Some(generation);
         }
+
+        self.found_postfix_title(suffix);
     }
 
     // We throw away most postfix titles, but keep the first one that's namelike,

@@ -77,8 +77,7 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
                 return Cow::Borrowed(&input[0..nick_start_ix.unwrap()]);
             } else if !must_precede_whitespace || starts_with_whitespace(&input[j..]) {
                 let strip_from = strip_from_index(nick_start_ix.unwrap(), prev_char);
-                return Cow::Owned(input[0..strip_from].to_string() +
-                                  &strip_nickname(&input[j..]));
+                return Cow::Owned(input[0..strip_from].to_string() + &strip_nickname(&input[j..]));
             } else {
                 return Cow::Owned(input[0..i].to_string() + &strip_nickname(&input[i..]));
             }
@@ -290,7 +289,8 @@ mod tests {
 
     #[test]
     fn unmatched_quote() {
-        assert_eq!("Robert Mr. Bob' Roberts", strip_nickname("Robert Mr. Bob' Roberts"));
+        assert_eq!("Robert Mr. Bob' Roberts",
+                   strip_nickname("Robert Mr. Bob' Roberts"));
     }
 
     #[test]

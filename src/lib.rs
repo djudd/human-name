@@ -59,7 +59,7 @@ use utils::{is_mixed_case, transliterate, lowercase_if_alpha};
 pub struct Name {
     words: Vec<String>,
     surname_index: usize,
-    suffix_index: usize,
+    generation_from_suffix: Option<usize>,
     initials: String,
     word_indices_in_initials: Vec<(usize, usize)>,
     hash: Cell<Option<u64>>,
@@ -144,12 +144,11 @@ impl Name {
             return None;
         }
 
-        let (words, surname_index, suffix_index) = result.unwrap();
+        let (words, surname_index, generation_from_suffix) = result.unwrap();
 
         let mut names: Vec<String> = Vec::with_capacity(words.len());
         let mut initials = String::with_capacity(surname_index);
         let mut surname_index_in_names = surname_index;
-        let mut suffix_index_in_names = suffix_index;
         let mut word_indices_in_initials: Vec<(usize, usize)> = Vec::with_capacity(surname_index);
 
         for (i, word) in words.into_iter().enumerate() {
@@ -160,7 +159,6 @@ impl Name {
                                     .flat_map(|c| c.to_uppercase()));
 
                 surname_index_in_names -= 1;
-                suffix_index_in_names -= 1;
             } else if i < surname_index {
                 let prior_len = initials.len();
 
@@ -170,10 +168,8 @@ impl Name {
 
                 names.push(word.namecased.into_owned());
                 word_indices_in_initials.push((prior_len, initials.len()));
-            } else if i < suffix_index {
-                names.push(word.namecased.into_owned());
             } else {
-                names.push(suffix::namecase(&word));
+                names.push(word.namecased.into_owned());
             }
         }
 
@@ -183,7 +179,7 @@ impl Name {
         Some(Name {
             words: names,
             surname_index: surname_index_in_names,
-            suffix_index: suffix_index_in_names,
+            generation_from_suffix: generation_from_suffix,
             initials: initials,
             word_indices_in_initials: word_indices_in_initials,
             hash: Cell::new(None),
@@ -247,7 +243,7 @@ impl Name {
 
     /// Surname as a slice of words (always present)
     pub fn surnames(&self) -> &[String] {
-        &self.words[self.surname_index..self.suffix_index]
+        &self.words[self.surname_index..]
     }
 
     /// Surname as a string (always present)
@@ -261,11 +257,7 @@ impl Name {
 
     /// Generational suffix, if present
     pub fn suffix(&self) -> Option<&str> {
-        if self.words.len() > self.suffix_index {
-            Some(&*self.words[self.suffix_index])
-        } else {
-            None
-        }
+        self.generation_from_suffix.map(|g| suffix::display_generational_suffix(g))
     }
 
     fn with_each_given_name_or_initial<F: FnMut(NameWordOrInitial)>(&self, cb: &mut F) {
@@ -352,8 +344,9 @@ impl Name {
                           .iter()
                           .fold(self.words.len() - 1, |sum, ref word| sum + word.len());
 
-        if self.suffix_index < self.words.len() {
-            len += 1; // Comma
+        if let Some(suffix) = self.suffix() {
+            len += 2; // Comma and space
+            len += suffix.len();
         }
 
         let extra_initials = self.initials.chars().count() - self.surname_index;

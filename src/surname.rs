@@ -132,7 +132,8 @@ mod tests {
 
     #[test]
     fn three_words() {
-        let parts: Vec<_> = NamePart::all_from_text("Jane Emily Doe", true, Location::Start).collect();
+        let parts: Vec<_> = NamePart::all_from_text("Jane Emily Doe", true, Location::Start)
+                                .collect();
         assert_eq!(2, find_surname_index(&*parts));
     }
 
@@ -144,37 +145,49 @@ mod tests {
 
     #[test]
     fn conjunction_after_one() {
-        let parts: Vec<_> = NamePart::all_from_text("Rodrigo y Velazquez", true, Location::Start).collect();
+        let parts: Vec<_> = NamePart::all_from_text("Rodrigo y Velazquez", true, Location::Start)
+                                .collect();
         assert_eq!(0, find_surname_index(&*parts));
     }
 
     #[test]
     fn conjunction_after_two() {
-        let parts: Vec<_> = NamePart::all_from_text("Jane Rodrigo y Velazquez", true, Location::Start).collect();
+        let parts: Vec<_> = NamePart::all_from_text("Jane Rodrigo y Velazquez",
+                                                    true,
+                                                    Location::Start)
+                                .collect();
         assert_eq!(1, find_surname_index(&*parts));
     }
 
     #[test]
     fn particle_after_nothing() {
-        let parts: Vec<_> = NamePart::all_from_text("Abd al-Qader", true, Location::Start).collect();
+        let parts: Vec<_> = NamePart::all_from_text("Abd al-Qader", true, Location::Start)
+                                .collect();
         assert_eq!(0, find_surname_index(&*parts));
     }
 
     #[test]
     fn particle_after_one() {
-        let parts: Vec<_> = NamePart::all_from_text("Jane Abd al-Qader", true, Location::Start).collect();
+        let parts: Vec<_> = NamePart::all_from_text("Jane Abd al-Qader", true, Location::Start)
+                                .collect();
         assert_eq!(1, find_surname_index(&*parts));
     }
 
     #[test]
     fn particle_and_conjunction() {
-        let parts: Vec<_> = NamePart::all_from_text("Alejandro de Aza y Cabra", true, Location::Start).collect();
+        let parts: Vec<_> = NamePart::all_from_text("Alejandro de Aza y Cabra",
+                                                    true,
+                                                    Location::Start)
+                                .collect();
         assert_eq!(1, find_surname_index(&*parts));
     }
 
     #[test]
     fn conjunction_and_particle() {
-        let parts: Vec<_> = NamePart::all_from_text("Alejandro Cabra y de Aza", true, Location::Start).collect();
+        let parts: Vec<_> = NamePart::all_from_text("Alejandro Cabra y de Aza",
+                                                    true,
+                                                    Location::Start)
+                                .collect();
         assert_eq!(1, find_surname_index(&*parts));
     }
 }

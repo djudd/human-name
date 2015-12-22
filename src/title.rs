@@ -549,50 +549,66 @@ mod tests {
 
     #[test]
     fn strip_prefix_title_none() {
-        let mut parts: Vec<_> = NamePart::all_from_text("Jane Doe", true, Location::Start).collect();
+        let mut parts: Vec<_> = NamePart::all_from_text("Jane Doe", true, Location::Start)
+                                    .collect();
         strip_prefix_title(&mut parts, true);
-        assert_eq!("Jane Doe", parts.iter().fold("".to_string(), |s,ref p| s + " " + p.word).trim());
+        assert_eq!("Jane Doe",
+                   parts.iter().fold("".to_string(), |s, ref p| s + " " + p.word).trim());
     }
 
     #[test]
     fn strip_prefix_title_abbr() {
-        let mut parts: Vec<_> = NamePart::all_from_text("Dr. Jane Doe", true, Location::Start).collect();
+        let mut parts: Vec<_> = NamePart::all_from_text("Dr. Jane Doe", true, Location::Start)
+                                    .collect();
         strip_prefix_title(&mut parts, true);
-        assert_eq!("Jane Doe", parts.iter().fold("".to_string(), |s,ref p| s + " " + p.word).trim());
+        assert_eq!("Jane Doe",
+                   parts.iter().fold("".to_string(), |s, ref p| s + " " + p.word).trim());
     }
 
     #[test]
     fn strip_prefix_title_multi_abbr() {
-        let mut parts: Vec<_> = NamePart::all_from_text("Revd. Dr. Jane Doe", true, Location::Start).collect();
+        let mut parts: Vec<_> = NamePart::all_from_text("Revd. Dr. Jane Doe",
+                                                        true,
+                                                        Location::Start)
+                                    .collect();
         strip_prefix_title(&mut parts, true);
-        assert_eq!("Jane Doe", parts.iter().fold("".to_string(), |s,ref p| s + " " + p.word).trim());
+        assert_eq!("Jane Doe",
+                   parts.iter().fold("".to_string(), |s, ref p| s + " " + p.word).trim());
     }
 
     #[test]
     fn strip_prefix_title_word() {
-        let mut parts: Vec<_> = NamePart::all_from_text("Lady Jane Doe", true, Location::Start).collect();
+        let mut parts: Vec<_> = NamePart::all_from_text("Lady Jane Doe", true, Location::Start)
+                                    .collect();
         strip_prefix_title(&mut parts, true);
-        assert_eq!("Jane Doe", parts.iter().fold("".to_string(), |s,ref p| s + " " + p.word).trim());
+        assert_eq!("Jane Doe",
+                   parts.iter().fold("".to_string(), |s, ref p| s + " " + p.word).trim());
     }
 
     #[test]
     fn strip_prefix_title_multi_word() {
-        let mut parts: Vec<_> = NamePart::all_from_text("1st (B) Ltc Jane Doe", true, Location::Start).collect();
+        let mut parts: Vec<_> = NamePart::all_from_text("1st (B) Ltc Jane Doe",
+                                                        true,
+                                                        Location::Start)
+                                    .collect();
         strip_prefix_title(&mut parts, true);
-        assert_eq!("Jane Doe", parts.iter().fold("".to_string(), |s,ref p| s + " " + p.word).trim());
+        assert_eq!("Jane Doe",
+                   parts.iter().fold("".to_string(), |s, ref p| s + " " + p.word).trim());
     }
 
     #[test]
     fn strip_prefix_title_short_ambiguous() {
         let mut parts: Vec<_> = NamePart::all_from_text("DR DOE", true, Location::Start).collect();
         strip_prefix_title(&mut parts, true);
-        assert_eq!("DR DOE", parts.iter().fold("".to_string(), |s,ref p| s + " " + p.word).trim());
+        assert_eq!("DR DOE",
+                   parts.iter().fold("".to_string(), |s, ref p| s + " " + p.word).trim());
     }
 
     #[test]
     fn strip_prefix_title_short_unambiguous() {
         let mut parts: Vec<_> = NamePart::all_from_text("Dr. Doe", true, Location::Start).collect();
         strip_prefix_title(&mut parts, true);
-        assert_eq!("Doe", parts.iter().fold("".to_string(), |s,ref p| s + " " + p.word).trim());
+        assert_eq!("Doe",
+                   parts.iter().fold("".to_string(), |s, ref p| s + " " + p.word).trim());
     }
 }

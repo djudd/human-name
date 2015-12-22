@@ -215,7 +215,7 @@ Griffey, Ken, Jr.|Griffey|Ken||K||Jr.
 Smith Jr., John|Smith|John||J||Jr.
 Smith III, John|Smith|John||J||III
 King John Alexander V|Alexander|John||J||V
-Larry James Johnson I|Johnson|Larry|James|L|J|I
+Larry James Johnson I|Johnson|Larry|James|L|J|Sr.
 
 # suffix with unusual capitalization
 Smith, John e, III, Jr|Smith|John||J|E|III
