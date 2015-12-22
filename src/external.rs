@@ -6,7 +6,6 @@ use self::libc::c_char;
 use std::ffi::{CString, CStr};
 use std::mem;
 use std::ptr;
-use std::hash::{Hash, Hasher, SipHasher};
 use super::Name;
 
 macro_rules! str_to_char_star {
@@ -55,9 +54,7 @@ pub extern "C" fn human_name_consistent_with(a: &Name, b: &Name) -> bool {
 
 #[no_mangle]
 pub extern "C" fn human_name_hash(name: &Name) -> u64 {
-    let mut s = SipHasher::new();
-    name.hash(&mut s);
-    s.finish()
+    name.memoized_surname_hash()
 }
 
 #[no_mangle]

@@ -1,7 +1,5 @@
 use std::hash::{Hash, Hasher};
 use super::Name;
-use super::comparison;
-use super::utils::{lowercase_if_alpha, transliterate};
 
 /// Might this name represent the same person as another name?
 ///
@@ -26,26 +24,10 @@ impl PartialEq for Name {
 ///
 /// This hash function is prone to collisions!
 ///
-/// We can only use the last four alphabetical characters of the surname, because
-/// that's all we're guaranteed to use in the equality test. That means if names
-/// are ASCII, we only have 19 bits of variability.
+/// See docs on `surname_hash` for details.
 ///
-/// That means if you are working with a lot of names and you expect surnames
-/// to be similar or identical, you might be better off avoiding hash-based
-/// datastructures (or using a custom hash and alternate equality test).
-///
-/// We can't use more characters of the surname because we treat names as equal
-/// when one surname ends with the other and the smaller is at least four
-/// characters, to catch cases like "Iria Gayo" == "Iria del Río Gayo".
-///
-/// We can't use the first initial because we might ignore it if someone goes
-/// by a middle name, to catch cases like "H. Manuel Alperin" == "Manuel Alperin."
 impl Hash for Name {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        let surname_chars = self.surnames().iter().flat_map(|w| w.chars()).flat_map(transliterate).rev();
-        for c in surname_chars.filter_map(lowercase_if_alpha)
-                              .take(comparison::MIN_SURNAME_CHAR_MATCH) {
-            c.hash(state);
-        }
+        self.surname_hash(state);
     }
 }

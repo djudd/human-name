@@ -60,10 +60,15 @@ impl Name {
     ///
     #[cfg_attr(rustfmt, rustfmt_skip)]
     pub fn consistent_with(&self, other: &Name) -> bool {
-        // Check surnames first because coincidentally-identical surnames are
-        // less likely in most contexts than coincidentally-identical given names
-        self.surname_consistent(other) &&
+        // Fast path
+        if self.memoized_surname_hash() != other.memoized_surname_hash() {
+            return false;
+        }
+
+        // Check given name(s) first because if we got this far, we know that
+        // at least the last characters of the surnames are consistent
         self.given_and_middle_names_consistent(other) &&
+        self.surname_consistent(other) &&
         self.suffix_consistent(other)
     }
 

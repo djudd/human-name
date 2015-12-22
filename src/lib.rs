@@ -34,8 +34,10 @@ pub mod external;
 mod eq_hash;
 
 use std::borrow::Cow;
+use std::cell::Cell;
+use std::hash::{Hash, Hasher, SipHasher};
 use itertools::Itertools;
-use utils::is_mixed_case;
+use utils::{is_mixed_case,transliterate,lowercase_if_alpha};
 
 /// Represents a parsed human name.
 ///
@@ -60,6 +62,7 @@ pub struct Name {
     suffix_index: usize,
     initials: String,
     word_indices_in_initials: Vec<(usize, usize)>,
+    hash: Cell<Option<u64>>,
 }
 
 enum NameWordOrInitial<'a> {
@@ -183,6 +186,7 @@ impl Name {
             suffix_index: suffix_index_in_names,
             initials: initials,
             word_indices_in_initials: word_indices_in_initials,
+            hash: Cell::new(None),
         })
     }
 
@@ -405,5 +409,50 @@ impl Name {
         }
 
         result
+    }
+
+    /// Implements a hash for a name that is always identical for two names that
+    /// may be consistent.
+    ///
+    /// ### WARNING
+    ///
+    /// This hash function is prone to collisions!
+    ///
+    /// We can only use the last four alphabetical characters of the surname, because
+    /// that's all we're guaranteed to use in the equality test. That means if names
+    /// are ASCII, we only have 19 bits of variability.
+    ///
+    /// That means if you are working with a lot of names and you expect surnames
+    /// to be similar or identical, you might be better off avoiding hash-based
+    /// datastructures (or using a custom hash and alternate equality test).
+    ///
+    /// We can't use more characters of the surname because we treat names as equal
+    /// when one surname ends with the other and the smaller is at least four
+    /// characters, to catch cases like "Iria Gayo" == "Iria del Río Gayo".
+    ///
+    /// We can't use the first initial because we might ignore it if someone goes
+    /// by a middle name, to catch cases like "H. Manuel Alperin" == "Manuel Alperin."
+    pub fn surname_hash<H: Hasher>(&self, state: &mut H) {
+        let surname_chars = self.surnames().iter().flat_map(|w| w.chars()).flat_map(transliterate).rev();
+        for c in surname_chars.filter_map(lowercase_if_alpha)
+                              .take(comparison::MIN_SURNAME_CHAR_MATCH) {
+            c.hash(state);
+        }
+    }
+
+    /// Memoizes the result of `surname_hash` when used with `SipHasher`
+    pub fn memoized_surname_hash(&self) -> u64 {
+        {
+            let cached = self.hash.get();
+            if cached.is_some() {
+                return cached.unwrap();
+            }
+
+            let mut s = SipHasher::new();
+            self.surname_hash(&mut s);
+            self.hash.set(Some(s.finish()));
+        }
+
+        self.memoized_surname_hash()
     }
 }
