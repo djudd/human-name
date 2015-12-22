@@ -16,7 +16,7 @@ impl ToJson for Name {
     /// # fn main() {
     /// let name = Name::parse("JOHN ALLEN Q MACDONALD JR").unwrap();
     /// assert_eq!(
-    ///   r#"{"first_initial":"J","given_name":"John","middle_initial":"AQ","middle_names":"Allen","suffix":"Jr.","surname":"MacDonald"}"#,
+    ///   r#"{"first_initial":"J","given_name":"John","middle_initials":"AQ","middle_names":"Allen","suffix":"Jr.","surname":"MacDonald"}"#,
     ///   name.to_json().to_string()
     /// );
     /// # }
@@ -31,7 +31,7 @@ impl ToJson for Name {
                      self.given_name().unwrap().to_json());
         }
         if self.middle_initials().is_some() {
-            d.insert("middle_initial".to_string(),
+            d.insert("middle_initials".to_string(),
                      self.middle_initials().unwrap().to_json());
         }
         if self.middle_names().is_some() {
