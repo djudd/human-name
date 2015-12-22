@@ -6,6 +6,12 @@ static VOWELLESS_SURNAMES: [&'static str; 4] = ["Ng", "Lv", "Mtz", "Hdz"];
 
 static SINGLE_LETTER_CONJUNCTIONS: [&'static str; 4] = ["e", "y", "E", "Y"];
 
+// Uncapitalized list should match UNCAPITALIZED_PARTICLES in `namecase.rs`
+//
+// Unfortunately, the duplication between the lists is necessary because of the
+// way `phf_set!` works, and the duplication within this list is necessary
+// because we may or may not lowercase the particle as part of first-pass
+// namecasing, depending on whether the input is given with mixed case.
 static SURNAME_PREFIXES: phf::Set<&'static str> = phf_set! {
     "af",
     "av",
@@ -30,6 +36,7 @@ static SURNAME_PREFIXES: phf::Set<&'static str> = phf_set! {
     "vel",
     "von",
     "zu",
+    "zum",
     "Abu",
     "Abd",
     "Af",

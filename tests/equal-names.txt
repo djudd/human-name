@@ -1,4 +1,5 @@
 John Doe|John Doe|==
+john doe|John Doe|==
 John Doe|Jane Doe|!=
 John Q. Doe|John Doe|==
 John Q. Doe|John Q. Doe|==
@@ -6,6 +7,8 @@ John Q. Doe|John H. Doe|!=
 John Q. Doe|Jane Q. Doe|!=
 Jon Doe|Ron Doe|!=
 Jon Q. Doe|Ron Q. Doe|!=
+Jon du Pont|Jon Du Pont|==
+Jon du Pont|Jon Den Pont|!=
 Hernan Alperin|Hernan Alperin|==
 Hernan Alperin|Herman Alperin|!=
 Hernan Alperin|Hernan Alpine|!=

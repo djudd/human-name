@@ -28,6 +28,7 @@ static UNCAPITALIZED_PARTICLES: phf::Set<&'static str> = phf_set! {
     "Vel",
     "Von",
     "Zu",
+    "Zum",
     "E",
     "Y",
 };
