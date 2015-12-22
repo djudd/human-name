@@ -38,8 +38,8 @@ impl Name {
     /// names and/or suffixes are present in both names, they must match as well.
     ///
     /// Transliterates everything to ASCII before comparison using the naive
-    /// algorithm of unidecode (which ignores context), and ignores case, accents
-    /// and combining marks.
+    /// algorithm of [unidecode](https://github.com/chowdhurya/rust-unidecode/)
+    /// (which ignores context), and ignores case, accents and combining marks.
     ///
     /// In the case of given and middle names, allows one name to be a prefix of
     /// the other, without requiring the prefix end at a word boundary as we do
