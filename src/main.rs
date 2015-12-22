@@ -75,10 +75,10 @@ fn equality_mode(args: &Vec<String>) {
             writeln!(&mut std::io::stdout(), "parse failed!").ok();
             process::exit(1);
         } else if parsed_a.unwrap() != parsed_b.unwrap() {
-            writeln!(&mut std::io::stdout(), "not equal!").ok();
+            writeln!(&mut std::io::stdout(), "n").ok();
             process::exit(1);
         } else {
-            writeln!(&mut std::io::stdout(), "equal").ok();
+            writeln!(&mut std::io::stdout(), "y").ok();
             process::exit(0);
         }
     }
