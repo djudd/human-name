@@ -72,6 +72,17 @@ pub fn transliterate<'a>(c: char) -> Chars<'a> {
     unidecode_char(c).chars()
 }
 
+#[inline]
+pub fn to_ascii_letter(c: char) -> Option<char> {
+    match c {
+        'A'...'Z' => Some(c),
+        _ => match transliterate(c).next() {
+            Some(c) => c.to_uppercase().next(),
+            None => None,
+        },
+    }
+}
+
 pub fn to_ascii(s: &str) -> Cow<str> {
     if s.is_ascii() {
         Cow::Borrowed(s)

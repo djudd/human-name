@@ -85,35 +85,12 @@ impl Name {
     }
 
     fn given_and_middle_names_consistent_with_less_complete(&self, other: &Name) -> bool {
-        macro_rules! transliterate_initial {
-            ($c:expr) => {
-                match transliterate($c).next() {
-                    Some(c) => c.to_uppercase().next(),
-                    None => None,
-                }
-            }
-        }
-
-        macro_rules! transliterate_initials {
-            ($initials:expr) => {
-                if $initials.is_ascii() {
-                    Cow::Borrowed($initials)
-                } else {
-                    Cow::Owned($initials
-                        .chars()
-                        .filter_map(|c| transliterate(c).next())
-                        .filter_map(|c| c.to_uppercase().next())
-                        .collect::<String>())
-                }
-            }
-        }
-
         // Handle simple cases first, where we only have to worry about one name
         // and/or initial.
         if self.middle_initials().is_none() && other.middle_initials().is_none() {
             if self.given_name().is_none() || other.given_name().is_none() {
-                return transliterate_initial!(self.first_initial()) ==
-                       transliterate_initial!(other.first_initial());
+                return to_ascii_letter(self.first_initial()) ==
+                       to_ascii_letter(other.first_initial());
             } else {
                 return have_matching_variants(self.given_name().unwrap(),
                                               other.given_name().unwrap());
@@ -128,8 +105,8 @@ impl Name {
                                      self.goes_by_middle_name() ||
                                      other.goes_by_middle_name();
 
-        let my_initials = &*transliterate_initials!(self.initials());
-        let their_initials = &*transliterate_initials!(other.initials());
+        let my_initials = &*self.transliterated_initials();
+        let their_initials = &*other.transliterated_initials();
 
         if any_missing_given_name {
             if self.goes_by_middle_name() {
@@ -268,7 +245,7 @@ impl Name {
                 return;
             }
 
-            let my_initial = transliterate_initial!(my_part.initial());
+            let my_initial = to_ascii_letter(my_part.initial());
             let their_initial = *their_initials.peek().unwrap();
             if my_initial.is_none() || my_initial.unwrap() != their_initial {
                 // We have an initial they don't, or an invalid one, continue
@@ -308,8 +285,15 @@ impl Name {
         !consistency_refuted && their_initials.peek().is_none()
     }
 
-    fn simple_surname(&self) -> bool {
-        self.surnames().len() == 1 && self.surname().chars().all(is_ascii_alphabetic)
+    fn transliterated_initials(&self) -> Cow<str> {
+        if self.initials().is_ascii() {
+            Cow::Borrowed(self.initials())
+        } else {
+            Cow::Owned(self.initials()
+                .chars()
+                .filter_map(to_ascii_letter)
+                .collect::<String>())
+        }
     }
 
     fn surname_consistent(&self, other: &Name) -> bool {
@@ -400,6 +384,10 @@ impl Name {
                 }
             }
         }
+    }
+
+    fn simple_surname(&self) -> bool {
+        self.surnames().len() == 1 && self.surname().chars().all(is_ascii_alphabetic)
     }
 
     fn suffix_consistent(&self, other: &Name) -> bool {
