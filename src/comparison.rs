@@ -77,14 +77,6 @@ impl Name {
     }
 
     fn given_and_middle_names_consistent(&self, other: &Name) -> bool {
-        if self.initials().len() >= other.initials().len() {
-            self.given_and_middle_names_consistent_with_less_complete(other)
-        } else {
-            other.given_and_middle_names_consistent_with_less_complete(self)
-        }
-    }
-
-    fn given_and_middle_names_consistent_with_less_complete(&self, other: &Name) -> bool {
         // Handle simple cases first, where we only have to worry about one name
         // and/or initial.
         if self.middle_initials().is_none() && other.middle_initials().is_none() {
@@ -97,49 +89,22 @@ impl Name {
             }
         }
 
-        // Unless we have both given names, we require that the first initials
-        // match (if we do have the names, we'll check for nicknames, etc,
-        // which might violate this requirement.)
-        let any_missing_given_name = self.given_name().is_none() ||
-                                     other.given_name().is_none() ||
-                                     self.goes_by_middle_name() ||
-                                     other.goes_by_middle_name();
+        // For the more complicated cases, we'll simplify things a bit by
+        // letting ourselves assume `self` has the more complete name.
+        if self.initials().chars().count() >= other.initials().chars().count() {
+            self.given_and_middle_names_consistent_with_less_complete(other)
+        } else {
+            other.given_and_middle_names_consistent_with_less_complete(self)
+        }
+    }
 
-        let my_initials = &*self.transliterated_initials();
-        let their_initials = &*other.transliterated_initials();
-
-        if any_missing_given_name {
-            if self.goes_by_middle_name() {
-                // Edge case: if we go by a middle name, another version of the
-                // name might use the middle name's initial as the first initial.
-                //
-                // However, only check in this direction because we know `self`
-                // has more complete initials, so their initials won't contain
-                // ours unless they're equal.
-                if !my_initials.contains(&their_initials) {
-                    return false;
-                }
-            } else {
-                // Normal case, given the absence of (true) given names
-                //
-                // Using byte offsets is ok because we already converted to ASCII
-                if my_initials.chars().nth(0) != their_initials.chars().nth(0) {
-                    return false;
-                }
-            }
+    fn given_and_middle_names_consistent_with_less_complete(&self, other: &Name) -> bool {
+        // Check initials first
+        if !self.initials_consistent_with_less_complete(other) {
+            return false;
         }
 
-        // If we have middle initials, check their consistency alone before
-        // looking at names (& we know "self" has the more complete initials).
-        if self.middle_initials().is_some() && other.middle_initials().is_some() {
-            // Using byte offsets is ok because we already converted to ASCII
-            if !my_initials[1..].contains(&their_initials[1..]) {
-                return false;
-            }
-        }
-
-        // Unless both versions of the name have given or middle names, that's
-        // all we have to do.
+        // Unless both versions of the name have given or middle names, we're done
         if self.surname_index == 0 || other.surname_index == 0 {
             return true;
         }
@@ -150,72 +115,48 @@ impl Name {
         // that the words are an exact match, or that one is a prefix of the other,
         // or that one is a recognized nickname or spelling variant of the other.
 
-        let mut their_initials = their_initials.chars().peekable();
-        let mut their_initial_index = 0;
-        let mut their_word_indices = other.word_indices_in_initials.iter().peekable();
-        let mut their_words = other.words.iter();
-        let mut suffix_for_prior_prefix_match: Option<&str> = None;
-        let mut consistency_refuted = false;
+        let missing_any_names = self.missing_any_name() || other.missing_any_name();
+
+        let mut their_parts = other.given_names_or_initials().peekable();
+        let mut suffix_for_prior_prefix_match: Option<String> = None;
         let mut looked_up_nicknames = false;
 
-        self.with_each_given_name_or_initial(&mut |my_part| {
-            macro_rules! require_word_match {
-                ($my_word:expr, $their_word:expr) => { {
-                    let mut my_chars = $my_word.chars().flat_map(transliterate).filter_map(lowercase_if_alpha);
-                    let mut their_chars = $their_word.chars().flat_map(transliterate).filter_map(lowercase_if_alpha);
-                    let mut matched = 0;
+        let mut their_part_if_any = their_parts.next();
 
-                    loop {
-                        let my_char = my_chars.next();
-                        let their_char = their_chars.next();
+        for my_part in self.given_names_or_initials() {
+            if let Some(ref their_part) = their_part_if_any {
+                let result = my_part.check_consistency(their_part, !looked_up_nicknames);
 
-                        if my_char.is_none() && their_char.is_none() {
-                            // Exact match; continue
-                            suffix_for_prior_prefix_match = None;
-                            return;
-                        } else if (my_char.is_none() || their_char.is_none()) && matched >= MIN_GIVEN_NAME_CHAR_MATCH {
-                            // Prefix match; continue
-                            if my_char.is_none() && their_initials.peek().is_none() {
-                                // We'll only use this when the name with fewer words
-                                // (theirs) is out of words, but the last matching part
-                                // of the name with more words (ours) was only a prefix
-                                // (see NOTE below)
-                                suffix_for_prior_prefix_match = Some(&$their_word[matched..]);
-                            }
-                            return;
-                        } else if my_char != their_char {
-                            // Failed match; abort, but first, if we haven't before,
-                            // try nickname database (we only allow one nickname
-                            // per full name)
-                            consistency_refuted = looked_up_nicknames || !have_matching_variants($my_word, $their_word);
-                            looked_up_nicknames = true;
-                            return;
-                        } else {
-                            matched += 1;
-                        }
+                match result {
+                    ComparisonResult::Inconsistent => {
+                        // The names are inconsistent
+                        return false;
                     }
-                } }
-            }
-
-            macro_rules! skip_n_of_their_initials {
-                ($count:expr) => {
-                    for _ in 0..$count {
-                        their_initials.next();
-                        their_initial_index += 1;
+                    ComparisonResult::DifferentInitials => {
+                        // They don't have a word for this initial, so we don't
+                        // advance the iterator for their words/initials
+                        continue;
+                    }
+                    ComparisonResult::NicknameMatch => {
+                        looked_up_nicknames = true;
+                    }
+                    ComparisonResult::PrefixOfOther(remaining_chars) => {
+                        suffix_for_prior_prefix_match = Some(remaining_chars);
+                    }
+                    _ => {
+                        // Any other kind of match; no-op, just continue
                     }
                 }
-            }
-
-            if consistency_refuted {
-                // We already found words that fail to match
-                return;
-            }
-
-            if suffix_for_prior_prefix_match.is_some() {
-                // NOTE It's not uncommon for representations of a name to be
-                // inconsistent in whether two parts of a given name are separated
-                // by a space, a hyphen, or nothing (especially with transliterated
-                // names).
+            } else if missing_any_names {
+                // We've matched everything available, and will skip the check
+                // in the next block
+                return true;
+            } else if let Some(suffix) = suffix_for_prior_prefix_match {
+                // We've matched everything available, but we're not quite done.
+                //
+                // It's not uncommon for representations of a name to be inconsistent
+                // in whether two parts of a given name are separated by a space,
+                // a hyphen, or nothing (especially with transliterated names).
                 //
                 // This is one of the reasons we accept prefix-only matches for
                 // given & middle names. However, doing so potentially opens us up
@@ -232,57 +173,70 @@ impl Name {
                 // This separates, e.g., "Jinli" from "Jin Yi", or "Xiaofeng" from
                 // "Xiao Peng".
                 //
-                // This logic is imperfect in the presence of middle initials,
-                // but that's an edge case to an edge case.
-                if let NameWordOrInitial::Word(word) = my_part {
-                    consistency_refuted = !eq_or_starts_with!(suffix_for_prior_prefix_match.unwrap(), word);
-                    return;
+                // We don't try to do this in the presence of middle initials
+                // without corresponding names, because the logic would have to
+                // be even more complicated.
+                if let NameWordOrInitial::Word(word, _) = my_part {
+                    return eq_or_starts_with!(suffix, word);
+                } else {
+                    return true;
+                }
+            } else {
+                // We've matched everything available
+                return true;
+            }
+
+            let mut advance_by = my_part.initials_count();
+            while advance_by > 0 && their_part_if_any.is_some() {
+                their_part_if_any = their_parts.next();
+                if let Some(ref their_part) = their_part_if_any {
+                    advance_by -= their_part.initials_count();
                 }
             }
+        }
 
-            if their_initials.peek().is_none() {
-                // We've matched everything available
-                return;
+        their_part_if_any.is_none()
+    }
+
+    fn initials_consistent_with_less_complete(&self, other: &Name) -> bool {
+        let my_initials = &*self.transliterated_initials();
+        let their_initials = &*other.transliterated_initials();
+
+        // Unless we have both given names, we require that the first initials
+        // match (if we do have the names, we'll check for nicknames, etc,
+        // which might violate this requirement.)
+        //
+        // If we do have both, we skip this requirement because we might find
+        // a nickname match.
+        if self.missing_given_name() || other.missing_given_name() {
+            if self.goes_by_middle_name() {
+                // Edge case: if we go by a middle name, another version of the
+                // name might use the middle name's initial as the first initial.
+                //
+                // However, only check in this direction because we know `self`
+                // has more complete initials, so their initials won't contain
+                // ours unless they're equal.
+                if !my_initials.contains(&their_initials) {
+                    return false;
+                }
+            } else {
+                // Normal case, given the absence of (true) given names
+                if my_initials.chars().nth(0) != their_initials.chars().nth(0) {
+                    return false;
+                }
             }
+        }
 
-            let my_initial = to_ascii_letter(my_part.initial());
-            let their_initial = *their_initials.peek().unwrap();
-            if my_initial.is_none() || my_initial.unwrap() != their_initial {
-                // We have an initial they don't, or an invalid one, continue
-                return;
-            }
+        // If we have middle initials, check their consistency alone before
+        // looking at names (& we know "self" has the more complete initials).
+        //
+        // Using byte offsets is ok because we already converted to ASCII.
+        if my_initials.len() > 1 && their_initials.len() > 1 &&
+           !my_initials[1..].contains(&their_initials[1..]) {
+            return false;
+        }
 
-            // The initials match, so we know we'll want to increment both
-            skip_n_of_their_initials!(my_part.initial_count());
-
-            if their_word_indices.peek().is_none() || their_word_indices.peek().unwrap().0 >= their_initial_index {
-                // They don't have a word for this initial
-                return;
-            }
-
-            let &(j, k) = their_word_indices.next().unwrap();
-
-            // Edge case: Their word is hyphenated and so corresponds to
-            // multiple initials (but ours isn't, or this would be redundant)
-            if (k - j) > my_part.initial_count() {
-                skip_n_of_their_initials!(k - j - my_part.initial_count());
-            }
-
-            let their_word = their_words.next().unwrap();
-
-            match my_part {
-                NameWordOrInitial::Initial(_) => {
-                    // We don't have a word for this initial
-                    return;
-                },
-                NameWordOrInitial::Word(my_word) => {
-                    // Both have words for this initial, so check if they match
-                    require_word_match!(my_word, their_word);
-                },
-            }
-        });
-
-        !consistency_refuted && their_initials.peek().is_none()
+        true
     }
 
     fn transliterated_initials(&self) -> Cow<str> {
@@ -290,10 +244,32 @@ impl Name {
             Cow::Borrowed(self.initials())
         } else {
             Cow::Owned(self.initials()
-                .chars()
-                .filter_map(to_ascii_letter)
-                .collect::<String>())
+                           .chars()
+                           .filter_map(to_ascii_letter)
+                           .collect::<String>())
         }
+    }
+
+    fn missing_given_name(&self) -> bool {
+        self.given_name().is_none() || self.goes_by_middle_name()
+    }
+
+    fn missing_any_name(&self) -> bool {
+        if self.surname_index == 0 {
+            return true;
+        }
+
+        let mut prev = 0;
+
+        for &(i, j) in self.word_indices_in_initials.iter() {
+            if i > prev {
+                return true;
+            } else {
+                prev = j;
+            }
+        }
+
+        self.surname_index > prev
     }
 
     fn surname_consistent(&self, other: &Name) -> bool {
@@ -396,27 +372,96 @@ impl Name {
     }
 }
 
+#[derive(Eq,PartialEq,Debug)]
+enum ComparisonResult {
+    Inconsistent,
+    DifferentInitials,
+    InitialsOnlyMatch,
+    ExactMatch,
+    PrefixOfOther(String),
+    PrefixOfSelf(String),
+    NicknameMatch,
+}
+
 impl<'a> NameWordOrInitial<'a> {
-    pub fn initial(&self) -> char {
+    pub fn initial(&self) -> Option<char> {
         match self {
-            &NameWordOrInitial::Word(word) => {
-                word.chars().nth(0).unwrap()
+            &NameWordOrInitial::Word(word, _) => {
+                to_ascii_letter(word.chars().nth(0).unwrap())
             }
             &NameWordOrInitial::Initial(initial) => {
-                initial
+                to_ascii_letter(initial)
             }
         }
     }
 
-    pub fn initial_count(&self) -> usize {
+    pub fn check_consistency(&self,
+                             other: &NameWordOrInitial,
+                             allow_nicknames: bool)
+                             -> ComparisonResult {
+        if self.initial().is_none() || self.initial() != other.initial() {
+            return ComparisonResult::DifferentInitials;
+        }
+
+        if !self.has_word() || !other.has_word() {
+            return ComparisonResult::InitialsOnlyMatch;
+        }
+
+        let mut my_chars = self.word()
+                               .chars()
+                               .flat_map(transliterate)
+                               .filter_map(lowercase_if_alpha);
+        let mut their_chars = other.word()
+                                   .chars()
+                                   .flat_map(transliterate)
+                                   .filter_map(lowercase_if_alpha);
+        let mut matched = 0;
+
+        loop {
+            let my_char = my_chars.next();
+            let their_char = their_chars.next();
+
+            if my_char.is_none() && their_char.is_none() {
+                return ComparisonResult::ExactMatch;
+            } else if (my_char.is_none() || their_char.is_none()) && matched >= MIN_GIVEN_NAME_CHAR_MATCH {
+                if their_char.is_some() {
+                    return ComparisonResult::PrefixOfOther(format!("{}{}", their_char.unwrap(), their_chars.collect::<String>()));
+                } else {
+                    return ComparisonResult::PrefixOfSelf(format!("{}{}",
+                                                                  my_char.unwrap(),
+                                                                  my_chars.collect::<String>()));
+                }
+            } else if my_char != their_char {
+                // Failed match; abort, but first, maybe try nickname db
+                if allow_nicknames && have_matching_variants(self.word(), other.word()) {
+                    return ComparisonResult::NicknameMatch;
+                } else {
+                    return ComparisonResult::Inconsistent;
+                }
+            } else {
+                matched += 1;
+            }
+        }
+    }
+
+    fn word(&self) -> &str {
         match self {
-            &NameWordOrInitial::Word(word) => {
-                // TODO Replace this hack
-                word.chars().filter(|c| *c == '-').count() + 1
-            }
-            &NameWordOrInitial::Initial(_) => {
-                1
-            }
+            &NameWordOrInitial::Word(word, _) => word,
+            &NameWordOrInitial::Initial(_) => unreachable!(),
+        }
+    }
+
+    fn has_word(&self) -> bool {
+        match self {
+            &NameWordOrInitial::Word(_, _) => true,
+            &NameWordOrInitial::Initial(_) => false,
+        }
+    }
+
+    fn initials_count(&self) -> u8 {
+        match self {
+            &NameWordOrInitial::Word(_, count) => count as u8,
+            &NameWordOrInitial::Initial(_) => 1,
         }
     }
 }

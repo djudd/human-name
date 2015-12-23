@@ -36,6 +36,9 @@ mod eq_hash;
 use std::borrow::Cow;
 use std::cell::Cell;
 use std::hash::{Hash, Hasher, SipHasher};
+use std::slice::Iter;
+use std::str::Chars;
+use std::iter::{Peekable, Enumerate};
 use itertools::Itertools;
 use utils::{is_mixed_case, transliterate, lowercase_if_alpha};
 
@@ -63,11 +66,6 @@ pub struct Name {
     initials: String,
     word_indices_in_initials: Vec<(usize, usize)>,
     hash: Cell<Option<u64>>,
-}
-
-enum NameWordOrInitial<'a> {
-    Word(&'a str),
-    Initial(char),
 }
 
 impl Name {
@@ -260,37 +258,11 @@ impl Name {
         self.generation_from_suffix.map(|g| suffix::display_generational_suffix(g))
     }
 
-    fn with_each_given_name_or_initial<F: FnMut(NameWordOrInitial)>(&self, cb: &mut F) {
-        let mut initials = self.initials.chars().enumerate();
-        let mut known_names = self.words[0..self.surname_index].iter();
-        let mut known_name_indices = self.word_indices_in_initials.iter().peekable();
-
-        loop {
-            match initials.next() {
-                Some((i, initial)) => {
-                    let mut next_name = None;
-                    if let Some(&&(j, k)) = known_name_indices.peek() {
-                        if j == i {
-                            known_name_indices.next();
-                            next_name = known_names.next();
-
-                            // Handle case of hyphenated name for which we have 2+ initials
-                            for _ in j + 1..k {
-                                initials.next();
-                            }
-                        }
-                    }
-
-                    if let Some(name) = next_name {
-                        cb(NameWordOrInitial::Word(name));
-                    } else {
-                        cb(NameWordOrInitial::Initial(initial));
-                    }
-                }
-                None => {
-                    break;
-                }
-            }
+    fn given_names_or_initials(&self) -> GivenNamesOrInitials {
+        GivenNamesOrInitials {
+            initials: self.initials.chars().enumerate(),
+            known_names: self.words[0..self.surname_index].iter(),
+            known_name_indices: self.word_indices_in_initials.iter().peekable(),
         }
     }
 
@@ -374,9 +346,9 @@ impl Name {
     pub fn display_full(&self) -> String {
         let mut result = String::with_capacity(self.byte_len());
 
-        self.with_each_given_name_or_initial(&mut |part| {
+        for part in self.given_names_or_initials() {
             match part {
-                NameWordOrInitial::Word(name) => {
+                NameWordOrInitial::Word(name, _) => {
                     result.push_str(name);
                     result.push(' ');
                 }
@@ -385,7 +357,7 @@ impl Name {
                     result.push_str(". ");
                 }
             }
-        });
+        }
 
         let surnames = self.surnames();
         if surnames.len() > 1 {
@@ -451,5 +423,49 @@ impl Name {
         }
 
         self.memoized_surname_hash()
+    }
+}
+
+struct GivenNamesOrInitials<'a> {
+    initials: Enumerate<Chars<'a>>,
+    known_names: Iter<'a, String>,
+    known_name_indices: Peekable<Iter<'a, (usize, usize)>>,
+}
+
+#[derive(Debug)]
+enum NameWordOrInitial<'a> {
+    Word(&'a str, usize),
+    Initial(char),
+}
+
+impl <'a>Iterator for GivenNamesOrInitials<'a> {
+    type Item = NameWordOrInitial<'a>;
+
+    fn next(&mut self) -> Option<NameWordOrInitial<'a>> {
+        match self.initials.next() {
+            Some((i, initial)) => {
+                let mut next_name = None;
+                let mut initials_for_word = 1;
+                if let Some(&&(j, k)) = self.known_name_indices.peek() {
+                    if j == i {
+                        self.known_name_indices.next();
+                        next_name = self.known_names.next();
+
+                        // Handle case of hyphenated name for which we have 2+ initials
+                        for _ in j + 1..k {
+                            self.initials.next();
+                            initials_for_word += 1;
+                        }
+                    }
+                }
+
+                if let Some(name) = next_name {
+                    Some(NameWordOrInitial::Word(name, initials_for_word))
+                } else {
+                    Some(NameWordOrInitial::Initial(initial))
+                }
+            }
+            None => None,
+        }
     }
 }

@@ -52,7 +52,7 @@ pub fn is_ascii_alphabetic(c: char) -> bool {
     match c {
         'a'...'z' => true,
         'A'...'Z' => true,
-        _ => false
+        _ => false,
     }
 }
 
