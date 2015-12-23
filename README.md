@@ -81,12 +81,14 @@ $ human_name parse "Jane Doe"
 $ human_name parse "MR OSCAR DE LA HOYA JR"
 {"first_initial":"O","given_name":"Oscar","suffix":"Jr.","surname":"de la Hoya"}
 
-$ human_name eq "Jane Doe" "Jane M. Doe" && echo $?
-equal
+$ human_name eq "Jane Doe" "Jane M. Doe"
+y
+$ echo $?
 0
 
-$ human_name eq "Jane M. Doe" "Jane H. Doe" || echo $?
-not equal!
+$ human_name eq "Jane M. Doe" "Jane H. Doe"
+n
+$ echo $?
 1
 ```
 
