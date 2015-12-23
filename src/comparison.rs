@@ -308,7 +308,16 @@ impl Name {
         !consistency_refuted && their_initials.peek().is_none()
     }
 
+    fn simple_surname(&self) -> bool {
+        self.surnames().len() == 1 && self.surname().chars().all(is_ascii_alphabetic)
+    }
+
     fn surname_consistent(&self, other: &Name) -> bool {
+        // Fast path
+        if self.simple_surname() && other.simple_surname() {
+            return self.surname().eq_ignore_ascii_case(&*other.surname());
+        }
+
         let mut my_words = self.surnames()
                                .iter()
                                .flat_map(|w| w.unicode_words())

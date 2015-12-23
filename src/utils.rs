@@ -48,6 +48,15 @@ pub fn is_combining(c: char) -> bool {
 }
 
 #[inline]
+pub fn is_ascii_alphabetic(c: char) -> bool {
+    match c {
+        'a'...'z' => true,
+        'A'...'Z' => true,
+        _ => false
+    }
+}
+
+#[inline]
 pub fn lowercase_if_alpha(c: char) -> Option<char> {
     if c.is_uppercase() {
         c.to_lowercase().next()
