@@ -363,6 +363,8 @@ lt. gen. john a. kenneth doe iv|Doe|John|Kenneth|J|AK|IV
 donovan mcnabb-smith|McNabb-Smith|Donovan||D||
 scott e. werner|Werner|Scott||S|E|
 matthëus schmidt|Schmidt|Matthëus||M||
+TURING SR, AM|Turing|||A|M|Sr.
+DR AC DA SILVA|da Silva|||A|C|
 
 # screwy capitalization
 Jianfei LIU|Liu|Jianfei||J||

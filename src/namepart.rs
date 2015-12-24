@@ -3,6 +3,7 @@ use super::surname;
 use super::namecase;
 use std::borrow::Cow;
 use std::ascii::AsciiExt;
+use phf;
 use unicode_segmentation::UnicodeSegmentation;
 
 // If Start and End overlap, use End
@@ -146,6 +147,8 @@ impl <'a>NamePart<'a> {
             if chars <= 5 && trust_capitalization &&
                word.chars().all(|c| !c.is_alphabetic() || c.is_uppercase()) {
                 Category::Initials
+            } else if chars == 2 && !trust_capitalization && !TWO_LETTER_GIVEN_NAMES.contains(word) {
+                Category::Initials
             } else {
                 Category::Name
             }
@@ -279,4 +282,148 @@ mod tests {
         assert_eq!(Category::Name,
                    NamePart::from_word("JEM", false, Location::Start).category);
     }
+
+    #[test]
+    fn two_letters() {
+        assert_eq!(Category::Name,
+                   NamePart::from_word("Al", true, Location::Start).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("AL", true, Location::Start).category);
+        assert_eq!(Category::Name,
+                   NamePart::from_word("AL", false, Location::Start).category);
+        assert_eq!(Category::Name,
+                   NamePart::from_word("At", true, Location::Start).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("AT", true, Location::Start).category);
+        assert_eq!(Category::Initials,
+                   NamePart::from_word("AT", false, Location::Start).category);
+    }
 }
+
+// Everything with a vowel reasonably popular in the Social Security data:
+// https://www.ssa.gov/oact/babynames/limits.html
+static TWO_LETTER_GIVEN_NAMES: phf::Set<&'static str> = phf_set! {
+    "Jo",
+    "JO",
+    "jo",
+    "Ty",
+    "TY",
+    "ty",
+    "Ed",
+    "ED",
+    "ed",
+    "Al",
+    "AL",
+    "al",
+    "Bo",
+    "BO",
+    "bo",
+    "Lu",
+    "LU",
+    "lu",
+    "Cy",
+    "CY",
+    "cy",
+    "An",
+    "AN",
+    "an",
+    "La",
+    "LA",
+    "la",
+    "Aj",
+    "AJ",
+    "aj",
+    "Le",
+    "LE",
+    "le",
+    "Om",
+    "OM",
+    "om",
+    "Pa",
+    "PA",
+    "pa",
+    "De",
+    "DE",
+    "de",
+    "Ky",
+    "KY",
+    "ky",
+    "My",
+    "MY",
+    "my",
+    "Vy",
+    "VY",
+    "vy",
+    "Vi",
+    "VI",
+    "vi",
+    "Ka",
+    "KA",
+    "ka",
+    "Sy",
+    "SY",
+    "sy",
+    "Vu",
+    "VU",
+    "vu",
+    "Yu",
+    "YU",
+    "yu",
+    "Mi",
+    "MI",
+    "mi",
+    "Su",
+    "SU",
+    "su",
+    "Ma",
+    "MA",
+    "ma",
+    "Ha",
+    "HA",
+    "ha",
+    "Ki",
+    "KI",
+    "ki",
+    "Tu",
+    "TU",
+    "tu",
+    "Ji",
+    "JI",
+    "ji",
+    "Ja",
+    "JA",
+    "ja",
+    "Ly",
+    "LY",
+    "ly",
+    "Li",
+    "LI",
+    "li",
+    "Ai",
+    "AI",
+    "ai",
+    "Ry",
+    "RY",
+    "ry",
+    "Ab",
+    "AB",
+    "ab",
+    "Ho",
+    "HO",
+    "ho",
+    "Da",
+    "DA",
+    "da",
+    "Oz",
+    "OZ",
+    "oz",
+    "El",
+    "EL",
+    "el",
+    "Na",
+    "NA",
+    "na",
+    "Yi",
+    "YI",
+    "yi",
+};
