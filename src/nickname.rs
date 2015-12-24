@@ -179,17 +179,34 @@ pub fn have_matching_variants(original_a: &str, original_b: &str) -> bool {
     let a_variants = NameVariants::for_name(&*original_a);
     let b_variants = NameVariants::for_name(&*original_b);
 
-    a_variants.iter_with_original().any(|a| {
-        b_variants.iter_with_original().any(|b| {
-            eq_or_starts_with!(a, b) || is_final_syllables_of(a, b) ||
-            is_final_syllables_of(b, a) || matches_without_diminutive(a, b) ||
-            matches_without_diminutive(b, a)
-        })
-    })
+    a_variants.iter_with_original()
+              .any(|a| b_variants.iter_with_original().any(|b| variants_match(a, b)))
+}
+
+fn variants_match(a: &str, b: &str) -> bool {
+    have_prefix_match(a, b) || is_final_syllables_of(a, b) || is_final_syllables_of(b, a) ||
+    matches_without_diminutive(a, b) || matches_without_diminutive(b, a)
+}
+
+fn have_prefix_match(a: &str, b: &str) -> bool {
+    if eq_or_starts_with!(a, b) {
+        // Exception: Case where one variant is a feminized version of the other
+        if a.len() == b.len() + 1 && a.ends_with('a') {
+            false
+        } else if b.len() == a.len() + 1 && b.ends_with('a') {
+            false
+        } else {
+            true
+        }
+    } else {
+        false
+    }
 }
 
 fn matches_without_diminutive(a: &str, b: &str) -> bool {
-    if a.len() > 2 && b.len() >= a.len() - 1 && (a.ends_with('y') || a.ends_with('e')) &&
+    if DIMINUTIVE_EXCEPTIONS.contains(a) {
+        false
+    } else if a.len() > 2 && b.len() >= a.len() - 1 && (a.ends_with('y') || a.ends_with('e')) &&
        eq_or_starts_with!(a[0..a.len() - 1], b) {
         true
     } else if a.len() > 4 && b.len() >= a.len() - 2 && (a.ends_with("ie") || a.ends_with("ey")) &&
@@ -213,8 +230,10 @@ fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
         true
     } else if haystack.len() < 4 || needle.len() < 2 || needle.len() > haystack.len() - 2 {
         false
+    } else if starts_with_consonant(needle) || needle.starts_with("Ann") || haystack.starts_with("Mary") {
+        eq_or_ends_with!(needle, haystack) && !FINAL_SYLLABLES_EXCEPTIONS.contains(needle)
     } else {
-        starts_with_consonant(needle) && eq_or_ends_with!(needle, haystack)
+        false
     }
 }
 
@@ -235,6 +254,10 @@ mod tests {
         assert!(have_matching_variants("Dorothy", "Dot"));
         assert!(have_matching_variants("Leroy", "Roy"));
         assert!(have_matching_variants("Roy", "Leroy"));
+        assert!(have_matching_variants("Ann", "Agnes"));
+        assert!(have_matching_variants("Annie", "Luann"));
+        assert!(have_matching_variants("Marianne", "Mary"));
+        assert!(have_matching_variants("Marianne", "Anne"));
     }
 
     #[test]
@@ -249,6 +272,7 @@ mod tests {
         assert!(have_matching_variants("Dave", "Davy"));
         assert!(have_matching_variants("Lon", "Al")); // Alonzo
         assert!(have_matching_variants("Al", "Lon")); // Alonzo
+        assert!(have_matching_variants("Lousie", "Lulu"));
     }
 
     #[test]
@@ -257,6 +281,10 @@ mod tests {
         assert!(!have_matching_variants("Xander", "Xina"));
         assert!(!have_matching_variants("Andy", "Xander"));
         assert!(!have_matching_variants("Xander", "Andy"));
+        assert!(!have_matching_variants("Molly", "Annie"));
+        assert!(!have_matching_variants("Christopher", "Tina"));
+        assert!(!have_matching_variants("Molly", "Mark"));
+        assert!(!have_matching_variants("Patricia", "Rick"));
     }
 
     #[test]
@@ -265,6 +293,9 @@ mod tests {
         assert!(!have_matching_variants("Luanne", "Antoinette"));
         assert!(!have_matching_variants("Jane", "John"));
         assert!(!have_matching_variants("John", "Jane"));
+        assert!(!have_matching_variants("John", "Nathan"));
+        assert!(!have_matching_variants("Mary", "Margeret"));
+        assert!(!have_matching_variants("Annette", "Johanna"));
     }
 
     #[test]
@@ -301,6 +332,7 @@ mod tests {
 
 // There's no reason not to just use arrays for the values except that it won't compile :(
 static NAMES_BY_NICK_PREFIX: phf::Map<&'static str, phf::Set<&'static str>> = phf_map! {
+    "Ann" => phf_set! { "Agnes", "Antoinette", "Marianna", "Roseanne", "Anabelle", "Luann" },
     "Babb" => phf_set! { "Barbara" },
     "Bais" => phf_set! { "Elizabeth" },
     "Baiss" => phf_set! { "Elizabeth" },
@@ -495,7 +527,6 @@ static NAMES_BY_NICK_PREFIX: phf::Map<&'static str, phf::Set<&'static str>> = ph
     "Add" => phf_set! { "Adaline", "Adelaide", "Adelphia", "Agatha" },
     "Agg" => phf_set! { "Agatha", "Agnes", "Augusta" },
     "All" => phf_set! { "Aileen", "Alberta", "Alice", "Almena", "Alison" },
-    "Ann" => phf_set! { "Luann", "Maryanne" },
     "Arr" => phf_set! { "Arabella", "Armena" },
     "Benn" => phf_set! { "Benedict", "Benjamin", "Benedetta" },
     "Berr" => phf_set! { "Barry", "Greenberry", "Littleberry" },
@@ -574,7 +605,7 @@ static NAMES_BY_NICK_PREFIX: phf::Map<&'static str, phf::Set<&'static str>> = ph
     "Pats" => phf_set! { "Martha", "Patricia", "Patrick" },
     "Patt" => phf_set! { "Martha", "Matilda", "Parthenia", "Patience", "Patricia" },
     "Phen" => phf_set! { "Josephine", "Parthenia", "Tryphena" },
-    "Poll" => phf_set! { "Mary", "Paulina" },
+    "Poll" => phf_set! { "Paulina" },
     "Rand" => phf_set! { "Miranda" },
     "Reen" => phf_set! { "Irene", "Maureen", "Sabrina" },
     "Regg" => phf_set! { "Regina", "Reginald" },
@@ -594,7 +625,7 @@ static NAMES_BY_NICK_PREFIX: phf::Map<&'static str, phf::Set<&'static str>> = ph
     "Tedd" => phf_set! { "Edward", "Theodore" },
     "Terr" => phf_set! { "Theresa" },
     "Till" => phf_set! { "Matilda", "Temperance", "Tilford" },
-    "Ton" => phf_set! { "Anthony", "Antoinette", "Clifton", "Sheldon", "Antonio", "Antoni" },
+    "Ton" => phf_set! { "Anthony", "Antoinette", "Clifton", "Antonio", "Antoni" },
     "Triss" => phf_set! { "Beatrice", "Theresa" },
     "Trix" => phf_set! { "Beatrice", "Patricia" },
     "Vick" => phf_set! { "Veronica", "Victoria" },
@@ -658,10 +689,9 @@ static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> =
     "Anil" => phf_set! { "Anıl" },
     "Anja" => phf_set! { "Sanjay" },
     "Anju" => phf_set! { "Anjali", "Anjana" },
-    "Ann" => phf_set! { "Agnes", "Antoinette", "Luann", "Marianna", "Maryanne", "Nancy", "Roseanne", "Anabelle" },
-    "Anna" => phf_set! { "Ania" },
-    "Anne" => phf_set! { "Luann", "Marianna", "Maryanne" },
-    "Annette" => phf_set! { "Anna" },
+    "Ann" => phf_set! { "Agnes", "Antoinette", "Marianna", "Nancy", "Roseanne", "Anabelle" },
+    "Anna" => phf_set! { "Ania", "Annette" },
+    "Anne" => phf_set! { "Luann", "Marianna" },
     "Antoine" => phf_set! { "Anthony" },
     "Antonia" => phf_set! { "Antoinette" },
     "Antonio" => phf_set! { "Anthony" },
@@ -881,7 +911,7 @@ static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> =
     "Elisha" => phf_set! { "Alice" },
     "Elissa" => phf_set! { "Elizabeth" },
     "Ella" => phf_set! { "Eleanor", "Gabrielle", "Helena", "Luella" },
-    "Ellen" => phf_set! { "Eleanor", "Helena", "Maryellen" },
+    "Ellen" => phf_set! { "Eleanor", "Helena" },
     "Ellender" => phf_set! { "Helena" },
     "Ellis" => phf_set! { "Alice" },
     "Ells" => phf_set! { "Elwood" },
@@ -1064,7 +1094,7 @@ static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> =
     "Kc" => phf_set! { "Casey" },
     "Kami" => phf_set! { "Kamran" },
     "Karel" => phf_set! { "Charles" },
-    "Karen" => phf_set! { "Karonhappuck", "Katherine" },
+    "Karen" => phf_set! { "Karonhappuck" },
     "Karim" => phf_set! { "Kareem" },
     "Karl" => phf_set! { "Charles" },
     "Kasia" => phf_set! { "Katarzyna" },
@@ -1168,7 +1198,7 @@ static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> =
     "Lucinda" => phf_set! { "Cynthia" },
     "Luke" => phf_set! { "Lucias", "Luthor", "Lucas" },
     "Lula" => phf_set! { "Luella" },
-    "Lulu" => phf_set! { "Luann", "Lousie", "Marylou", "Luciana", "Lourdes" },
+    "Lulu" => phf_set! { "Luann", "Luciana", "Lou" },
     "Lum" => phf_set! { "Columbus" },
     "Lupita" => phf_set! { "Guadalupe" },
     "Lyn" => phf_set! { "Belinda" },
@@ -1324,7 +1354,6 @@ static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> =
     "Pate" => phf_set! { "Peter" },
     "Pati" => phf_set! { "Patrycja" },
     "Pato" => phf_set! { "Patricio" },
-    "Patricia" => phf_set! { "Patrick" },
     "Pauli" => phf_set! { "Paula" },
     "Pawel" => phf_set! { "Paweł" },
     "Peg" => phf_set! { "Margaret" },
@@ -1336,7 +1365,6 @@ static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> =
     "Phililpa" => phf_set! { "Philipina" },
     "Phineas" => phf_set! { "Alphinias" },
     "Phoebe" => phf_set! { "Philipina" },
-    "Phyllis" => phf_set! { "Philinda" },
     "Pinar" => phf_set! { "Pınar" },
     "Pino" => phf_set! { "Giuseppe" },
     "Pip" => phf_set! { "Philip" },
@@ -1378,7 +1406,6 @@ static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> =
     "Rico" => phf_set! { "Ricardo" },
     "Riki" => phf_set! { "Riccardo" },
     "Rita" => phf_set! { "Margaret" },
-    "Robin" => phf_set! { "Robert" },
     "Rod" => phf_set! { "Roger" },
     "Rodger" => phf_set! { "Roger" },
     "Roland" => phf_set! { "Orlando" },
@@ -1541,4 +1568,17 @@ static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, phf::Set<&'static str>> =
     "Zhang" => phf_set! { "Cheung" },
     "Zhou" => phf_set! { "Chou", "Chow" },
     "Zubiah" => phf_set! { "Azubah" },
+};
+
+static DIMINUTIVE_EXCEPTIONS: phf::Set<&'static str> = phf_set! {
+    "Mary",
+    "Joy",
+    "Roy",
+    "Guy",
+    "Amy",
+    "Troy",
+};
+
+static FINAL_SYLLABLES_EXCEPTIONS: phf::Set<&'static str> = phf_set! {
+    "Nathan", // Probably != Jonathan
 };
