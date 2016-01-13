@@ -46,9 +46,13 @@ impl Name {
             }
         }
 
-        let normed: String = string.chars()
-                                   .filter_map(lowercase_if_alpha)
-                                   .collect();
+        let normed: Cow<str> = if string.chars().all(|c| c.is_alphabetic() && c.is_lowercase()) {
+            Cow::Borrowed(string)
+        } else {
+            Cow::Owned(string.chars()
+                             .filter_map(lowercase_if_alpha)
+                             .collect::<String>())
+        };
 
         if normed.is_empty() {
             return false;
@@ -64,7 +68,7 @@ impl Name {
                                 .filter_map(|n| n.chars().nth(0))
                                 .flat_map(char::to_lowercase));
 
-            if normed == initials {
+            if *normed == initials {
                 return true;
             }
         }
@@ -80,7 +84,7 @@ impl Name {
                                             .filter_map(|n| n.chars().nth(0))
                                             .flat_map(char::to_lowercase));
 
-                if normed == name_and_initial {
+                if *normed == name_and_initial {
                     return true;
                 }
             }
