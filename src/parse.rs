@@ -7,6 +7,7 @@ use super::namepart::{NamePart, Location, Category};
 struct ParseOp<'a> {
     surname_index: usize,
     generation_from_suffix: Option<usize>,
+    maybe_not_prefix: Option<NamePart<'a>>,
     maybe_not_postfix: Option<NamePart<'a>>,
     use_capitalization: bool,
 }
@@ -17,6 +18,7 @@ pub fn parse(name: &str,
     let op = ParseOp {
         surname_index: 0,
         generation_from_suffix: None,
+        maybe_not_prefix: None,
         maybe_not_postfix: None,
         use_capitalization: use_capitalization,
     };
@@ -63,9 +65,12 @@ impl <'a>ParseOp<'a> {
         // ambiguous strings like "MA" as surnames rather than titles
         // (not initials, which should only be at the end of the input
         // if they are comma-separated, and we already handled that case)
-        if ParseOp::fixably_invalid(&words, self.surname_index) &&
-           self.maybe_not_postfix.is_some() {
-            words.push(self.maybe_not_postfix.unwrap());
+        if ParseOp::fixably_invalid(&words, self.surname_index) {
+            if self.maybe_not_postfix.is_some() {
+                words.push(self.maybe_not_postfix.unwrap());
+            } else if self.maybe_not_prefix.is_some() {
+                words.insert(0, self.maybe_not_prefix.unwrap());
+            }
         }
 
         // Anything trailing that looks like initials is probably a stray postfix
@@ -118,17 +123,18 @@ impl <'a>ParseOp<'a> {
 
         // Check for title as prefix (e.g. "Dr. John Smith" or "Right Hon.
         // John Smith")
-        let mut stripped_prefix_title = false;
+        let mut prefix_title = None;
         if words.len() > 1 {
-            stripped_prefix_title = title::strip_prefix_title(&mut words, true);
+            prefix_title = title::strip_prefix_title(&mut words, true);
         }
 
         // Strip non-comma-separated titles & suffixes (e.g. "John Smith Jr.")
         self.strip_postfixes(&mut words, false);
 
-        if stripped_prefix_title {
+        if prefix_title.is_some() {
             // Finding a prefix title means the next word is a first name or
             // initial (we don't support "Dr. Smith, John")
+            self.found_prefix_title(prefix_title.unwrap());
             self.surname_index = surname::find_surname_index(&words[1..]) + 1;
         } else {
             // Have to guess whether this is just the surname (as in "Smith, John")
@@ -159,7 +165,9 @@ impl <'a>ParseOp<'a> {
 
         // Handle (unusual) formats like "Smith, Dr. John M."
         if given_middle_or_postfix_words.len() > 1 {
-            title::strip_prefix_title(&mut given_middle_or_postfix_words, false);
+            if let Some(prefix_title) = title::strip_prefix_title(&mut given_middle_or_postfix_words, false) {
+                self.found_prefix_title(prefix_title);
+            }
         }
 
         // Handle isolated suffixes or titles as well as (unusual) formats like
@@ -261,6 +269,15 @@ impl <'a>ParseOp<'a> {
     fn found_postfix_title(&mut self, postfix: NamePart<'a>) {
         if self.maybe_not_postfix.is_none() && (postfix.is_namelike() || postfix.is_initials()) {
             self.maybe_not_postfix = Some(postfix);
+        }
+    }
+
+    // Ditto prefixes
+    fn found_prefix_title(&mut self, prefix: Vec<NamePart<'a>>) {
+        if self.maybe_not_prefix.is_none() {
+            if let Some(word) = prefix.into_iter().rev().find(|word| word.is_namelike() || word.is_initials()) {
+                self.maybe_not_prefix = Some(word);
+            }
         }
     }
 }

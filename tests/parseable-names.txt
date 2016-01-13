@@ -336,6 +336,10 @@ Smith, John Und|Smith|John|Und|J|U||
 Al Yankovic|Yankovic|Al||A||
 Maj Vinberg|Vinberg|Maj||M||
 Queen Latifah|Latifah|Queen||Q||
+Prince Upton Jr.|Upton|Prince||P||Jr.
+Upton, Prince Jr.|Upton|Prince||P||Jr.
+Rt. Hon. Prince Upton Jr.|Upton|Prince||P||Jr.
+Upton, Rt. Hon. Prince Jr.|Upton|Prince||P||Jr.
 
 # long titles
 Secretary of State Hillary Clinton|Clinton|Hillary||H||
