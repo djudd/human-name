@@ -145,3 +145,43 @@ fn equality() {
         }
     }
 }
+
+#[test]
+fn web_match() {
+    let f = File::open("tests/web-matches.txt").ok().unwrap();
+    let reader = BufReader::new(f);
+
+    for line in reader.lines() {
+        let line = line.ok().unwrap();
+
+        if line.starts_with("#") {
+            continue;
+        }
+
+        let parts: Vec<&str> = line.split('|').collect();
+
+        let name = human_name::Name::parse(parts[1]).unwrap();
+        let compare = parts[0];
+        assert!(name.matches_slug_or_localpart(compare), "{} should match {} but did not!", name.display_full(), compare);
+    }
+}
+
+#[test]
+fn web_nonmatch() {
+    let f = File::open("tests/web-nonmatches.txt").ok().unwrap();
+    let reader = BufReader::new(f);
+
+    for line in reader.lines() {
+        let line = line.ok().unwrap();
+
+        if line.starts_with("#") {
+            continue;
+        }
+
+        let parts: Vec<&str> = line.split('|').collect();
+
+        let name = human_name::Name::parse(parts[1]).unwrap();
+        let compare = parts[0];
+        assert!(!name.matches_slug_or_localpart(compare), "{} should not match {} but did!", name.display_full(), compare);
+    }
+}

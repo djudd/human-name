@@ -231,4 +231,14 @@ mod bench {
             black_box(deduped.len())
         })
     }
+
+    #[bench]
+    fn bench_web_match(b: &mut Bencher) {
+        let name = Name::parse("Jane Doe").unwrap();
+        let compare = "janexdoe2005";
+
+        b.iter(|| {
+            black_box(name.matches_slug_or_localpart(compare))
+        });
+    }
 }

@@ -27,6 +27,7 @@ mod namepart;
 mod parse;
 mod comparison;
 mod serialization;
+mod web_match;
 
 pub mod external;
 

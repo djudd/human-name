@@ -56,6 +56,13 @@ pub fn is_ascii_alphabetic(c: char) -> bool {
     }
 }
 
+// Sadly necessary because string split gives "type of this value must be known"
+// compilation error when passed a closure in some contexts
+#[inline]
+pub fn is_nonalphanumeric(c: char) -> bool {
+    !c.is_alphanumeric()
+}
+
 #[inline]
 pub fn lowercase_if_alpha(c: char) -> Option<char> {
     if c.is_uppercase() {
@@ -194,9 +201,9 @@ macro_rules! eq_or_starts_with {
 
 #[macro_export]
 macro_rules! eq_or_ends_with {
-    ($a:expr, $b:expr) => { {
-        let mut n_chars = $a.chars().rev().filter_map(lowercase_if_alpha);
-        let mut h_chars = $b.chars().rev().filter_map(lowercase_if_alpha);
+    ($needle:expr, $haystack:expr) => { {
+        let mut n_chars = $needle.chars().rev().filter_map(lowercase_if_alpha);
+        let mut h_chars = $haystack.chars().rev().filter_map(lowercase_if_alpha);
         let result;
 
         loop {
