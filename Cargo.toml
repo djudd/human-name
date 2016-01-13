@@ -14,7 +14,7 @@ unicode-normalization = "0.1.*"
 unidecode = "0.2.*"
 rustc-serialize = "0.3.*"
 phf = "0.7.*"
-phf_macros = "0.7.*"
+phf_macros = { version = "0.7.*", git = "https://github.com/djudd/rust-phf", branch = "fix-eat-retval" }
 
 [features]
 default = ["name_eq_hash"]
