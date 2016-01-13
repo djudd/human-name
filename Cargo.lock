@@ -1,6 +1,6 @@
 [root]
 name = "human_name"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "itertools 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "phf 0.7.10 (registry+https://github.com/rust-lang/crates.io-index)",
