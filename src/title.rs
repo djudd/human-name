@@ -486,7 +486,9 @@ pub fn is_postfix_title(word: &NamePart, might_be_initials: bool) -> bool {
     }
 }
 
-pub fn strip_prefix_title<'a>(words: &mut Vec<NamePart<'a>>, try_to_keep_two_words: bool) -> Option<Vec<NamePart<'a>>> {
+pub fn strip_prefix_title<'a>(words: &mut Vec<NamePart<'a>>,
+                              try_to_keep_two_words: bool)
+                              -> Option<Vec<NamePart<'a>>> {
     let mut prefix_len = words.len() - 1;
     while prefix_len > 0 {
         let found_prefix = {

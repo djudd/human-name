@@ -165,7 +165,8 @@ impl <'a>ParseOp<'a> {
 
         // Handle (unusual) formats like "Smith, Dr. John M."
         if given_middle_or_postfix_words.len() > 1 {
-            if let Some(prefix_title) = title::strip_prefix_title(&mut given_middle_or_postfix_words, false) {
+            if let Some(prefix_title) =
+                   title::strip_prefix_title(&mut given_middle_or_postfix_words, false) {
                 self.found_prefix_title(prefix_title);
             }
         }
@@ -275,7 +276,9 @@ impl <'a>ParseOp<'a> {
     // Ditto prefixes
     fn found_prefix_title(&mut self, prefix: Vec<NamePart<'a>>) {
         if self.maybe_not_prefix.is_none() {
-            if let Some(word) = prefix.into_iter().rev().find(|word| word.is_namelike() || word.is_initials()) {
+            if let Some(word) = prefix.into_iter()
+                                      .rev()
+                                      .find(|word| word.is_namelike() || word.is_initials()) {
                 self.maybe_not_prefix = Some(word);
             }
         }
