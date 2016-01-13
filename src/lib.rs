@@ -4,9 +4,8 @@
 
 #![doc(html_root_url = "https://djudd.github.io/human-name/")]
 
-#![feature(drain)]
-#![feature(plugin)]
 #![feature(libc)]
+#![feature(plugin)]
 #![plugin(phf_macros)]
 
 extern crate phf;
