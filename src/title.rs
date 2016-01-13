@@ -492,11 +492,10 @@ pub fn strip_prefix_title(words: &mut Vec<NamePart>, try_to_keep_two_words: bool
         let found_prefix = {
             let next_word = &words[prefix_len];
             if try_to_keep_two_words && words.len() - prefix_len <= 1 &&
-               words[prefix_len - 1].is_initials() {
+               (words[prefix_len - 1].is_initials() || words[prefix_len - 1].is_namelike()) {
                 // If there is only one word after the prefix, e.g. "DR SMITH",
                 // given prefix of "DR", we treat ambiguous strings like "DR"
-                // as more likely to be initials than a title (there are no
-                // similarly ambiguous given names among our title word list)
+                // as more likely to be initials or a name than a title
                 false
             } else {
                 (next_word.is_namelike() || next_word.is_initials()) &&

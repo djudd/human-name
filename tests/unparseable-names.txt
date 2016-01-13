@@ -6,9 +6,9 @@ Smith, Jr.
 #Smith, Ph.D
 Dr. Smith
 Mr. Andrews
-Sir Ben
-Lord Allen
-Queen Elizabeth
+#Sir Ben
+#Lord Allen
+#Queen Elizabeth
 vt gh
 ABC
 a b c
@@ -28,7 +28,7 @@ johnny y
 鈴
 rights now managed by Philosophy Documenation Center
 Campo Gr
-Professor Steinberg
+#Professor Steinberg
 Marcin - red. Frybes
 #DESY Forschung Hochenergiephysik
 #D. Ould-Ali et

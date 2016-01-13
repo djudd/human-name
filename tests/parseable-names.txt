@@ -334,7 +334,8 @@ Jane Doctor|Doctor|Jane||J||
 Anwar al Awlaki|Al Awlaki|Anwar||A||
 Smith, John Und|Smith|John|Und|J|U||
 Al Yankovic|Yankovic|Al||A||
-#Maj Vinberg|Vinberg|Maj||M||
+Maj Vinberg|Vinberg|Maj||M||
+Queen Latifah|Latifah|Queen||Q||
 
 # long titles
 Secretary of State Hillary Clinton|Clinton|Hillary||H||
