@@ -17,15 +17,6 @@ static PREFIX_TITLE_PARTS: phf::Set<&'static str> = phf_set! {
     "King'S",
     "Queen",
     "Queen'S",
-    "1lt",
-    "1st",
-    "1sgt",
-    "1stlt",
-    "1stsgt",
-    "2lt",
-    "2nd",
-    "2ndlt",
-    "A1c",
     "Abbess",
     "Abbot",
     "Academic",
@@ -126,14 +117,6 @@ static PREFIX_TITLE_PARTS: phf::Set<&'static str> = phf_set! {
     "Curator",
     "Customs",
     "Cwo",
-    "Cwo-2",
-    "Cwo-3",
-    "Cwo-4",
-    "Cwo-5",
-    "Cwo2",
-    "Cwo3",
-    "Cwo4",
-    "Cwo5",
     "D'Affaires",
     "Deacon",
     "Delegate",
@@ -290,9 +273,6 @@ static PREFIX_TITLE_PARTS: phf::Set<&'static str> = phf_set! {
     "Pharaoh",
     "Pilot",
     "Pir",
-    "Po1",
-    "Po2",
-    "Po3",
     "Police",
     "Political",
     "Pope",
@@ -320,7 +300,6 @@ static PREFIX_TITLE_PARTS: phf::Set<&'static str> = phf_set! {
     "Pslc",
     "Pte",
     "Pursuivant",
-    "Pv2",
     "Pvt",
     "Rabbi",
     "Radm",
@@ -409,16 +388,6 @@ static PREFIX_TITLE_PARTS: phf::Set<&'static str> = phf_set! {
     "Warden",
     "Warrant",
     "Wing",
-    "Wo-1",
-    "Wo-2",
-    "Wo-3",
-    "Wo-4",
-    "Wo-5",
-    "Wo1",
-    "Wo2",
-    "Wo3",
-    "Wo4",
-    "Wo5",
     "Woodman",
     "And",
     "The",
@@ -438,6 +407,8 @@ fn might_be_title_part(word: &NamePart) -> bool {
         // Allow any word with 1 or 2 characters as part of a title (but see below)
         true
     } else if !word.is_namelike() {
+        true
+    } else if word.word.chars().any(char::is_numeric) {
         true
     } else {
         PREFIX_TITLE_PARTS.contains(&*word.namecased)
@@ -476,7 +447,7 @@ fn is_prefix_title(words: &[NamePart]) -> bool {
 
 pub fn is_postfix_title(word: &NamePart, might_be_initials: bool) -> bool {
     if word.is_namelike() {
-        POSTFIX_TITLES.contains(&*word.namecased)
+        POSTFIX_TITLES.contains(&*word.namecased) || word.word.chars().any(char::is_numeric)
     } else if word.is_initials() {
         !might_be_initials && word.word.chars().filter(|c| c.is_alphabetic()).count() > 1
     } else {
