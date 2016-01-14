@@ -125,7 +125,7 @@ impl <'a>ParseOp<'a> {
         // John Smith")
         let mut prefix_title = None;
         if words.len() > 1 {
-            prefix_title = title::strip_prefix_title(&mut words, true);
+            prefix_title = title::strip_prefix_title(&mut words);
         }
 
         // Strip non-comma-separated titles & suffixes (e.g. "John Smith Jr.")
@@ -166,7 +166,7 @@ impl <'a>ParseOp<'a> {
         // Handle (unusual) formats like "Smith, Dr. John M."
         if given_middle_or_postfix_words.len() > 1 {
             if let Some(prefix_title) =
-                   title::strip_prefix_title(&mut given_middle_or_postfix_words, false) {
+                   title::strip_prefix_title(&mut given_middle_or_postfix_words) {
                 self.found_prefix_title(prefix_title);
             }
         }
