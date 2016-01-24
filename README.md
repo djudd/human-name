@@ -114,7 +114,7 @@ Jay Smith
 
 Ruby bindings using the `ffi` gem are available at [github.com/djudd/human-name-rb](https://github.com/djudd/human-name-rb)
 
-Python bindings are planned, but not yet available.
+Python bindings using the `ctypes` module are available at [github.com/djudd/human-name-py](https://github.com/djudd/human-name-py)
 
 # Credit
 
