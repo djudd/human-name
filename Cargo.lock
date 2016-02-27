@@ -1,10 +1,10 @@
 [root]
 name = "human_name"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "itertools 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "phf 0.7.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "phf_macros 0.7.10 (git+https://github.com/djudd/rust-phf?branch=fix-eat-retval)",
+ "phf 0.7.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "phf_macros 0.7.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.16 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-normalization 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-segmentation 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -32,38 +32,33 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "phf"
-version = "0.7.10"
+version = "0.7.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "phf_shared 0.7.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "phf_shared 0.7.13 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "phf_generator"
-version = "0.7.10"
-source = "git+https://github.com/djudd/rust-phf?branch=fix-eat-retval#82da9f00f404634c09097f9116cda9e8e742d556"
+version = "0.7.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "phf_shared 0.7.10 (git+https://github.com/djudd/rust-phf?branch=fix-eat-retval)",
+ "phf_shared 0.7.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.13 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "phf_macros"
-version = "0.7.10"
-source = "git+https://github.com/djudd/rust-phf?branch=fix-eat-retval#82da9f00f404634c09097f9116cda9e8e742d556"
+version = "0.7.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "phf_generator 0.7.10 (git+https://github.com/djudd/rust-phf?branch=fix-eat-retval)",
- "phf_shared 0.7.10 (git+https://github.com/djudd/rust-phf?branch=fix-eat-retval)",
+ "phf_generator 0.7.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "phf_shared 0.7.13 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "phf_shared"
-version = "0.7.10"
-source = "git+https://github.com/djudd/rust-phf?branch=fix-eat-retval#82da9f00f404634c09097f9116cda9e8e742d556"
-
-[[package]]
-name = "phf_shared"
-version = "0.7.10"
+version = "0.7.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]

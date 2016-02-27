@@ -1,6 +1,6 @@
 [package]
 name = "human_name"
-version = "0.6.1"
+version = "0.6.2"
 authors = ["David Judd <david.a.judd@gmail.com>"]
 description = "A library for parsing and comparing human names"
 license = "Apache-2.0"
@@ -13,8 +13,8 @@ unicode-segmentation = "0.1.*"
 unicode-normalization = "0.1.*"
 unidecode = "0.2.*"
 rustc-serialize = "0.3.*"
-phf = "0.7.*"
-phf_macros = { version = "0.7.*", git = "https://github.com/djudd/rust-phf", branch = "fix-eat-retval" }
+phf = "0.7.13"
+phf_macros = "0.7.13"
 
 [features]
 default = ["name_eq_hash"]
