@@ -387,7 +387,7 @@ impl<'a> NameWordOrInitial<'a> {
     pub fn initial(&self) -> Option<char> {
         match self {
             &NameWordOrInitial::Word(word, _) => {
-                to_ascii_letter(word.chars().nth(0).unwrap())
+                word.chars().nth(0).and_then(|c| to_ascii_letter(c))
             }
             &NameWordOrInitial::Initial(initial) => {
                 to_ascii_letter(initial)
