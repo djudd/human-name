@@ -162,13 +162,24 @@ impl Name {
 
                 initials.extend(word.namecased
                                     .split('-')
-                                    .filter_map(|w| w.chars().find(|c| c.is_alphabetic())));
+                                    .filter_map(|w| w.chars().find(|c| c.is_alphabetic()))
+                                    .flat_map(|c| c.to_uppercase()));
 
                 names.push(word.namecased.into_owned());
                 word_indices_in_initials.push((prior_len, initials.len()));
             } else {
                 names.push(word.namecased.into_owned());
             }
+        }
+
+        debug_assert!(!names.is_empty(), "Names are empty!");
+        //debug_assert!(initials.len() > 0, "Initials are empty!");
+        //
+        // This shouldn't be necessary, but we've found a case - "ﾟ." - where
+        // the `is_alphabetic()` filter passes in `NamePart::from_word` but
+        // fails in the `initials.extend` filter above, somehow.
+        if initials.is_empty() {
+            return None;
         }
 
         names.shrink_to_fit();

@@ -112,7 +112,7 @@ impl <'a>ParseOp<'a> {
                            part: &'a str,
                            mut words: Vec<NamePart<'a>>)
                            -> Vec<NamePart<'a>> {
-        assert!(words.is_empty() && self.surname_index == 0,
+        debug_assert!(words.is_empty() && self.surname_index == 0,
                 "Invalid state for handle_before_comma!");
 
         words.extend(NamePart::all_from_text(part, self.use_capitalization, Location::End));
@@ -153,7 +153,7 @@ impl <'a>ParseOp<'a> {
                           part: &'a str,
                           mut words: Vec<NamePart<'a>>)
                           -> Vec<NamePart<'a>> {
-        assert!(!words.is_empty() && self.surname_index == 0,
+        debug_assert!(!words.is_empty() && self.surname_index == 0,
                 "Invalid state for handle_after_comma!");
 
         let mut given_middle_or_postfix_words: Vec<NamePart> =
@@ -190,7 +190,7 @@ impl <'a>ParseOp<'a> {
 
     // Called on any parts remaining after full name is found
     fn handle_after_surname(&mut self, part: &'a str) {
-        assert!(self.surname_index > 0,
+        debug_assert!(self.surname_index > 0,
                 "Invalid state for handle_after_surname!");
 
         if self.maybe_not_postfix.is_some() && self.generation_from_suffix.is_some() {
