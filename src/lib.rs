@@ -35,7 +35,8 @@ mod eq_hash;
 
 use std::borrow::Cow;
 use std::cell::Cell;
-use std::hash::{Hash, Hasher, SipHasher};
+use std::hash::{Hash, Hasher};
+use std::collections::hash_map::DefaultHasher;
 use std::slice::Iter;
 use std::str::Chars;
 use std::iter::{Peekable, Enumerate};
@@ -420,7 +421,7 @@ impl Name {
         }
     }
 
-    /// Memoizes the result of `surname_hash` when used with `SipHasher`
+    /// Memoizes the result of `surname_hash` when used with `DefaultHasher`
     pub fn memoized_surname_hash(&self) -> u64 {
         {
             let cached = self.hash.get();
@@ -428,7 +429,7 @@ impl Name {
                 return cached.unwrap();
             }
 
-            let mut s = SipHasher::new();
+            let mut s = DefaultHasher::new();
             self.surname_hash(&mut s);
             self.hash.set(Some(s.finish()));
         }
