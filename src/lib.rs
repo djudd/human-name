@@ -40,7 +40,6 @@ use std::collections::hash_map::DefaultHasher;
 use std::slice::Iter;
 use std::str::Chars;
 use std::iter::{Peekable, Enumerate};
-use itertools::Itertools;
 use utils::{is_mixed_case, transliterate, lowercase_if_alpha};
 
 /// Represents a parsed human name.
