@@ -384,7 +384,7 @@ enum ComparisonResult {
 }
 
 impl<'a> NameWordOrInitial<'a> {
-    pub fn initial(&self) -> Option<char> {
+    fn initial(&self) -> Option<char> {
         match self {
             &NameWordOrInitial::Word(word, _) => {
                 word.chars().nth(0).and_then(|c| to_ascii_letter(c))
@@ -395,7 +395,7 @@ impl<'a> NameWordOrInitial<'a> {
         }
     }
 
-    pub fn check_consistency(&self,
+    fn check_consistency(&self,
                              other: &NameWordOrInitial,
                              allow_nicknames: bool)
                              -> ComparisonResult {
