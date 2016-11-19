@@ -75,7 +75,7 @@ pub fn lowercase_if_alpha(c: char) -> Option<char> {
 }
 
 #[inline]
-pub fn transliterate<'a>(c: char) -> Chars<'a> {
+pub fn transliterate(c: char) -> Chars<'static> {
     unidecode_char(c).chars()
 }
 
