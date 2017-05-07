@@ -1,0 +1,1 @@
+initSidebarItems({"macro":[["eq_or_ends_with",""],["eq_or_starts_with",""]],"mod":[["external","A C API for interacting with `Name` objects."]],"struct":[["Name","Represents a parsed human name."]]});
