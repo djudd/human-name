@@ -59,6 +59,7 @@ use utils::{is_mixed_case, transliterate, lowercase_if_alpha};
 /// Once you have a Name, you may extract is components, convert it to JSON,
 /// or compare it with another Name to see if they are consistent with representing
 /// the same person (see docs on `consistent_with` for details).
+#[derive(Clone, Debug)]
 pub struct Name {
     words: Vec<String>,
     surname_index: usize,
