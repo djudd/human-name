@@ -54,7 +54,7 @@ pub extern "C" fn human_name_consistent_with(a: &Name, b: &Name) -> bool {
 
 #[no_mangle]
 pub extern "C" fn human_name_hash(name: &Name) -> u64 {
-    name.memoized_surname_hash()
+    name.hash
 }
 
 #[no_mangle]

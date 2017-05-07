@@ -34,7 +34,6 @@ pub mod external;
 mod eq_hash;
 
 use std::borrow::Cow;
-use std::cell::Cell;
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 use std::slice::Iter;
@@ -66,7 +65,7 @@ pub struct Name {
     generation_from_suffix: Option<usize>,
     initials: String,
     word_indices_in_initials: Vec<(usize, usize)>,
-    hash: Cell<Option<u64>>,
+    pub hash: u64,
 }
 
 impl Name {
@@ -186,13 +185,16 @@ impl Name {
         names.shrink_to_fit();
         word_indices_in_initials.shrink_to_fit();
 
+        let mut s = DefaultHasher::new();
+        Name::hash_surnames(&names[surname_index_in_names..], &mut s);
+
         Some(Name {
             words: names,
             surname_index: surname_index_in_names,
             generation_from_suffix: generation_from_suffix,
             initials: initials,
             word_indices_in_initials: word_indices_in_initials,
-            hash: Cell::new(None),
+            hash: s.finish(),
         })
     }
 
@@ -410,7 +412,11 @@ impl Name {
     /// We can't use the first initial because we might ignore it if someone goes
     /// by a middle name or nickname, or due to transliteration.
     pub fn surname_hash<H: Hasher>(&self, state: &mut H) {
-        let surname_chars = self.surnames()
+        Name::hash_surnames(self.surnames(), state)
+    }
+
+    fn hash_surnames<H: Hasher>(surnames: &[String], state: &mut H) {
+        let surname_chars = surnames
                                 .iter()
                                 .flat_map(|w| w.chars())
                                 .flat_map(transliterate)
@@ -419,22 +425,6 @@ impl Name {
                               .take(comparison::MIN_SURNAME_CHAR_MATCH) {
             c.hash(state);
         }
-    }
-
-    /// Memoizes the result of `surname_hash` when used with `DefaultHasher`
-    pub fn memoized_surname_hash(&self) -> u64 {
-        {
-            let cached = self.hash.get();
-            if cached.is_some() {
-                return cached.unwrap();
-            }
-
-            let mut s = DefaultHasher::new();
-            self.surname_hash(&mut s);
-            self.hash.set(Some(s.finish()));
-        }
-
-        self.memoized_surname_hash()
     }
 }
 

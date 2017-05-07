@@ -129,7 +129,7 @@ fn equality() {
                     "{} should be equal to {} but was not!",
                     b,
                     a);
-            assert!(parsed_a.unwrap().memoized_surname_hash() == parsed_b.unwrap().memoized_surname_hash(),
+            assert!(parsed_a.unwrap().hash == parsed_b.unwrap().hash,
                     "{} should have the same hash as {} but did not!",
                     a,
                     b);

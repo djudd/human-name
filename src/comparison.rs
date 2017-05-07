@@ -65,7 +65,7 @@ impl Name {
     #[cfg_attr(rustfmt, rustfmt_skip)]
     pub fn consistent_with(&self, other: &Name) -> bool {
         // Fast path
-        if self.memoized_surname_hash() != other.memoized_surname_hash() {
+        if self.hash != other.hash {
             return false;
         }
 
