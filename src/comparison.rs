@@ -61,7 +61,7 @@ impl Name {
     /// are trying to figure out exactly where, e.g. a particular author's index
     /// in the list of authors of a co-authored paper.
     ///
-    #[cfg_attr(rustfmt, rustfmt_skip)]
+    #[rustfmt::skip]
     pub fn consistent_with(&self, other: &Name) -> bool {
         // Fast path
         if self.hash != other.hash {
@@ -384,11 +384,11 @@ enum ComparisonResult {
 
 impl<'a> NameWordOrInitial<'a> {
     fn initial(&self) -> Option<char> {
-        match self {
-            &NameWordOrInitial::Word(word, _) => {
-                word.chars().nth(0).and_then(|c| to_ascii_letter(c))
+        match *self {
+            NameWordOrInitial::Word(word, _) => {
+                word.chars().nth(0).and_then(to_ascii_letter)
             }
-            &NameWordOrInitial::Initial(initial) => {
+            NameWordOrInitial::Initial(initial) => {
                 to_ascii_letter(initial)
             }
         }
@@ -444,23 +444,23 @@ impl<'a> NameWordOrInitial<'a> {
     }
 
     fn word(&self) -> &str {
-        match self {
-            &NameWordOrInitial::Word(word, _) => word,
-            &NameWordOrInitial::Initial(_) => unreachable!(),
+        match *self {
+            NameWordOrInitial::Word(word, _) => word,
+            NameWordOrInitial::Initial(_) => unreachable!(),
         }
     }
 
     fn has_word(&self) -> bool {
-        match self {
-            &NameWordOrInitial::Word(_, _) => true,
-            &NameWordOrInitial::Initial(_) => false,
+        match *self {
+            NameWordOrInitial::Word(_, _) => true,
+            NameWordOrInitial::Initial(_) => false,
         }
     }
 
     fn initials_count(&self) -> u8 {
-        match self {
-            &NameWordOrInitial::Word(_, count) => count as u8,
-            &NameWordOrInitial::Initial(_) => 1,
+        match *self {
+            NameWordOrInitial::Word(_, count) => count as u8,
+            NameWordOrInitial::Initial(_) => 1,
         }
     }
 }

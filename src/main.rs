@@ -11,8 +11,8 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use rustc_serialize::json::ToJson;
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
-const USAGE: &'static str = "
+#[rustfmt::skip]
+const USAGE: &str = "
 Usage:
     human_name parse <name>
     human_name parse -
@@ -44,7 +44,7 @@ fn main() {
     }
 }
 
-fn equality_mode(args: &Vec<String>) {
+fn equality_mode(args: &[String]) {
     if args[2] == "-" {
         let parsed_a = human_name::Name::parse(&args[3]);
         if parsed_a.is_none() {
@@ -58,7 +58,8 @@ fn equality_mode(args: &Vec<String>) {
                 Some(input) => {
                     let parsed_b = human_name::Name::parse(&input);
                     if parsed_a == parsed_b {
-                        if !writeln!(&mut io::stdout(), "{}", input.trim()).is_ok() {
+                        let result = writeln!(&mut io::stdout(), "{}", input.trim());
+                        if result.is_err() {
                             break;
                         }
                     };
@@ -84,7 +85,7 @@ fn equality_mode(args: &Vec<String>) {
     }
 }
 
-fn parse_mode(args: &Vec<String>) {
+fn parse_mode(args: &[String]) {
     if args[2] == "-" {
         let reader = BufReader::new(io::stdin());
         for line in reader.lines() {
@@ -92,15 +93,11 @@ fn parse_mode(args: &Vec<String>) {
                 Some(input) => {
                     let parsed = human_name::Name::parse(&input);
                     let output = match parsed {
-                        Some(name) => {
-                            name.to_json().to_string()
-                        }
-                        None => {
-                            "".to_string()
-                        }
+                        Some(name) => name.to_json().to_string(),
+                        None => "".to_string(),
                     };
 
-                    if !writeln!(&mut io::stdout(), "{}", output).is_ok() {
+                    if writeln!(&mut io::stdout(), "{}", output).is_err() {
                         break;
                     }
                 }
@@ -163,8 +160,9 @@ mod bench {
 
     #[bench]
     fn bench_parsing_complex(b: &mut Bencher) {
+        let name = "鈴木 Velasquez y Garcia, Dr. Juan Q. 'Don Juan' Xavier III";
         b.iter(|| {
-            let parsed = Name::parse("鈴木 Velasquez y Garcia, Dr. Juan Q. 'Don Juan' Xavier III");
+            let parsed = Name::parse(name);
             black_box(parsed.is_none())
         })
     }
@@ -222,8 +220,8 @@ mod bench {
         let f = File::open("tests/benchmark-names.txt").ok().unwrap();
         let reader = BufReader::new(f);
         let names: Vec<Name> = reader.lines()
-                                     .filter_map(|l| Name::parse(&l.ok().unwrap()))
-                                     .collect();
+            .filter_map(|l| Name::parse(&l.ok().unwrap()))
+            .collect();
 
         let mut deduped = HashSet::with_capacity(names.len() / 4);
         b.iter(|| {
@@ -237,8 +235,6 @@ mod bench {
         let name = Name::parse("Jane Doe").unwrap();
         let compare = "janexdoe2005";
 
-        b.iter(|| {
-            black_box(name.matches_slug_or_localpart(compare))
-        });
+        b.iter(|| black_box(name.matches_slug_or_localpart(compare)));
     }
 }

@@ -36,9 +36,9 @@ pub fn generation_from_suffix(part: &NamePart, might_be_initials: bool) -> Optio
     let namecased = &*part.namecased;
 
     if part.is_namelike() || (part.is_initials() && !(part.chars == 1 && might_be_initials)) {
-        GENERATION_BY_SUFFIX.get(namecased).map(|g| *g)
+        GENERATION_BY_SUFFIX.get(namecased).cloned()
     } else if part.is_abbreviation() {
-        GENERATION_BY_SUFFIX.get(&namecased[0..namecased.len() - 1]).map(|g| *g)
+        GENERATION_BY_SUFFIX.get(&namecased[0..namecased.len() - 1]).cloned()
     } else {
         None
     }

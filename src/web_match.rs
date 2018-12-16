@@ -36,7 +36,7 @@ impl Name {
         // Special case: Nice punctuation lets us actually parse a name directly
         if string.chars().any(is_nonalphanumeric) {
             let subbed = string.split(is_nonalphanumeric)
-                               .filter(|p| p.len() > 0)
+                               .filter(|p|!p.is_empty())
                                .join(" ");
 
             if let Some(name) = Name::parse(&subbed) {
@@ -209,10 +209,8 @@ impl Name {
                        eq_or_starts_with!(remainder, initials) {
                         return true;
                     }
-                } else if allow_unknowns {
-                    if remainder.len() < 3 {
-                        return true;
-                    }
+                } else if allow_unknowns && remainder.len() < 3 {
+                    return true;
                 }
             }
         }

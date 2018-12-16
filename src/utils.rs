@@ -4,8 +4,8 @@ use unicode_normalization::char::canonical_combining_class;
 use unicode_normalization::UnicodeNormalization;
 use unidecode::unidecode_char;
 
-const VOWELS: &'static str = "aeiouyAEIOUY";
-const HYPHENS: &'static str = "-\u{2010}‑‒–—―−－﹘﹣";
+const VOWELS: &str = "aeiouyAEIOUY";
+const HYPHENS: &str = "-\u{2010}‑‒–—―−－﹘﹣";
 
 pub fn is_mixed_case(s: &str) -> bool {
     let mut has_lowercase = false;
@@ -151,18 +151,11 @@ pub fn starts_with_consonant(word: &str) -> bool {
 
 pub fn has_sequential_alphas(word: &str) -> bool {
     let mut iter = word.chars().peekable();
-    loop {
-        match iter.next() {
-            Some(c) => {
-                match iter.peek() {
-                    Some(nc) => {
-                        if c.is_alphabetic() && nc.is_alphabetic() {
-                            return true;
-                        }
-                    }
-                    None => {
-                        break;
-                    }
+    while let Some(c) = iter.next() {
+        match iter.peek() {
+            Some(nc) => {
+                if c.is_alphabetic() && nc.is_alphabetic() {
+                    return true;
                 }
             }
             None => {

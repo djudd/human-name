@@ -20,7 +20,7 @@ pub fn parse(name: &str,
         generation_from_suffix: None,
         maybe_not_prefix: None,
         maybe_not_postfix: None,
-        use_capitalization: use_capitalization,
+        use_capitalization,
     };
 
     let (words, surname_index, generation_from_suffix) = op.run(name);
@@ -43,7 +43,7 @@ impl <'a>ParseOp<'a> {
 
         // Separate comma-separated titles and suffixes, then flip remaining words
         // around remaining comma, if any
-        for part in name.split(",") {
+        for part in name.split(',') {
             if words.is_empty() {
                 // We're in the surname part (if the format is "Smith, John"),
                 // or the only actual name part (if the format is "John Smith,
@@ -84,12 +84,13 @@ impl <'a>ParseOp<'a> {
             // check if we can treat the last word as a name if we just ignore
             // case; this handles the not-quite-rare-enough case of an all-caps
             // last name (e.g.Neto John SMITH), among others
-            if self.use_capitalization && ParseOp::fixably_invalid(&words, self.surname_index) {
-                if NamePart::from_word(&*removed.namecased, false, Location::End).is_namelike() {
-                    removed.category = Category::Name;
-                    words.push(removed);
-                    break;
-                }
+            if self.use_capitalization &&
+                ParseOp::fixably_invalid(&words, self.surname_index) &&
+                NamePart::from_word(&*removed.namecased, false, Location::End).is_namelike() {
+
+                removed.category = Category::Name;
+                words.push(removed);
+                break;
             }
         }
 
@@ -103,7 +104,7 @@ impl <'a>ParseOp<'a> {
         (words, self.surname_index, self.generation_from_suffix)
     }
 
-    fn fixably_invalid(words: &Vec<NamePart>, surname_index: usize) -> bool {
+    fn fixably_invalid(words: &[NamePart], surname_index: usize) -> bool {
         words.len() < 2 || !words[surname_index..].iter().any(|w| w.is_namelike())
     }
 
@@ -123,10 +124,11 @@ impl <'a>ParseOp<'a> {
 
         // Check for title as prefix (e.g. "Dr. John Smith" or "Right Hon.
         // John Smith")
-        let mut prefix_title = None;
-        if words.len() > 1 {
-            prefix_title = title::strip_prefix_title(&mut words);
-        }
+        let prefix_title = if words.len() > 1 {
+            title::strip_prefix_title(&mut words)
+        } else {
+            None
+        };
 
         // Strip non-comma-separated titles & suffixes (e.g. "John Smith Jr.")
         self.strip_postfixes(&mut words, false);
@@ -216,7 +218,7 @@ impl <'a>ParseOp<'a> {
         }
     }
 
-    fn strip_postfixes<'b>(&mut self, words: &mut Vec<NamePart<'a>>, after_comma: bool) {
+    fn strip_postfixes(&mut self, words: &mut Vec<NamePart<'a>>, after_comma: bool) {
         let skip = if after_comma {
             0
         } else {
@@ -232,7 +234,7 @@ impl <'a>ParseOp<'a> {
         let first_abbr_index = words[skip..]
                                    .iter()
                                    .position(|word| !word.is_namelike() && !word.is_initials())
-                                   .unwrap_or(words[skip..].len()) +
+                                   .unwrap_or_else(|| words[skip..].len()) +
                                skip;
 
         let first_postfix_index = cmp::min(first_abbr_index,

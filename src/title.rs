@@ -401,6 +401,7 @@ static POSTFIX_TITLES: phf::Set<&'static str> = phf_set! {
     "Al",
 };
 
+#[allow(clippy::if_same_then_else)]
 fn might_be_title_part(word: &NamePart) -> bool {
     if word.chars < 3 {
         // Allow any word with 1 or 2 characters as part of a title (but see below)

@@ -47,7 +47,7 @@ impl <'a>Iterator for NameParts<'a> {
         }
 
         // Now look for the next whitespace that remains
-        let next_whitespace = self.text.find(char::is_whitespace).unwrap_or(self.text.len());
+        let next_whitespace = self.text.find(char::is_whitespace).unwrap_or_else(|| self.text.len());
         let next_inner_period = self.text[0..next_whitespace].find('.');
         let next_boundary = match next_inner_period {
             Some(i) => i + 1,
@@ -60,7 +60,7 @@ impl <'a>Iterator for NameParts<'a> {
             // Special case: only allowed word without alphabetical characters
             self.text = &self.text[next_boundary..];
             Some(NamePart {
-                word: word,
+                word,
                 chars: 1,
                 category: Category::Other,
                 namecased: Cow::Borrowed(word),
@@ -106,12 +106,14 @@ impl <'a>NamePart<'a> {
 
     pub fn all_from_text(text: &str, trust_capitalization: bool, location: Location) -> NameParts {
         NameParts {
-            text: text,
-            trust_capitalization: trust_capitalization,
-            location: location,
+            text,
+            trust_capitalization,
+            location,
         }
     }
 
+    #[allow(clippy::if_same_then_else)]
+    #[allow(clippy::collapsible_if)]
     pub fn from_word(word: &str, trust_capitalization: bool, location: Location) -> NamePart {
         let chars = word.chars().count();
         let ascii = word.chars().all(|c| c.is_ascii());
@@ -161,10 +163,10 @@ impl <'a>NamePart<'a> {
         };
 
         NamePart {
-            word: word,
-            chars: chars,
-            category: category,
-            namecased: namecased,
+            word,
+            chars,
+            category,
+            namecased,
         }
     }
 

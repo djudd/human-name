@@ -18,7 +18,7 @@ fn expected_close_char_if_opens_nickname(c: char,
         _ => None,
     };
 
-    if !close.is_none() {
+    if close.is_some() {
         // Treat, e.g., opening parens as the start of a nickname
         // regardless of where it occurs
         return close;
@@ -188,6 +188,8 @@ fn variants_match(a: &str, b: &str) -> bool {
     matches_without_diminutive(a, b) || matches_without_diminutive(b, a)
 }
 
+#[allow(clippy::needless_bool)]
+#[allow(clippy::if_same_then_else)]
 fn have_prefix_match(a: &str, b: &str) -> bool {
     if eq_or_starts_with!(a, b) {
         // Exception: Case where one variant is a feminized version of the other
@@ -203,6 +205,7 @@ fn have_prefix_match(a: &str, b: &str) -> bool {
     }
 }
 
+#[allow(clippy::if_same_then_else)]
 fn matches_without_diminutive(a: &str, b: &str) -> bool {
     if DIMINUTIVE_EXCEPTIONS.contains(a) {
         false
@@ -216,11 +219,9 @@ fn matches_without_diminutive(a: &str, b: &str) -> bool {
        (a.ends_with("ita") || a.ends_with("ina")) &&
        eq_or_starts_with!(a[0..a.len() - 3], b) {
         true
-    } else if a.len() > 5 && b.len() >= a.len() - 3 && b.ends_with('o') && a.ends_with("ito") &&
-       eq_or_starts_with!(a[0..a.len() - 3], b) {
-        true
     } else {
-        false
+        a.len() > 5 && b.len() >= a.len() - 3 && b.ends_with('o') && a.ends_with("ito") &&
+        eq_or_starts_with!(a[0..a.len() - 3], b)
     }
 }
 

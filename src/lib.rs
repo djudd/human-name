@@ -137,12 +137,7 @@ impl Name {
         let mixed_case = is_mixed_case(name);
         let name = nickname::strip_nickname(name);
 
-        let result = parse::parse(&*name, mixed_case);
-        if result.is_none() {
-            return None;
-        }
-
-        let (words, surname_index, generation_from_suffix) = result.unwrap();
+        let (words, surname_index, generation_from_suffix) = parse::parse(&*name, mixed_case)?;
 
         let mut names: Vec<String> = Vec::with_capacity(words.len());
         let mut initials = String::with_capacity(surname_index);
@@ -191,9 +186,9 @@ impl Name {
         Some(Name {
             words: names,
             surname_index: surname_index_in_names,
-            generation_from_suffix: generation_from_suffix,
-            initials: initials,
-            word_indices_in_initials: word_indices_in_initials,
+            generation_from_suffix,
+            initials,
+            word_indices_in_initials,
             hash: s.finish(),
         })
     }
@@ -269,7 +264,7 @@ impl Name {
 
     /// Generational suffix, if present
     pub fn suffix(&self) -> Option<&str> {
-        self.generation_from_suffix.map(|g| suffix::display_generational_suffix(g))
+        self.generation_from_suffix.map(suffix::display_generational_suffix)
     }
 
     fn given_names_or_initials(&self) -> GivenNamesOrInitials {

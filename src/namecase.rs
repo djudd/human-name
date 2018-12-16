@@ -45,6 +45,7 @@ static MAC_EXCEPTIONS: phf::Set<&'static str> = phf_set! {
     "Macias",
 };
 
+#[allow(clippy::if_same_then_else)]
 fn capitalize_after_mac(word: &str) -> bool {
     if word.len() <= 4 {
         false
@@ -52,10 +53,8 @@ fn capitalize_after_mac(word: &str) -> bool {
         false
     } else if ["a", "c", "i", "z", "j"].iter().any(|c| word.ends_with(c)) {
         false
-    } else if MAC_EXCEPTIONS.contains(word) {
-        false
     } else {
-        true
+        !MAC_EXCEPTIONS.contains(word)
     }
 }
 
