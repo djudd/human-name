@@ -1,6 +1,6 @@
 [package]
 name = "human_name"
-version = "0.7.0"
+version = "0.7.1"
 authors = ["David Judd <david.a.judd@gmail.com>"]
 description = "A library for parsing and comparing human names"
 license = "Apache-2.0"
