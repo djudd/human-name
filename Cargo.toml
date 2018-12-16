@@ -15,6 +15,7 @@ unidecode = "0.2.*"
 rustc-serialize = "0.3.*"
 phf = "0.7.19"
 phf_macros = "0.7.19"
+libc = "0.2"
 
 [features]
 default = ["name_eq_hash"]

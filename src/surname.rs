@@ -1,5 +1,4 @@
 use phf;
-use std::ascii::AsciiExt;
 use super::namepart::NamePart;
 
 static VOWELLESS_SURNAMES: [&'static str; 4] = ["Ng", "Lv", "Mtz", "Hdz"];

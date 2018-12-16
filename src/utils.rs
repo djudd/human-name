@@ -1,4 +1,3 @@
-use std::ascii::AsciiExt;
 use std::str::Chars;
 use std::borrow::Cow;
 use unicode_normalization::char::canonical_combining_class;

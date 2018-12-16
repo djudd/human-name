@@ -2,7 +2,6 @@ use super::utils::*;
 use super::surname;
 use super::namecase;
 use std::borrow::Cow;
-use std::ascii::AsciiExt;
 use phf;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -41,7 +40,7 @@ impl <'a>Iterator for NameParts<'a> {
 
     fn next(&mut self) -> Option<NamePart<'a>> {
         // Skip any leading whitespace
-        self.text = self.text.trim_left();
+        self.text = self.text.trim_start();
 
         if self.text.is_empty() {
             return None;

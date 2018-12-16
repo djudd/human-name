@@ -1,4 +1,3 @@
-use std::ascii::AsciiExt;
 use std::borrow::Cow;
 use super::utils::*;
 use super::nickname::have_matching_variants;

@@ -1,5 +1,4 @@
 use phf;
-use std::ascii::AsciiExt;
 use super::namepart::NamePart;
 
 static TWO_CHAR_TITLES: [&'static str; 4] = ["mr", "ms", "sr", "dr"];
