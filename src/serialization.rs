@@ -3,7 +3,6 @@ use std::collections::BTreeMap;
 use super::Name;
 
 impl ToJson for Name {
-
     /// Serializes a name into parsed components.
     ///
     /// ```

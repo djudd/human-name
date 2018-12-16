@@ -4,7 +4,6 @@ use super::Name;
 use super::utils::*;
 
 impl Name {
-
     /// Does this name appear to match a munged string such as an email
     /// localpart or URL slug, where whitespace has been removed?
     ///
@@ -36,8 +35,8 @@ impl Name {
         // Special case: Nice punctuation lets us actually parse a name directly
         if string.chars().any(is_nonalphanumeric) {
             let subbed = string.split(is_nonalphanumeric)
-                               .filter(|p|!p.is_empty())
-                               .join(" ");
+                .filter(|p| !p.is_empty())
+                .join(" ");
 
             if let Some(name) = Name::parse(&subbed) {
                 if name.consistent_with(self) {
@@ -50,8 +49,8 @@ impl Name {
             Cow::Borrowed(string)
         } else {
             Cow::Owned(string.chars()
-                             .filter_map(lowercase_if_alpha)
-                             .collect::<String>())
+                .filter_map(lowercase_if_alpha)
+                .collect::<String>())
         };
 
         if normed.is_empty() {
@@ -64,9 +63,9 @@ impl Name {
             let mut initials = String::with_capacity(full_initials_len);
             initials.extend(self.initials().chars().flat_map(char::to_lowercase));
             initials.extend(self.surnames()
-                                .iter()
-                                .filter_map(|n| n.chars().nth(0))
-                                .flat_map(char::to_lowercase));
+                .iter()
+                .filter_map(|n| n.chars().nth(0))
+                .flat_map(char::to_lowercase));
 
             if *normed == initials {
                 return true;
@@ -80,9 +79,9 @@ impl Name {
                 let mut name_and_initial = String::with_capacity(name_and_initial_len);
                 name_and_initial.extend(name.chars().flat_map(char::to_lowercase));
                 name_and_initial.extend(self.surnames()
-                                            .iter()
-                                            .filter_map(|n| n.chars().nth(0))
-                                            .flat_map(char::to_lowercase));
+                    .iter()
+                    .filter_map(|n| n.chars().nth(0))
+                    .flat_map(char::to_lowercase));
 
                 if *normed == name_and_initial {
                     return true;
@@ -134,9 +133,9 @@ impl Name {
 
     fn find_surname_in(&self, haystack: &str) -> Option<(usize, usize, bool)> {
         let lower_surname: String = self.surnames()
-                                        .iter()
-                                        .flat_map(|n| n.chars().filter_map(lowercase_if_alpha))
-                                        .collect();
+            .iter()
+            .flat_map(|n| n.chars().filter_map(lowercase_if_alpha))
+            .collect();
         if lower_surname.len() < 2 {
             return None;
         }

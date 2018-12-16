@@ -11,7 +11,6 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use rustc_serialize::json::ToJson;
 
-#[rustfmt::skip]
 const USAGE: &str = "
 Usage:
     human_name parse <name>

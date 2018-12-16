@@ -82,10 +82,12 @@ pub fn transliterate(c: char) -> Chars<'static> {
 pub fn to_ascii_letter(c: char) -> Option<char> {
     match c {
         'A'...'Z' => Some(c),
-        _ => match transliterate(c).next() {
-            Some(c) => c.to_uppercase().next(),
-            None => None,
-        },
+        _ => {
+            match transliterate(c).next() {
+                Some(c) => c.to_uppercase().next(),
+                None => None,
+            }
+        }
     }
 }
 
@@ -96,20 +98,20 @@ pub fn to_ascii(s: &str) -> Cow<str> {
         let mut capitalized_any = false;
 
         Cow::Owned(s.chars()
-                    .flat_map(transliterate)
-                    .filter_map(|c| {
-                        if !c.is_alphabetic() {
-                            None
-                        } else if c.is_uppercase() && !capitalized_any {
-                            capitalized_any = true;
-                            Some(c)
-                        } else if c.is_lowercase() && capitalized_any {
-                            Some(c)
-                        } else {
-                            c.to_lowercase().next()
-                        }
-                    })
-                    .collect())
+            .flat_map(transliterate)
+            .filter_map(|c| {
+                if !c.is_alphabetic() {
+                    None
+                } else if c.is_uppercase() && !capitalized_any {
+                    capitalized_any = true;
+                    Some(c)
+                } else if c.is_lowercase() && capitalized_any {
+                    Some(c)
+                } else {
+                    c.to_lowercase().next()
+                }
+            })
+            .collect())
     }
 }
 

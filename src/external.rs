@@ -85,8 +85,8 @@ pub unsafe extern "C" fn human_name_goes_by_middle_name(name: &Name) -> bool {
 
 #[no_mangle]
 pub unsafe extern "C" fn human_name_matches_slug_or_localpart(name: &Name,
-                                                       input: *const libc::c_char)
-                                                       -> bool {
+                                                              input: *const libc::c_char)
+                                                              -> bool {
     let s = CStr::from_ptr(input).to_string_lossy();
     name.matches_slug_or_localpart(&*s)
 }
