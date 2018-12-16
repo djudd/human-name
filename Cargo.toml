@@ -8,13 +8,13 @@ repository = "https://github.com/djudd/human-name"
 documentation = "http://djudd.github.io/human-name"
 
 [dependencies]
-itertools = "0.4.*"
-unicode-segmentation = "0.1.*"
-unicode-normalization = "0.1.*"
-unidecode = "0.2.*"
-rustc-serialize = "0.3.*"
-phf = "0.7.19"
-phf_macros = "0.7.19"
+itertools = "0.8"
+unicode-segmentation = "1.2"
+unicode-normalization = "0.1"
+unidecode = "0.3"
+rustc-serialize = "0.3"
+phf = "0.7"
+phf_macros = "0.7"
 libc = "0.2"
 
 [features]
