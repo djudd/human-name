@@ -116,7 +116,10 @@ impl <'a>NamePart<'a> {
     #[allow(clippy::collapsible_if)]
     pub fn from_word(word: &str, trust_capitalization: bool, location: Location) -> NamePart {
         let chars = word.chars().count();
+        debug_assert!(chars > 0);
+
         let ascii = word.chars().all(|c| c.is_ascii());
+        debug_assert!(word.chars().any(char::is_alphabetic));
 
         let category = if chars == 1 && ascii {
             Category::Initials
@@ -155,7 +158,7 @@ impl <'a>NamePart<'a> {
             }
         };
 
-        let namecased = if trust_capitalization && ascii && is_capitalized(word) {
+        let namecased = if trust_capitalization && is_plausibly_capitalized(word) {
             Cow::Borrowed(word)
         } else {
             let might_be_particle = location == Location::Middle;

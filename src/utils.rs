@@ -26,19 +26,28 @@ pub fn is_mixed_case(s: &str) -> bool {
     false
 }
 
-pub fn is_capitalized(word: &str) -> bool {
-    match word.chars().nth(0) {
-        Some(c) => {
-            if !c.is_uppercase() {
-                return false;
-            }
-        }
-        None => {
-            return false;
-        }
-    }
+pub fn is_plausibly_capitalized(word: &str) -> bool {
+    debug_assert!(!word.chars().any(char::is_whitespace));
 
-    word.chars().skip(1).all(|c| c.is_lowercase() || !c.is_alphabetic())
+    // Enforce that the first character is capitalized
+    let initial_upper = match word.chars().nth(0) {
+        Some(c) if c.is_uppercase() => true,
+        _ => false,
+    };
+
+    if initial_upper {
+        // Enforce that every alphabetical character which follows another
+        // alphabetical character is lowercase
+        let mut require_lowercase = true;
+        word.chars().skip(1).all(|c| {
+            let alpha = c.is_alphabetic();
+            let ok = !require_lowercase || !alpha || c.is_lowercase();
+            require_lowercase = alpha;
+            ok
+        })
+    } else {
+        false
+    }
 }
 
 #[inline]
@@ -233,4 +242,39 @@ macro_rules! eq_or_ends_with {
 
         result
     } }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sequential_alphas() {
+        assert!(has_sequential_alphas("ab"));
+        assert!(has_sequential_alphas("abc"));
+        assert!(has_sequential_alphas("a.bc"));
+        assert!(has_sequential_alphas("鄭a"));
+        assert!(!has_sequential_alphas(""));
+        assert!(!has_sequential_alphas("a"));
+        assert!(!has_sequential_alphas("a.b"));
+        assert!(!has_sequential_alphas("鄭.a"));
+        assert!(!has_sequential_alphas("ﾟ."));
+    }
+
+    #[test]
+    fn capitalization() {
+        assert_eq!("A", capitalize_word("a"));
+        assert_eq!("Aa", capitalize_word("aa"));
+        assert_eq!("Aa", capitalize_word("AA"));
+    }
+
+    #[test]
+    fn plausibly_capitalized() {
+        assert!(is_plausibly_capitalized("A"));
+        assert!(!is_plausibly_capitalized("a"));
+        assert!(is_plausibly_capitalized("Aa"));
+        assert!(!is_plausibly_capitalized("AA"));
+        assert!(is_plausibly_capitalized("La'Tanya"));
+        assert!(is_plausibly_capitalized("La'tanya"));
+    }
 }
