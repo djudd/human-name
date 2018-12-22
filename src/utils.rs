@@ -147,7 +147,7 @@ pub fn capitalize_word(word: &str) -> String {
 }
 
 pub fn normalize_nfkd_and_hyphens(string: &str) -> Cow<str> {
-    if string.chars().all(|c| c.is_ascii()) {
+    if string.is_ascii() {
         Cow::Borrowed(string)
     } else {
         let string = string
