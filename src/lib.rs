@@ -39,7 +39,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::slice::Iter;
 use std::str::Chars;
 use std::iter::{Peekable, Enumerate};
-use utils::{is_mixed_case, transliterate, lowercase_if_alpha};
+use utils::{is_mixed_case, transliterate, lowercase_if_alpha, normalize_nfkd_and_hyphens};
 
 /// Represents a parsed human name.
 ///
@@ -134,8 +134,9 @@ impl Name {
             return None;
         }
 
-        let mixed_case = is_mixed_case(name);
-        let name = nickname::strip_nickname(name);
+        let name = normalize_nfkd_and_hyphens(&name);
+        let name = nickname::strip_nickname(&name);
+        let mixed_case = is_mixed_case(&name);
 
         let (words, surname_index, generation_from_suffix) = parse::parse(&*name, mixed_case)?;
 
@@ -168,14 +169,7 @@ impl Name {
         }
 
         debug_assert!(!names.is_empty(), "Names are empty!");
-        //debug_assert!(initials.len() > 0, "Initials are empty!");
-        //
-        // This shouldn't be necessary, but we've found a case - "ﾟ." - where
-        // the `is_alphabetic()` filter passes in `NamePart::from_word` but
-        // fails in the `initials.extend` filter above, somehow.
-        if initials.is_empty() {
-            return None;
-        }
+        debug_assert!(!initials.is_empty(), "Initials are empty!");
 
         names.shrink_to_fit();
         word_indices_in_initials.shrink_to_fit();

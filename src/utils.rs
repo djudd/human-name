@@ -115,14 +115,14 @@ pub fn to_ascii(s: &str) -> Cow<str> {
     }
 }
 
-pub fn capitalize_and_normalize(word: &str) -> String {
+pub fn capitalize_word(word: &str) -> String {
+    debug_assert!(!word.chars().any(char::is_whitespace));
+
     let mut capitalize_next = true;
 
     word.chars()
         .filter_map(|c| {
-            let result = if HYPHENS.contains(c) {
-                Some('-')
-            } else if !c.is_alphanumeric() {
+            let result = if !c.is_alphanumeric() {
                 Some(c)
             } else if capitalize_next {
                 c.to_uppercase().next()
@@ -134,8 +134,26 @@ pub fn capitalize_and_normalize(word: &str) -> String {
 
             result
         })
-        .nfkd()
         .collect()
+}
+
+pub fn normalize_nfkd_and_hyphens(string: &str) -> Cow<str> {
+    if string.chars().all(|c| c.is_ascii()) {
+        Cow::Borrowed(string)
+    } else {
+        let string = string
+            .nfkd()
+            .map(|c| {
+                 if HYPHENS.contains(c) {
+                     '-'
+                 } else {
+                     c
+                 }
+            })
+            .collect();
+
+        Cow::Owned(string)
+    }
 }
 
 pub fn is_missing_vowels(word: &str) -> bool {
