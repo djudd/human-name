@@ -86,7 +86,7 @@ impl <'a>Iterator for NameParts<'a> {
     }
 }
 
-#[derive(Eq,PartialEq,Debug)]
+#[derive(Eq,PartialEq,Debug,Clone,Copy)]
 pub enum Category {
     Name,
     Initials,
@@ -94,7 +94,7 @@ pub enum Category {
     Other,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NamePart<'a> {
     pub word: &'a str,
     pub chars: usize,
