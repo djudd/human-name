@@ -1,5 +1,5 @@
-use phf;
 use namepart::NamePart;
+use phf;
 
 static GENERATION_BY_SUFFIX: phf::Map<&'static str, usize> = phf_map! {
     "1" => 1,
@@ -38,7 +38,9 @@ pub fn generation_from_suffix(part: &NamePart, might_be_initials: bool) -> Optio
     if part.is_namelike() || (part.is_initials() && !(part.chars == 1 && might_be_initials)) {
         GENERATION_BY_SUFFIX.get(namecased).cloned()
     } else if part.is_abbreviation() {
-        GENERATION_BY_SUFFIX.get(&namecased[0..namecased.len() - 1]).cloned()
+        GENERATION_BY_SUFFIX
+            .get(&namecased[0..namecased.len() - 1])
+            .cloned()
     } else {
         None
     }
@@ -50,8 +52,8 @@ pub fn display_generational_suffix(generation: usize) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::namepart::{Location, NamePart};
+    use super::*;
 
     #[test]
     fn doe() {

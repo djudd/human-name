@@ -1,15 +1,15 @@
 #![feature(test)]
 
 extern crate human_name;
-extern crate test;
 extern crate rustc_serialize;
+extern crate test;
 
-use std::env;
-use std::process;
-use std::io;
-use std::io::BufReader;
-use std::io::prelude::*;
 use rustc_serialize::json::ToJson;
+use std::env;
+use std::io;
+use std::io::prelude::*;
+use std::io::BufReader;
+use std::process;
 
 const USAGE: &str = "
 Usage:
@@ -117,13 +117,13 @@ fn parse_mode(args: &[String]) {
 
 #[cfg(test)]
 mod bench {
+    use human_name::Name;
     use std::collections::HashSet;
+    use std::fs::File;
     use std::io::prelude::*;
     use std::io::BufReader;
-    use std::fs::File;
-    use test::Bencher;
     use test::black_box;
-    use human_name::Name;
+    use test::Bencher;
 
     #[bench]
     fn bench_parsing_first_last(b: &mut Bencher) {
@@ -218,7 +218,8 @@ mod bench {
     fn bench_equality_many(b: &mut Bencher) {
         let f = File::open("tests/benchmark-names.txt").ok().unwrap();
         let reader = BufReader::new(f);
-        let names: Vec<Name> = reader.lines()
+        let names: Vec<Name> = reader
+            .lines()
             .filter_map(|l| Name::parse(&l.ok().unwrap()))
             .collect();
 

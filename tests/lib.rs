@@ -1,9 +1,9 @@
 extern crate human_name;
 extern crate unicode_normalization;
 
+use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::fs::File;
 use unicode_normalization::UnicodeNormalization;
 
 fn none_if_empty(s: &str) -> Option<&str> {
@@ -44,36 +44,48 @@ fn parsing() {
         let suffix = none_if_empty(&suffix);
 
         let name = name.unwrap();
-        assert!(name.surname() == surname,
-                "[{}] Expected surname {}, got {}",
-                input,
-                surname,
-                name.surname());
-        assert!(name.first_initial() == first_initial,
-                "[{}] Expected first initial {}, got {}",
-                input,
-                first_initial,
-                name.first_initial());
-        assert!(name.given_name() == given_name,
-                "[{}] Expected given_name {:?}, got {:?}",
-                input,
-                given_name,
-                name.given_name());
-        assert!(name.middle_name().map(|w| w.to_string()) == middle_names.map(|w| w.to_string()),
-                "[{}] Expected middle names {:?}, got {:?}",
-                input,
-                middle_names,
-                name.middle_name());
-        assert!(name.middle_initials() == middle_initials,
-                "[{}] Expected middle initials {:?}, got {:?}",
-                input,
-                middle_initials,
-                name.middle_initials());
-        assert!(name.suffix() == suffix,
-                "[{}] Expected suffix {:?}, got {:?}",
-                input,
-                suffix,
-                name.suffix());
+        assert!(
+            name.surname() == surname,
+            "[{}] Expected surname {}, got {}",
+            input,
+            surname,
+            name.surname()
+        );
+        assert!(
+            name.first_initial() == first_initial,
+            "[{}] Expected first initial {}, got {}",
+            input,
+            first_initial,
+            name.first_initial()
+        );
+        assert!(
+            name.given_name() == given_name,
+            "[{}] Expected given_name {:?}, got {:?}",
+            input,
+            given_name,
+            name.given_name()
+        );
+        assert!(
+            name.middle_name().map(|w| w.to_string()) == middle_names.map(|w| w.to_string()),
+            "[{}] Expected middle names {:?}, got {:?}",
+            input,
+            middle_names,
+            name.middle_name()
+        );
+        assert!(
+            name.middle_initials() == middle_initials,
+            "[{}] Expected middle initials {:?}, got {:?}",
+            input,
+            middle_initials,
+            name.middle_initials()
+        );
+        assert!(
+            name.suffix() == suffix,
+            "[{}] Expected suffix {:?}, got {:?}",
+            input,
+            suffix,
+            name.suffix()
+        );
     }
 }
 
@@ -90,10 +102,12 @@ fn unparseable() {
         }
 
         let result = human_name::Name::parse(&line);
-        assert!(result.is_none(),
-                "'Parsed' junk name: '{}' as '{}'",
-                line,
-                result.unwrap().display_first_last());
+        assert!(
+            result.is_none(),
+            "'Parsed' junk name: '{}' as '{}'",
+            line,
+            result.unwrap().display_first_last()
+        );
     }
 }
 
@@ -121,27 +135,37 @@ fn equality() {
         assert!(parsed_b.is_some(), "{} was not parsed", b);
 
         if expect == "==" {
-            assert!(parsed_a == parsed_b,
-                    "{} should be equal to {} but was not!",
-                    a,
-                    b);
-            assert!(parsed_b == parsed_a,
-                    "{} should be equal to {} but was not!",
-                    b,
-                    a);
-            assert!(parsed_a.unwrap().hash == parsed_b.unwrap().hash,
-                    "{} should have the same hash as {} but did not!",
-                    a,
-                    b);
+            assert!(
+                parsed_a == parsed_b,
+                "{} should be equal to {} but was not!",
+                a,
+                b
+            );
+            assert!(
+                parsed_b == parsed_a,
+                "{} should be equal to {} but was not!",
+                b,
+                a
+            );
+            assert!(
+                parsed_a.unwrap().hash == parsed_b.unwrap().hash,
+                "{} should have the same hash as {} but did not!",
+                a,
+                b
+            );
         } else {
-            assert!(parsed_a != parsed_b,
-                    "{} should not be equal to {} but was!",
-                    a,
-                    b);
-            assert!(parsed_b != parsed_a,
-                    "{} should not be equal to {} but was!",
-                    b,
-                    a);
+            assert!(
+                parsed_a != parsed_b,
+                "{} should not be equal to {} but was!",
+                a,
+                b
+            );
+            assert!(
+                parsed_b != parsed_a,
+                "{} should not be equal to {} but was!",
+                b,
+                a
+            );
         }
     }
 }
@@ -162,7 +186,12 @@ fn web_match() {
 
         let name = human_name::Name::parse(parts[1]).unwrap();
         let compare = parts[0];
-        assert!(name.matches_slug_or_localpart(compare), "{} should match {} but did not!", name.display_full(), compare);
+        assert!(
+            name.matches_slug_or_localpart(compare),
+            "{} should match {} but did not!",
+            name.display_full(),
+            compare
+        );
     }
 }
 
@@ -182,6 +211,11 @@ fn web_nonmatch() {
 
         let name = human_name::Name::parse(parts[1]).unwrap();
         let compare = parts[0];
-        assert!(!name.matches_slug_or_localpart(compare), "{} should not match {} but did!", name.display_full(), compare);
+        assert!(
+            !name.matches_slug_or_localpart(compare),
+            "{} should not match {} but did!",
+            name.display_full(),
+            compare
+        );
     }
 }

@@ -3,30 +3,29 @@
 //! See the documentation of the `Name` struct for details.
 
 #![doc(html_root_url = "https://djudd.github.io/human-name/")]
-
 #![feature(libc)]
 #![feature(plugin)]
 #![plugin(phf_macros)]
 
-extern crate phf;
 extern crate itertools;
-extern crate unicode_segmentation;
-extern crate unicode_normalization;
-extern crate unidecode;
+extern crate phf;
 extern crate rustc_serialize;
 extern crate smallvec;
+extern crate unicode_normalization;
+extern crate unicode_segmentation;
+extern crate unidecode;
 
 #[macro_use]
 mod utils;
-mod suffix;
-mod nickname;
-mod title;
-mod surname;
+mod comparison;
 mod namecase;
 mod namepart;
+mod nickname;
 mod parse;
-mod comparison;
 mod serialization;
+mod suffix;
+mod surname;
+mod title;
 mod web_match;
 
 pub mod external;
@@ -34,14 +33,14 @@ pub mod external;
 #[cfg(feature = "name_eq_hash")]
 mod eq_hash;
 
+use smallvec::SmallVec;
 use std::borrow::Cow;
-use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+use std::iter::{Enumerate, Peekable};
 use std::slice::Iter;
 use std::str::Chars;
-use std::iter::{Peekable, Enumerate};
-use utils::{is_mixed_case, transliterate, lowercase_if_alpha, normalize_nfkd_and_hyphens};
-use smallvec::SmallVec;
+use utils::{is_mixed_case, lowercase_if_alpha, normalize_nfkd_and_hyphens, transliterate};
 
 /// Represents a parsed human name.
 ///
@@ -71,7 +70,6 @@ pub struct Name {
 }
 
 impl Name {
-
     /// Parses a string represent a single person's full name into a canonical
     /// representation.
     ///
@@ -145,23 +143,28 @@ impl Name {
         let mut names: SmallVec<[String; 5]> = SmallVec::with_capacity(words.len());
         let mut initials = String::with_capacity(surname_index);
         let mut surname_index_in_names = surname_index;
-        let mut word_indices_in_initials: SmallVec<[(usize, usize); 5]> = SmallVec::with_capacity(surname_index);
+        let mut word_indices_in_initials: SmallVec<[(usize, usize); 5]> =
+            SmallVec::with_capacity(surname_index);
 
         for (i, word) in words.into_iter().enumerate() {
             if word.is_initials() && i < surname_index {
-                initials.extend(word.namecased
-                                    .chars()
-                                    .filter(|c| c.is_alphabetic())
-                                    .flat_map(|c| c.to_uppercase()));
+                initials.extend(
+                    word.namecased
+                        .chars()
+                        .filter(|c| c.is_alphabetic())
+                        .flat_map(|c| c.to_uppercase()),
+                );
 
                 surname_index_in_names -= 1;
             } else if i < surname_index {
                 let prior_len = initials.len();
 
-                initials.extend(word.namecased
-                                    .split('-')
-                                    .filter_map(|w| w.chars().find(|c| c.is_alphabetic()))
-                                    .flat_map(|c| c.to_uppercase()));
+                initials.extend(
+                    word.namecased
+                        .split('-')
+                        .filter_map(|w| w.chars().find(|c| c.is_alphabetic()))
+                        .flat_map(|c| c.to_uppercase()),
+                );
 
                 names.push(word.namecased.into_owned());
                 word_indices_in_initials.push((prior_len, initials.len()));
@@ -260,7 +263,8 @@ impl Name {
 
     /// Generational suffix, if present
     pub fn suffix(&self) -> Option<&str> {
-        self.generation_from_suffix.map(suffix::display_generational_suffix)
+        self.generation_from_suffix
+            .map(suffix::display_generational_suffix)
     }
 
     fn given_names_or_initials(&self) -> GivenNamesOrInitials {
@@ -294,12 +298,8 @@ impl Name {
     /// ```
     pub fn display_first_last(&self) -> String {
         match self.given_name() {
-            Some(ref name) => {
-                format!("{} {}", name, self.surname())
-            }
-            None => {
-                self.display_initial_surname()
-            }
+            Some(ref name) => format!("{} {}", name, self.surname()),
+            None => self.display_initial_surname(),
         }
     }
 
@@ -317,9 +317,10 @@ impl Name {
     /// ```
     pub fn byte_len(&self) -> usize {
         // Words plus spaces
-        let mut len = self.words
-                          .iter()
-                          .fold(self.words.len() - 1, |sum, ref word| sum + word.len());
+        let mut len = self
+            .words
+            .iter()
+            .fold(self.words.len() - 1, |sum, ref word| sum + word.len());
 
         if let Some(suffix) = self.suffix() {
             len += 2; // Comma and space
@@ -328,10 +329,12 @@ impl Name {
 
         let extra_initials = self.initials.chars().count() - self.surname_index;
         if extra_initials > 0 {
-            len += self.initials.len() -
-                   self.words[0..self.surname_index]
-                       .iter()
-                       .fold(0, |sum, ref word| sum + word.chars().nth(0).unwrap().len_utf8());
+            len += self.initials.len()
+                - self.words[0..self.surname_index]
+                    .iter()
+                    .fold(0, |sum, ref word| {
+                        sum + word.chars().nth(0).unwrap().len_utf8()
+                    });
 
             len += 2 * extra_initials; // Period and space for each initial
         }
@@ -408,12 +411,14 @@ impl Name {
 
     fn hash_surnames<H: Hasher>(surnames: &[String], state: &mut H) {
         let surname_chars = surnames
-                                .iter()
-                                .flat_map(|w| w.chars())
-                                .flat_map(transliterate)
-                                .rev();
-        for c in surname_chars.filter_map(lowercase_if_alpha)
-                              .take(comparison::MIN_SURNAME_CHAR_MATCH) {
+            .iter()
+            .flat_map(|w| w.chars())
+            .flat_map(transliterate)
+            .rev();
+        for c in surname_chars
+            .filter_map(lowercase_if_alpha)
+            .take(comparison::MIN_SURNAME_CHAR_MATCH)
+        {
             c.hash(state);
         }
     }
@@ -431,7 +436,7 @@ enum NameWordOrInitial<'a> {
     Initial(char),
 }
 
-impl <'a>Iterator for GivenNamesOrInitials<'a> {
+impl<'a> Iterator for GivenNamesOrInitials<'a> {
     type Item = NameWordOrInitial<'a>;
 
     fn next(&mut self) -> Option<NameWordOrInitial<'a>> {

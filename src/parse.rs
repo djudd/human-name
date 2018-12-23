@@ -1,7 +1,7 @@
-use super::title;
-use super::surname;
+use super::namepart::{Category, Location, NamePart};
 use super::suffix;
-use super::namepart::{NamePart, Location, Category};
+use super::surname;
+use super::title;
 use smallvec::SmallVec;
 
 struct ParseOp<'a> {
@@ -13,10 +13,10 @@ struct ParseOp<'a> {
     use_capitalization: bool,
 }
 
-pub fn parse(name: &str,
-             use_capitalization: bool)
-             -> Option<(SmallVec<[NamePart; 7]>, usize, Option<usize>)> {
-
+pub fn parse(
+    name: &str,
+    use_capitalization: bool,
+) -> Option<(SmallVec<[NamePart; 7]>, usize, Option<usize>)> {
     let mut op = ParseOp {
         words: SmallVec::new(),
         surname_index: 0,
@@ -33,10 +33,8 @@ pub fn parse(name: &str,
     }
 }
 
-impl <'a>ParseOp<'a> {
-
+impl<'a> ParseOp<'a> {
     fn run(&mut self, name: &'a str) -> bool {
-
         // Separate comma-separated titles and suffixes, then flip remaining words
         // around remaining comma, if any
         for part in name.split(',') {
@@ -81,10 +79,10 @@ impl <'a>ParseOp<'a> {
             // check if we can treat the last word as a name if we just ignore
             // case; this handles the not-quite-rare-enough case of an all-caps
             // last name (e.g.Neto John SMITH), among others
-            if self.use_capitalization &&
-                !self.valid() &&
-                NamePart::from_word(&*removed.namecased, false, Location::End).is_namelike() {
-
+            if self.use_capitalization
+                && !self.valid()
+                && NamePart::from_word(&*removed.namecased, false, Location::End).is_namelike()
+            {
                 removed.category = Category::Name;
                 self.words.push(removed);
                 break;
@@ -98,23 +96,36 @@ impl <'a>ParseOp<'a> {
             self.surname_index = surname::find_surname_index(&self.words[1..]) + 1;
         }
 
-        debug_assert!(self.words.iter().all(|w| w.is_namelike() || w.is_initials()));
+        debug_assert!(self
+            .words
+            .iter()
+            .all(|w| w.is_namelike() || w.is_initials()));
 
         // Check the plausibility of what we've found
         self.valid()
     }
 
     fn valid(&self) -> bool {
-        self.words.len() >= 2 && self.words[self.surname_index..].iter().any(|w| w.is_namelike())
+        self.words.len() >= 2
+            && self.words[self.surname_index..]
+                .iter()
+                .any(|w| w.is_namelike())
     }
 
     // Called only until any words are found
-    fn handle_before_comma(&mut self,
-                           part: &'a str) {
-        debug_assert!(self.words.is_empty() && self.surname_index == 0 && self.possible_false_prefix.is_none(),
-                "Invalid state for handle_before_comma!");
+    fn handle_before_comma(&mut self, part: &'a str) {
+        debug_assert!(
+            self.words.is_empty()
+                && self.surname_index == 0
+                && self.possible_false_prefix.is_none(),
+            "Invalid state for handle_before_comma!"
+        );
 
-        self.words.extend(NamePart::all_from_text(part, self.use_capitalization, Location::End));
+        self.words.extend(NamePart::all_from_text(
+            part,
+            self.use_capitalization,
+            Location::End,
+        ));
 
         if self.words.is_empty() {
             return;
@@ -151,10 +162,11 @@ impl <'a>ParseOp<'a> {
     }
 
     // Called after the first comma, until we find a given name or first initial
-    fn handle_after_comma(&mut self,
-                          part: &'a str) {
-        debug_assert!(!self.words.is_empty() && self.surname_index == 0,
-                "Invalid state for handle_after_comma!");
+    fn handle_after_comma(&mut self, part: &'a str) {
+        debug_assert!(
+            !self.words.is_empty() && self.surname_index == 0,
+            "Invalid state for handle_after_comma!"
+        );
 
         let mut given_middle_or_postfix_words: SmallVec<[NamePart<'a>; 5]> =
             NamePart::all_from_text(part, self.use_capitalization, Location::Start).collect();
@@ -195,16 +207,17 @@ impl <'a>ParseOp<'a> {
 
     // Called on any parts remaining after full name is found
     fn handle_after_surname(&mut self, part: &'a str) {
-        debug_assert!(self.surname_index > 0,
-                "Invalid state for handle_after_surname!");
+        debug_assert!(
+            self.surname_index > 0,
+            "Invalid state for handle_after_surname!"
+        );
 
         if self.possible_false_postfix.is_some() && self.generation_from_suffix.is_some() {
             return;
         }
 
-        let mut postfix_words = NamePart::all_from_text(part,
-                                                        self.use_capitalization,
-                                                        Location::End);
+        let mut postfix_words =
+            NamePart::all_from_text(part, self.use_capitalization, Location::End);
         while self.possible_false_postfix.is_none() || self.generation_from_suffix.is_none() {
             if let Some(word) = postfix_words.next() {
                 self.found_suffix_or_postfix(word, false);
@@ -231,7 +244,8 @@ impl <'a>ParseOp<'a> {
         // We throw away most postfix titles, but keep the first one that's namelike,
         // just in case we make a mistake and it turns out by process of elimination
         // that this must actually be a surname
-        if self.possible_false_postfix.is_none() && (postfix.is_namelike() || postfix.is_initials()) {
+        if self.possible_false_postfix.is_none() && (postfix.is_namelike() || postfix.is_initials())
+        {
             self.possible_false_postfix = Some(postfix);
         }
     }

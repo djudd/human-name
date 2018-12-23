@@ -1,7 +1,7 @@
+use super::utils::*;
+use super::Name;
 use itertools::Itertools;
 use std::borrow::Cow;
-use super::Name;
-use super::utils::*;
 
 impl Name {
     /// Does this name appear to match a munged string such as an email
@@ -34,7 +34,8 @@ impl Name {
 
         // Special case: Nice punctuation lets us actually parse a name directly
         if string.chars().any(is_nonalphanumeric) {
-            let subbed = string.split(is_nonalphanumeric)
+            let subbed = string
+                .split(is_nonalphanumeric)
                 .filter(|p| !p.is_empty())
                 .join(" ");
 
@@ -45,12 +46,18 @@ impl Name {
             }
         }
 
-        let normed: Cow<str> = if string.chars().all(|c| c.is_alphabetic() && c.is_lowercase()) {
+        let normed: Cow<str> = if string
+            .chars()
+            .all(|c| c.is_alphabetic() && c.is_lowercase())
+        {
             Cow::Borrowed(string)
         } else {
-            Cow::Owned(string.chars()
-                .filter_map(lowercase_if_alpha)
-                .collect::<String>())
+            Cow::Owned(
+                string
+                    .chars()
+                    .filter_map(lowercase_if_alpha)
+                    .collect::<String>(),
+            )
         };
 
         if normed.is_empty() {
@@ -62,10 +69,12 @@ impl Name {
         if full_initials_len > 2 && normed.len() == full_initials_len {
             let mut initials = String::with_capacity(full_initials_len);
             initials.extend(self.initials().chars().flat_map(char::to_lowercase));
-            initials.extend(self.surnames()
-                .iter()
-                .filter_map(|n| n.chars().nth(0))
-                .flat_map(char::to_lowercase));
+            initials.extend(
+                self.surnames()
+                    .iter()
+                    .filter_map(|n| n.chars().nth(0))
+                    .flat_map(char::to_lowercase),
+            );
 
             if *normed == initials {
                 return true;
@@ -78,10 +87,12 @@ impl Name {
             if normed.len() == name_and_initial_len {
                 let mut name_and_initial = String::with_capacity(name_and_initial_len);
                 name_and_initial.extend(name.chars().flat_map(char::to_lowercase));
-                name_and_initial.extend(self.surnames()
-                    .iter()
-                    .filter_map(|n| n.chars().nth(0))
-                    .flat_map(char::to_lowercase));
+                name_and_initial.extend(
+                    self.surnames()
+                        .iter()
+                        .filter_map(|n| n.chars().nth(0))
+                        .flat_map(char::to_lowercase),
+                );
 
                 if *normed == name_and_initial {
                     return true;
@@ -127,12 +138,14 @@ impl Name {
 
         let allow_unknowns = found_exact_surname && (prefix.is_none() || suffix.is_none());
 
-        (prefix.is_none() || self.matches_remaining_name_parts(prefix.unwrap(), allow_unknowns)) &&
-        (suffix.is_none() || self.matches_remaining_name_parts(suffix.unwrap(), allow_unknowns))
+        (prefix.is_none() || self.matches_remaining_name_parts(prefix.unwrap(), allow_unknowns))
+            && (suffix.is_none()
+                || self.matches_remaining_name_parts(suffix.unwrap(), allow_unknowns))
     }
 
     fn find_surname_in(&self, haystack: &str) -> Option<(usize, usize, bool)> {
-        let lower_surname: String = self.surnames()
+        let lower_surname: String = self
+            .surnames()
             .iter()
             .flat_map(|n| n.chars().filter_map(lowercase_if_alpha))
             .collect();
@@ -144,7 +157,11 @@ impl Name {
         let mut match_len = lower_surname.len();
 
         while match_begin.is_none() {
-            match_len -= lower_surname[0..match_len].chars().next_back().unwrap().len_utf8();
+            match_len -= lower_surname[0..match_len]
+                .chars()
+                .next_back()
+                .unwrap()
+                .len_utf8();
             if match_len > 2 {
                 match_begin = haystack.rfind(&lower_surname[0..match_len]);
             } else {
@@ -164,7 +181,9 @@ impl Name {
         let given_names: Option<Cow<String>> = if self.surname_index == 1 {
             Some(Cow::Borrowed(&self.words[0]))
         } else if self.surname_index > 0 {
-            Some(Cow::Owned(self.words[0..self.surname_index].iter().join(" ")))
+            Some(Cow::Owned(
+                self.words[0..self.surname_index].iter().join(" "),
+            ))
         } else {
             None
         };
@@ -204,8 +223,8 @@ impl Name {
                 // when middle initials are unknown and surname matched exactly,
                 // assuming maximum likely number of middle initials is two)
                 if let Some(initials) = self.middle_initials() {
-                    if initials.len() >= remainder.len() &&
-                       eq_or_starts_with!(remainder, initials) {
+                    if initials.len() >= remainder.len() && eq_or_starts_with!(remainder, initials)
+                    {
                         return true;
                     }
                 } else if allow_unknowns && remainder.len() < 3 {
@@ -227,8 +246,10 @@ impl Name {
             }
         }
 
-        if self.goes_by_middle_name() && part.len() == lower_first_initial.len_utf8() &&
-           part.chars().nth(0) == Some(lower_first_initial) {
+        if self.goes_by_middle_name()
+            && part.len() == lower_first_initial.len_utf8()
+            && part.chars().nth(0) == Some(lower_first_initial)
+        {
             return true;
         }
 

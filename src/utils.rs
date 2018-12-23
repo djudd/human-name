@@ -1,5 +1,5 @@
-use std::str::Chars;
 use std::borrow::Cow;
+use std::str::Chars;
 use unicode_normalization::char::canonical_combining_class;
 use unicode_normalization::UnicodeNormalization;
 use unidecode::unidecode_char;
@@ -91,12 +91,10 @@ pub fn transliterate(c: char) -> Chars<'static> {
 pub fn to_ascii_letter(c: char) -> Option<char> {
     match c {
         'A'...'Z' => Some(c),
-        _ => {
-            match transliterate(c).next() {
-                Some(c) => c.to_uppercase().next(),
-                None => None,
-            }
-        }
+        _ => match transliterate(c).next() {
+            Some(c) => c.to_uppercase().next(),
+            None => None,
+        },
     }
 }
 
@@ -106,21 +104,23 @@ pub fn to_ascii(s: &str) -> Cow<str> {
     } else {
         let mut capitalized_any = false;
 
-        Cow::Owned(s.chars()
-            .flat_map(transliterate)
-            .filter_map(|c| {
-                if !c.is_alphabetic() {
-                    None
-                } else if c.is_uppercase() && !capitalized_any {
-                    capitalized_any = true;
-                    Some(c)
-                } else if c.is_lowercase() && capitalized_any {
-                    Some(c)
-                } else {
-                    c.to_lowercase().next()
-                }
-            })
-            .collect())
+        Cow::Owned(
+            s.chars()
+                .flat_map(transliterate)
+                .filter_map(|c| {
+                    if !c.is_alphabetic() {
+                        None
+                    } else if c.is_uppercase() && !capitalized_any {
+                        capitalized_any = true;
+                        Some(c)
+                    } else if c.is_lowercase() && capitalized_any {
+                        Some(c)
+                    } else {
+                        c.to_lowercase().next()
+                    }
+                })
+                .collect(),
+        )
     }
 }
 
@@ -152,13 +152,7 @@ pub fn normalize_nfkd_and_hyphens(string: &str) -> Cow<str> {
     } else {
         let string = string
             .nfkd()
-            .map(|c| {
-                 if HYPHENS.contains(c) {
-                     '-'
-                 } else {
-                     c
-                 }
-            })
+            .map(|c| if HYPHENS.contains(c) { '-' } else { c })
             .collect();
 
         Cow::Owned(string)
@@ -166,7 +160,8 @@ pub fn normalize_nfkd_and_hyphens(string: &str) -> Cow<str> {
 }
 
 pub fn is_missing_vowels(word: &str) -> bool {
-    word.chars().all(|c| !c.is_alphabetic() || (c.is_ascii() && !VOWELS.contains(c)))
+    word.chars()
+        .all(|c| !c.is_alphabetic() || (c.is_ascii() && !VOWELS.contains(c)))
 }
 
 pub fn starts_with_consonant(word: &str) -> bool {
@@ -198,7 +193,7 @@ pub fn has_sequential_alphas(word: &str) -> bool {
 
 #[macro_export]
 macro_rules! eq_or_starts_with {
-    ($a:expr, $b:expr) => { {
+    ($a:expr, $b:expr) => {{
         let mut chars_a = $a.chars().filter_map(lowercase_if_alpha);
         let mut chars_b = $b.chars().filter_map(lowercase_if_alpha);
         let result;
@@ -217,12 +212,12 @@ macro_rules! eq_or_starts_with {
         }
 
         result
-    } }
+    }};
 }
 
 #[macro_export]
 macro_rules! eq_or_ends_with {
-    ($needle:expr, $haystack:expr) => { {
+    ($needle:expr, $haystack:expr) => {{
         let mut n_chars = $needle.chars().rev().filter_map(lowercase_if_alpha);
         let mut h_chars = $haystack.chars().rev().filter_map(lowercase_if_alpha);
         let result;
@@ -241,7 +236,7 @@ macro_rules! eq_or_ends_with {
         }
 
         result
-    } }
+    }};
 }
 
 #[cfg(test)]

@@ -1,5 +1,5 @@
-use std::hash::{Hash, Hasher};
 use super::Name;
+use std::hash::{Hash, Hasher};
 
 /// Might this name represent the same person as another name?
 ///

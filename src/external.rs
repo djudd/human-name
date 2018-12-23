@@ -3,16 +3,16 @@
 extern crate libc;
 
 use self::libc::c_char;
-use std::ffi::{CString, CStr};
+use super::Name;
+use std::ffi::{CStr, CString};
 use std::mem;
 use std::ptr;
-use super::Name;
 
 macro_rules! str_to_char_star {
-    ($str:expr) => { {
+    ($str:expr) => {{
         let s = CString::new($str).unwrap();
         s.into_raw()
-    } }
+    }};
 }
 
 macro_rules! option_str_to_char_star {
@@ -22,9 +22,9 @@ macro_rules! option_str_to_char_star {
                 let s = CString::new(string).unwrap();
                 s.into_raw()
             }
-            None => ptr::null()
+            None => ptr::null(),
         }
-    }
+    };
 }
 
 #[no_mangle]
@@ -84,9 +84,10 @@ pub unsafe extern "C" fn human_name_goes_by_middle_name(name: &Name) -> bool {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn human_name_matches_slug_or_localpart(name: &Name,
-                                                              input: *const libc::c_char)
-                                                              -> bool {
+pub unsafe extern "C" fn human_name_matches_slug_or_localpart(
+    name: &Name,
+    input: *const libc::c_char,
+) -> bool {
     let s = CStr::from_ptr(input).to_string_lossy();
     name.matches_slug_or_localpart(&*s)
 }

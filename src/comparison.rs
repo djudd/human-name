@@ -1,15 +1,13 @@
-use std::borrow::Cow;
-use super::utils::*;
 use super::nickname::have_matching_variants;
+use super::utils::*;
 use super::{Name, NameWordOrInitial};
+use std::borrow::Cow;
 use unicode_segmentation::UnicodeSegmentation;
 
 pub const MIN_SURNAME_CHAR_MATCH: usize = 4;
 pub const MIN_GIVEN_NAME_CHAR_MATCH: usize = 3;
 
-
 impl Name {
-
     /// Might this name represent the same person as another name?
     ///
     /// # Examples
@@ -80,11 +78,13 @@ impl Name {
         // and/or initial.
         if self.middle_initials().is_none() && other.middle_initials().is_none() {
             if self.given_name().is_none() || other.given_name().is_none() {
-                return to_ascii_letter(self.first_initial()) ==
-                       to_ascii_letter(other.first_initial());
+                return to_ascii_letter(self.first_initial())
+                    == to_ascii_letter(other.first_initial());
             } else {
-                return have_matching_variants(self.given_name().unwrap(),
-                                              other.given_name().unwrap());
+                return have_matching_variants(
+                    self.given_name().unwrap(),
+                    other.given_name().unwrap(),
+                );
             }
         }
 
@@ -230,8 +230,10 @@ impl Name {
         // looking at names (& we know "self" has the more complete initials).
         //
         // Using byte offsets is ok because we already converted to ASCII.
-        if my_initials.len() > 1 && their_initials.len() > 1 &&
-           !my_initials[1..].contains(&their_initials[1..]) {
+        if my_initials.len() > 1
+            && their_initials.len() > 1
+            && !my_initials[1..].contains(&their_initials[1..])
+        {
             return false;
         }
 
@@ -242,10 +244,12 @@ impl Name {
         if self.initials().is_ascii() {
             Cow::Borrowed(self.initials())
         } else {
-            Cow::Owned(self.initials()
-                           .chars()
-                           .filter_map(to_ascii_letter)
-                           .collect::<String>())
+            Cow::Owned(
+                self.initials()
+                    .chars()
+                    .filter_map(to_ascii_letter)
+                    .collect::<String>(),
+            )
         }
     }
 
@@ -277,15 +281,13 @@ impl Name {
             return self.surname().eq_ignore_ascii_case(&*other.surname());
         }
 
-        let mut my_words = self.surnames()
-                               .iter()
-                               .flat_map(|w| w.unicode_words())
-                               .rev();
+        let mut my_words = self.surnames().iter().flat_map(|w| w.unicode_words()).rev();
 
-        let mut their_words = other.surnames()
-                                   .iter()
-                                   .flat_map(|w| w.unicode_words())
-                                   .rev();
+        let mut their_words = other
+            .surnames()
+            .iter()
+            .flat_map(|w| w.unicode_words())
+            .rev();
 
         let mut my_word = my_words.next();
         let mut their_word = their_words.next();
@@ -304,8 +306,13 @@ impl Name {
 
             macro_rules! reverse_lowercase_alpha_chars {
                 ($word:expr) => {
-                    $word.unwrap().chars().flat_map(transliterate).rev().filter_map(lowercase_if_alpha)
-                }
+                    $word
+                        .unwrap()
+                        .chars()
+                        .flat_map(transliterate)
+                        .rev()
+                        .filter_map(lowercase_if_alpha)
+                };
             }
 
             let mut my_chars = reverse_lowercase_alpha_chars!(my_word);
@@ -366,12 +373,13 @@ impl Name {
     }
 
     fn suffix_consistent(&self, other: &Name) -> bool {
-        self.generation_from_suffix.is_none() || other.generation_from_suffix.is_none() ||
-        self.generation_from_suffix == other.generation_from_suffix
+        self.generation_from_suffix.is_none()
+            || other.generation_from_suffix.is_none()
+            || self.generation_from_suffix == other.generation_from_suffix
     }
 }
 
-#[derive(Eq,PartialEq,Debug)]
+#[derive(Eq, PartialEq, Debug)]
 enum ComparisonResult {
     Inconsistent,
     DifferentInitials,
@@ -385,19 +393,16 @@ enum ComparisonResult {
 impl<'a> NameWordOrInitial<'a> {
     fn initial(&self) -> Option<char> {
         match *self {
-            NameWordOrInitial::Word(word, _) => {
-                word.chars().nth(0).and_then(to_ascii_letter)
-            }
-            NameWordOrInitial::Initial(initial) => {
-                to_ascii_letter(initial)
-            }
+            NameWordOrInitial::Word(word, _) => word.chars().nth(0).and_then(to_ascii_letter),
+            NameWordOrInitial::Initial(initial) => to_ascii_letter(initial),
         }
     }
 
-    fn check_consistency(&self,
-                             other: &NameWordOrInitial,
-                             allow_nicknames: bool)
-                             -> ComparisonResult {
+    fn check_consistency(
+        &self,
+        other: &NameWordOrInitial,
+        allow_nicknames: bool,
+    ) -> ComparisonResult {
         if self.initial().is_none() || self.initial() != other.initial() {
             return ComparisonResult::DifferentInitials;
         }
@@ -406,14 +411,16 @@ impl<'a> NameWordOrInitial<'a> {
             return ComparisonResult::InitialsOnlyMatch;
         }
 
-        let mut my_chars = self.word()
-                               .chars()
-                               .flat_map(transliterate)
-                               .filter_map(lowercase_if_alpha);
-        let mut their_chars = other.word()
-                                   .chars()
-                                   .flat_map(transliterate)
-                                   .filter_map(lowercase_if_alpha);
+        let mut my_chars = self
+            .word()
+            .chars()
+            .flat_map(transliterate)
+            .filter_map(lowercase_if_alpha);
+        let mut their_chars = other
+            .word()
+            .chars()
+            .flat_map(transliterate)
+            .filter_map(lowercase_if_alpha);
         let mut matched = 0;
 
         loop {
@@ -422,13 +429,21 @@ impl<'a> NameWordOrInitial<'a> {
 
             if my_char.is_none() && their_char.is_none() {
                 return ComparisonResult::ExactMatch;
-            } else if (my_char.is_none() || their_char.is_none()) && matched >= MIN_GIVEN_NAME_CHAR_MATCH {
+            } else if (my_char.is_none() || their_char.is_none())
+                && matched >= MIN_GIVEN_NAME_CHAR_MATCH
+            {
                 if their_char.is_some() {
-                    return ComparisonResult::PrefixOfOther(format!("{}{}", their_char.unwrap(), their_chars.collect::<String>()));
+                    return ComparisonResult::PrefixOfOther(format!(
+                        "{}{}",
+                        their_char.unwrap(),
+                        their_chars.collect::<String>()
+                    ));
                 } else {
-                    return ComparisonResult::PrefixOfSelf(format!("{}{}",
-                                                                  my_char.unwrap(),
-                                                                  my_chars.collect::<String>()));
+                    return ComparisonResult::PrefixOfSelf(format!(
+                        "{}{}",
+                        my_char.unwrap(),
+                        my_chars.collect::<String>()
+                    ));
                 }
             } else if my_char != their_char {
                 // Failed match; abort, but first, maybe try nickname db

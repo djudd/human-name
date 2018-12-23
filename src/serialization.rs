@@ -1,6 +1,6 @@
-use rustc_serialize::json::{ToJson, Json};
-use std::collections::BTreeMap;
 use super::Name;
+use rustc_serialize::json::{Json, ToJson};
+use std::collections::BTreeMap;
 
 impl ToJson for Name {
     /// Serializes a name into parsed components.
@@ -23,8 +23,10 @@ impl ToJson for Name {
     fn to_json(&self) -> Json {
         let mut d = BTreeMap::new();
         d.insert("surname".to_string(), self.surname().to_json());
-        d.insert("first_initial".to_string(),
-                 format!("{}", self.first_initial()).to_json());
+        d.insert(
+            "first_initial".to_string(),
+            format!("{}", self.first_initial()).to_json(),
+        );
         if let Some(name) = self.given_name() {
             d.insert("given_name".to_string(), name.to_json());
         }

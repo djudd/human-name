@@ -1,12 +1,13 @@
+use super::utils::*;
+use phf;
 use std::borrow::Cow;
 use std::iter;
-use phf;
-use super::utils::*;
 
 // Returns tuple (close_char, must_precede_whitespace)
-fn expected_close_char_if_opens_nickname(c: char,
-                                         follows_whitespace: bool)
-                                         -> Option<(char, bool)> {
+fn expected_close_char_if_opens_nickname(
+    c: char,
+    follows_whitespace: bool,
+) -> Option<(char, bool)> {
     let close = match c {
         '(' => Some((')', false)),
         '[' => Some((']', false)),
@@ -116,7 +117,7 @@ struct NameVariants<'a> {
     prefix_variants: Option<&'a phf::Set<&'static str>>,
 }
 
-impl <'a>NameVariants<'a> {
+impl<'a> NameVariants<'a> {
     pub fn for_name(name: &'a str) -> NameVariants<'a> {
         NameVariants {
             original: name,
@@ -148,7 +149,7 @@ struct NameVariantIter<'a> {
     prefix_variants: Option<phf::set::Iter<'a, &'static str>>,
 }
 
-impl <'a>Iterator for NameVariantIter<'a> {
+impl<'a> Iterator for NameVariantIter<'a> {
     type Item = &'a str;
 
     fn next(&mut self) -> Option<&'a str> {
@@ -179,13 +180,19 @@ pub fn have_matching_variants(original_a: &str, original_b: &str) -> bool {
     let a_variants = NameVariants::for_name(&*original_a);
     let b_variants = NameVariants::for_name(&*original_b);
 
-    a_variants.iter_with_original()
-              .any(|a| b_variants.iter_with_original().any(|b| variants_match(a, b)))
+    a_variants.iter_with_original().any(|a| {
+        b_variants
+            .iter_with_original()
+            .any(|b| variants_match(a, b))
+    })
 }
 
 fn variants_match(a: &str, b: &str) -> bool {
-    have_prefix_match(a, b) || is_final_syllables_of(a, b) || is_final_syllables_of(b, a) ||
-    matches_without_diminutive(a, b) || matches_without_diminutive(b, a)
+    have_prefix_match(a, b)
+        || is_final_syllables_of(a, b)
+        || is_final_syllables_of(b, a)
+        || matches_without_diminutive(a, b)
+        || matches_without_diminutive(b, a)
 }
 
 #[allow(clippy::needless_bool)]
@@ -209,35 +216,51 @@ fn have_prefix_match(a: &str, b: &str) -> bool {
 fn matches_without_diminutive(a: &str, b: &str) -> bool {
     if DIMINUTIVE_EXCEPTIONS.contains(a) {
         false
-    } else if a.len() > 2 && b.len() >= a.len() - 1 && (a.ends_with('y') || a.ends_with('e')) &&
-       eq_or_starts_with!(a[0..a.len() - 1], b) {
+    } else if a.len() > 2
+        && b.len() >= a.len() - 1
+        && (a.ends_with('y') || a.ends_with('e'))
+        && eq_or_starts_with!(a[0..a.len() - 1], b)
+    {
         true
-    } else if a.len() > 4 && b.len() >= a.len() - 2 && (a.ends_with("ie") || a.ends_with("ey")) &&
-       eq_or_starts_with!(a[0..a.len() - 2], b) {
+    } else if a.len() > 4
+        && b.len() >= a.len() - 2
+        && (a.ends_with("ie") || a.ends_with("ey"))
+        && eq_or_starts_with!(a[0..a.len() - 2], b)
+    {
         true
-    } else if a.len() > 5 && b.len() >= a.len() - 3 && b.ends_with('a') &&
-       (a.ends_with("ita") || a.ends_with("ina")) &&
-       eq_or_starts_with!(a[0..a.len() - 3], b) {
+    } else if a.len() > 5
+        && b.len() >= a.len() - 3
+        && b.ends_with('a')
+        && (a.ends_with("ita") || a.ends_with("ina"))
+        && eq_or_starts_with!(a[0..a.len() - 3], b)
+    {
         true
     } else {
-        a.len() > 5 && b.len() >= a.len() - 3 && b.ends_with('o') && a.ends_with("ito") &&
-        eq_or_starts_with!(a[0..a.len() - 3], b)
+        a.len() > 5
+            && b.len() >= a.len() - 3
+            && b.ends_with('o')
+            && a.ends_with("ito")
+            && eq_or_starts_with!(a[0..a.len() - 3], b)
     }
 }
 
 fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
-    if needle.len() == haystack.len() - 1 && !starts_with_consonant(haystack) &&
-       eq_or_ends_with!(needle, haystack) {
+    if needle.len() == haystack.len() - 1
+        && !starts_with_consonant(haystack)
+        && eq_or_ends_with!(needle, haystack)
+    {
         true
     } else if haystack.len() < 4 || needle.len() < 2 || needle.len() > haystack.len() - 2 {
         false
-    } else if starts_with_consonant(needle) || needle.starts_with("Ann") || haystack.starts_with("Mary") {
+    } else if starts_with_consonant(needle)
+        || needle.starts_with("Ann")
+        || haystack.starts_with("Mary")
+    {
         eq_or_ends_with!(needle, haystack) && !FINAL_SYLLABLES_EXCEPTIONS.contains(needle)
     } else {
         false
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -321,8 +344,10 @@ mod tests {
 
     #[test]
     fn unmatched_quote() {
-        assert_eq!("Robert Mr. Bob' Roberts",
-                   strip_nickname("Robert Mr. Bob' Roberts"));
+        assert_eq!(
+            "Robert Mr. Bob' Roberts",
+            strip_nickname("Robert Mr. Bob' Roberts")
+        );
     }
 
     #[test]

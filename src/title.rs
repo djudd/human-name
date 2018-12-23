@@ -1,7 +1,7 @@
-use std::cmp;
-use phf;
 use super::namepart::NamePart;
 use super::suffix;
+use phf;
+use std::cmp;
 
 static TWO_CHAR_TITLES: [&'static str; 4] = ["mr", "ms", "sr", "dr"];
 
@@ -422,7 +422,10 @@ fn might_be_last_title_part(word: &NamePart) -> bool {
     // a title, except a set of very-common two-character title abbreviations,
     // because otherwise we are more likely dealing with initials
     if word.chars < 3 || word.word.chars().filter(|c| c.is_alphanumeric()).count() < 2 {
-        word.chars == 2 && TWO_CHAR_TITLES.iter().any(|title| title.eq_ignore_ascii_case(word.word))
+        word.chars == 2
+            && TWO_CHAR_TITLES
+                .iter()
+                .any(|title| title.eq_ignore_ascii_case(word.word))
     } else {
         might_be_title_part(word)
     }
@@ -441,7 +444,9 @@ fn is_prefix_title(words: &[NamePart]) -> bool {
     }
 
     if words.len() > 1 {
-        words[0..words.len() - 1].iter().all(|word| might_be_title_part(&word))
+        words[0..words.len() - 1]
+            .iter()
+            .all(|word| might_be_title_part(&word))
     } else {
         true
     }
@@ -463,8 +468,8 @@ pub fn find_prefix_len(words: &[NamePart]) -> usize {
     while prefix_len > 0 {
         let found_prefix = {
             let next_word = &words[prefix_len];
-            (next_word.is_namelike() || next_word.is_initials()) &&
-            is_prefix_title(&words[0..prefix_len])
+            (next_word.is_namelike() || next_word.is_initials())
+                && is_prefix_title(&words[0..prefix_len])
         };
 
         if found_prefix {
@@ -479,26 +484,28 @@ pub fn find_prefix_len(words: &[NamePart]) -> usize {
 
 pub fn find_postfix_index(words: &[NamePart], expect_initials: bool) -> usize {
     let last_nonpostfix_index = words.iter().rposition(|word| {
-        suffix::generation_from_suffix(&word, expect_initials).is_none() &&
-        !is_postfix_title(&word, expect_initials)
+        suffix::generation_from_suffix(&word, expect_initials).is_none()
+            && !is_postfix_title(&word, expect_initials)
     });
 
     let first_abbr_index = words
-                                .iter()
-                                .position(|word| !word.is_namelike() && !word.is_initials())
-                                .unwrap_or_else(|| words.len());
+        .iter()
+        .position(|word| !word.is_namelike() && !word.is_initials())
+        .unwrap_or_else(|| words.len());
 
-    cmp::min(first_abbr_index,
-             match last_nonpostfix_index {
-                Some(i) => i + 1,
-                None => 0,
-             })
+    cmp::min(
+        first_abbr_index,
+        match last_nonpostfix_index {
+            Some(i) => i + 1,
+            None => 0,
+        },
+    )
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::namepart::{Location, NamePart};
+    use super::*;
 
     #[test]
     fn is_postfix_title_esq() {
@@ -529,58 +536,83 @@ mod tests {
 
     #[test]
     fn find_prefix_len_none() {
-        let parts: Vec<_> = NamePart::all_from_text("Jane Doe", true, Location::Start)
-                                    .collect();
+        let parts: Vec<_> = NamePart::all_from_text("Jane Doe", true, Location::Start).collect();
         let prefix = find_prefix_len(&parts);
-        assert_eq!("Jane Doe",
-                   parts[prefix..].iter().fold("".to_string(), |s, ref p| s + " " + p.word).trim());
+        assert_eq!(
+            "Jane Doe",
+            parts[prefix..]
+                .iter()
+                .fold("".to_string(), |s, ref p| s + " " + p.word)
+                .trim()
+        );
     }
 
     #[test]
     fn find_prefix_len_abbr() {
-        let parts: Vec<_> = NamePart::all_from_text("Dr. Jane Doe", true, Location::Start)
-                                    .collect();
+        let parts: Vec<_> =
+            NamePart::all_from_text("Dr. Jane Doe", true, Location::Start).collect();
         let prefix = find_prefix_len(&parts);
-        assert_eq!("Jane Doe",
-                   parts[prefix..].iter().fold("".to_string(), |s, ref p| s + " " + p.word).trim());
+        assert_eq!(
+            "Jane Doe",
+            parts[prefix..]
+                .iter()
+                .fold("".to_string(), |s, ref p| s + " " + p.word)
+                .trim()
+        );
     }
 
     #[test]
     fn find_prefix_len_multi_abbr() {
-        let parts: Vec<_> = NamePart::all_from_text("Revd. Dr. Jane Doe",
-                                                        true,
-                                                        Location::Start)
-                                    .collect();
+        let parts: Vec<_> =
+            NamePart::all_from_text("Revd. Dr. Jane Doe", true, Location::Start).collect();
         let prefix = find_prefix_len(&parts);
-        assert_eq!("Jane Doe",
-                   parts[prefix..].iter().fold("".to_string(), |s, ref p| s + " " + p.word).trim());
+        assert_eq!(
+            "Jane Doe",
+            parts[prefix..]
+                .iter()
+                .fold("".to_string(), |s, ref p| s + " " + p.word)
+                .trim()
+        );
     }
 
     #[test]
     fn find_prefix_len_word() {
-        let parts: Vec<_> = NamePart::all_from_text("Lady Jane Doe", true, Location::Start)
-                                    .collect();
+        let parts: Vec<_> =
+            NamePart::all_from_text("Lady Jane Doe", true, Location::Start).collect();
         let prefix = find_prefix_len(&parts);
-        assert_eq!("Jane Doe",
-                   parts[prefix..].iter().fold("".to_string(), |s, ref p| s + " " + p.word).trim());
+        assert_eq!(
+            "Jane Doe",
+            parts[prefix..]
+                .iter()
+                .fold("".to_string(), |s, ref p| s + " " + p.word)
+                .trim()
+        );
     }
 
     #[test]
     fn find_prefix_len_multi_word() {
-        let parts: Vec<_> = NamePart::all_from_text("1st (B) Ltc Jane Doe",
-                                                        true,
-                                                        Location::Start)
-                                    .collect();
+        let parts: Vec<_> =
+            NamePart::all_from_text("1st (B) Ltc Jane Doe", true, Location::Start).collect();
         let prefix = find_prefix_len(&parts);
-        assert_eq!("Jane Doe",
-                   parts[prefix..].iter().fold("".to_string(), |s, ref p| s + " " + p.word).trim());
+        assert_eq!(
+            "Jane Doe",
+            parts[prefix..]
+                .iter()
+                .fold("".to_string(), |s, ref p| s + " " + p.word)
+                .trim()
+        );
     }
 
     #[test]
     fn find_prefix_len_short() {
         let parts: Vec<_> = NamePart::all_from_text("Dr. Doe", true, Location::Start).collect();
         let prefix = find_prefix_len(&parts);
-        assert_eq!("Doe",
-                   parts[prefix..].iter().fold("".to_string(), |s, ref p| s + " " + p.word).trim());
+        assert_eq!(
+            "Doe",
+            parts[prefix..]
+                .iter()
+                .fold("".to_string(), |s, ref p| s + " " + p.word)
+                .trim()
+        );
     }
 }
