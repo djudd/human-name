@@ -2,9 +2,10 @@ use super::title;
 use super::surname;
 use super::suffix;
 use super::namepart::{NamePart, Location, Category};
+use smallvec::SmallVec;
 
 struct ParseOp<'a> {
-    words: Vec<NamePart<'a>>,
+    words: SmallVec<[NamePart<'a>; 7]>,
     surname_index: usize,
     generation_from_suffix: Option<usize>,
     possible_false_prefix: Option<NamePart<'a>>,
@@ -14,10 +15,10 @@ struct ParseOp<'a> {
 
 pub fn parse(name: &str,
              use_capitalization: bool)
-             -> Option<(Vec<NamePart>, usize, Option<usize>)> {
+             -> Option<(SmallVec<[NamePart; 7]>, usize, Option<usize>)> {
 
     let mut op = ParseOp {
-        words: Vec::with_capacity(2),
+        words: SmallVec::new(),
         surname_index: 0,
         generation_from_suffix: None,
         possible_false_prefix: None,
@@ -155,7 +156,7 @@ impl <'a>ParseOp<'a> {
         debug_assert!(!self.words.is_empty() && self.surname_index == 0,
                 "Invalid state for handle_after_comma!");
 
-        let mut given_middle_or_postfix_words: Vec<NamePart> =
+        let mut given_middle_or_postfix_words: SmallVec<[NamePart<'a>; 5]> =
             NamePart::all_from_text(part, self.use_capitalization, Location::Start).collect();
 
         if given_middle_or_postfix_words.is_empty() {

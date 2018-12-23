@@ -16,6 +16,7 @@ rustc-serialize = "0.3"
 phf = "0.7"
 phf_macros = "0.7"
 libc = "0.2"
+smallvec = "0.6"
 
 [features]
 default = ["name_eq_hash"]
@@ -23,6 +24,7 @@ name_eq_hash = []
 
 [profile.release]
 debug = true
+lto = true
 
 [[bin]]
 name = "human_name"

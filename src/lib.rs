@@ -14,6 +14,7 @@ extern crate unicode_segmentation;
 extern crate unicode_normalization;
 extern crate unidecode;
 extern crate rustc_serialize;
+extern crate smallvec;
 
 #[macro_use]
 mod utils;
@@ -40,6 +41,7 @@ use std::slice::Iter;
 use std::str::Chars;
 use std::iter::{Peekable, Enumerate};
 use utils::{is_mixed_case, transliterate, lowercase_if_alpha, normalize_nfkd_and_hyphens};
+use smallvec::SmallVec;
 
 /// Represents a parsed human name.
 ///
@@ -60,11 +62,11 @@ use utils::{is_mixed_case, transliterate, lowercase_if_alpha, normalize_nfkd_and
 /// the same person (see docs on `consistent_with` for details).
 #[derive(Clone, Debug)]
 pub struct Name {
-    words: Vec<String>,
+    words: SmallVec<[String; 5]>,
     surname_index: usize,
     generation_from_suffix: Option<usize>,
     initials: String,
-    word_indices_in_initials: Vec<(usize, usize)>,
+    word_indices_in_initials: SmallVec<[(usize, usize); 5]>,
     pub hash: u64,
 }
 
@@ -140,10 +142,10 @@ impl Name {
 
         let (words, surname_index, generation_from_suffix) = parse::parse(&*name, mixed_case)?;
 
-        let mut names: Vec<String> = Vec::with_capacity(words.len());
+        let mut names: SmallVec<[String; 5]> = SmallVec::with_capacity(words.len());
         let mut initials = String::with_capacity(surname_index);
         let mut surname_index_in_names = surname_index;
-        let mut word_indices_in_initials: Vec<(usize, usize)> = Vec::with_capacity(surname_index);
+        let mut word_indices_in_initials: SmallVec<[(usize, usize); 5]> = SmallVec::with_capacity(surname_index);
 
         for (i, word) in words.into_iter().enumerate() {
             if word.is_initials() && i < surname_index {
