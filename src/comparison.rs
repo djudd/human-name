@@ -1,7 +1,11 @@
 use super::nickname::have_matching_variants;
 use super::utils::*;
-use super::{Name, NameWordOrInitial};
+use super::{Name, Words};
 use std::borrow::Cow;
+use std::iter::{Enumerate, Peekable};
+use std::ops::Range;
+use std::slice::Iter;
+use std::str::Chars;
 use unicode_segmentation::UnicodeSegmentation;
 
 pub const MIN_SURNAME_CHAR_MATCH: usize = 4;
@@ -94,6 +98,14 @@ impl Name {
             self.given_and_middle_names_consistent_with_less_complete(other)
         } else {
             other.given_and_middle_names_consistent_with_less_complete(self)
+        }
+    }
+
+    fn given_names_or_initials(&self) -> GivenNamesOrInitials {
+        GivenNamesOrInitials {
+            initials: self.initials.chars().enumerate(),
+            known_names: self.word_iter(0..self.surname_index),
+            known_name_indices: self.word_indices_in_initials.iter().peekable(),
         }
     }
 
@@ -264,11 +276,11 @@ impl Name {
 
         let mut prev = 0;
 
-        for &(i, j) in self.word_indices_in_initials.iter() {
-            if i > prev {
+        for &Range { start, end } in self.word_indices_in_initials.iter() {
+            if start > prev {
                 return true;
             } else {
-                prev = j;
+                prev = end;
             }
         }
 
@@ -281,13 +293,9 @@ impl Name {
             return self.surname().eq_ignore_ascii_case(&*other.surname());
         }
 
-        let mut my_words = self.surnames().iter().flat_map(|w| w.unicode_words()).rev();
+        let mut my_words = self.surname_iter().flat_map(|w| w.unicode_words()).rev();
 
-        let mut their_words = other
-            .surnames()
-            .iter()
-            .flat_map(|w| w.unicode_words())
-            .rev();
+        let mut their_words = other.surname_iter().flat_map(|w| w.unicode_words()).rev();
 
         let mut my_word = my_words.next();
         let mut their_word = their_words.next();
@@ -369,7 +377,7 @@ impl Name {
     }
 
     fn simple_surname(&self) -> bool {
-        self.surnames().len() == 1 && self.surname().chars().all(is_ascii_alphabetic)
+        self.surname_words() == 1 && self.surname().chars().all(is_ascii_alphabetic)
     }
 
     fn suffix_consistent(&self, other: &Name) -> bool {
@@ -477,5 +485,40 @@ impl<'a> NameWordOrInitial<'a> {
             NameWordOrInitial::Word(_, count) => count as u8,
             NameWordOrInitial::Initial(_) => 1,
         }
+    }
+}
+
+struct GivenNamesOrInitials<'a> {
+    initials: Enumerate<Chars<'a>>,
+    known_names: Words<'a>,
+    known_name_indices: Peekable<Iter<'a, Range<usize>>>,
+}
+
+#[derive(Debug)]
+enum NameWordOrInitial<'a> {
+    Word(&'a str, usize),
+    Initial(char),
+}
+
+impl<'a> Iterator for GivenNamesOrInitials<'a> {
+    type Item = NameWordOrInitial<'a>;
+
+    fn next(&mut self) -> Option<NameWordOrInitial<'a>> {
+        self.initials
+            .next()
+            .map(|(i, initial)| match self.known_name_indices.peek() {
+                Some(&&Range { start, end }) if start == i => {
+                    self.known_name_indices.next();
+
+                    // Handle case of hyphenated name for which we have 2+ initials
+                    let initials_for_word = end - start;
+                    for _ in 1..initials_for_word {
+                        self.initials.next();
+                    }
+
+                    NameWordOrInitial::Word(self.known_names.next().unwrap(), initials_for_word)
+                }
+                _ => NameWordOrInitial::Initial(initial),
+            })
     }
 }

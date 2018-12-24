@@ -37,9 +37,8 @@ use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
-use std::iter::{Enumerate, Peekable};
+use std::ops::Range;
 use std::slice::Iter;
-use std::str::Chars;
 use utils::{lowercase_if_alpha, normalize_nfkd_and_hyphens, transliterate};
 
 /// Represents a parsed human name.
@@ -61,11 +60,12 @@ use utils::{lowercase_if_alpha, normalize_nfkd_and_hyphens, transliterate};
 /// the same person (see docs on `consistent_with` for details).
 #[derive(Clone, Debug)]
 pub struct Name {
-    words: SmallVec<[String; 5]>,
+    text: String,
+    word_indices_in_text: SmallVec<[Range<usize>; 5]>,
     surname_index: usize,
     generation_from_suffix: Option<usize>,
     initials: String,
-    word_indices_in_initials: SmallVec<[(usize, usize); 5]>,
+    word_indices_in_initials: SmallVec<[Range<usize>; 5]>,
     pub hash: u64,
 }
 
@@ -139,56 +139,82 @@ impl Name {
 
         let (words, surname_index, generation_from_suffix) = parse::parse(&*name)?;
 
-        let mut names: SmallVec<[String; 5]> = SmallVec::with_capacity(words.len());
+        let last_word = words.len() - 1;
+
+        let mut text = String::with_capacity(name.len() + surname_index);
         let mut initials = String::with_capacity(surname_index);
         let mut surname_index_in_names = surname_index;
-        let mut word_indices_in_initials: SmallVec<[(usize, usize); 5]> =
+        let mut word_indices_in_initials: SmallVec<[Range<usize>; 5]> =
             SmallVec::with_capacity(surname_index);
+        let mut word_indices_in_text: SmallVec<[Range<usize>; 5]> =
+            SmallVec::with_capacity(words.len());
 
         for (i, word) in words.into_iter().enumerate() {
             if word.is_initials() && i < surname_index {
-                initials.extend(
-                    word.namecased
-                        .chars()
-                        .filter(|c| c.is_alphabetic())
-                        .flat_map(|c| c.to_uppercase()),
-                );
+                word.word
+                    .chars()
+                    .filter(|c| c.is_alphabetic())
+                    .flat_map(|c| c.to_uppercase())
+                    .for_each(|c| {
+                        text.push(c);
+                        text.push_str(". ");
+
+                        initials.push(c);
+                    });
 
                 surname_index_in_names -= 1;
-            } else if i < surname_index {
-                let prior_len = initials.len();
-
-                initials.extend(
-                    word.namecased
-                        .split('-')
-                        .filter_map(|w| w.chars().find(|c| c.is_alphabetic()))
-                        .flat_map(|c| c.to_uppercase()),
-                );
-
-                names.push(word.namecased.into_owned());
-                word_indices_in_initials.push((prior_len, initials.len()));
             } else {
-                names.push(word.namecased.into_owned());
+                let prior_len = text.len();
+                text.push_str(&*word.namecased);
+                word_indices_in_text.push(prior_len..text.len());
+
+                if i < last_word {
+                    text.push(' ');
+                }
+
+                if i < surname_index {
+                    let prior_len = initials.len();
+
+                    initials.extend(
+                        word.namecased
+                            .split('-')
+                            .filter_map(|w| w.chars().find(|c| c.is_alphabetic()))
+                            .flat_map(|c| c.to_uppercase()),
+                    );
+
+                    word_indices_in_initials.push(prior_len..initials.len());
+                }
             }
         }
 
-        debug_assert!(!names.is_empty(), "Names are empty!");
+        if let Some(suffix) = generation_from_suffix {
+            text.push_str(", ");
+            text.push_str(suffix::display_generational_suffix(suffix));
+        }
+
+        debug_assert!(!text.is_empty(), "Names are empty!");
         debug_assert!(!initials.is_empty(), "Initials are empty!");
 
-        names.shrink_to_fit();
+        text.shrink_to_fit();
+        word_indices_in_text.shrink_to_fit();
+        initials.shrink_to_fit();
         word_indices_in_initials.shrink_to_fit();
 
-        let mut s = DefaultHasher::new();
-        Name::hash_surnames(&names[surname_index_in_names..], &mut s);
-
-        Some(Name {
-            words: names,
+        let mut name = Name {
+            text,
+            word_indices_in_text,
             surname_index: surname_index_in_names,
             generation_from_suffix,
             initials,
             word_indices_in_initials,
-            hash: s.finish(),
-        })
+            hash: 0,
+        };
+
+        let mut s = DefaultHasher::new();
+        name.surname_hash(&mut s);
+        name.hash = s.finish();
+
+        Some(name)
     }
 
     /// First initial (always present)
@@ -197,34 +223,82 @@ impl Name {
     }
 
     /// Given name as a string, if present
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let name = Name::parse("Jane Doe").unwrap();
+    /// assert_eq!(Some("Jane"), name.given_name());
+    ///
+    /// let name = Name::parse("J. Doe").unwrap();
+    /// assert_eq!(None, name.given_name());
+    /// ```
     pub fn given_name(&self) -> Option<&str> {
-        if self.surname_index > 0 {
-            Some(&*self.words[0])
-        } else {
-            None
-        }
+        self.word_iter(0..self.surname_index).nth(0)
     }
 
-    /// Does this person use a middle name in place of their given name (e.g., T. Boone Pickens)?
+    /// Does this person use a middle name in place of their given name?
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let name = Name::parse("Jane Doe").unwrap();
+    /// assert!(!name.goes_by_middle_name());
+    ///
+    /// let name = Name::parse("J. Doe").unwrap();
+    /// assert!(!name.goes_by_middle_name());
+    ///
+    /// let name = Name::parse("T Boone Pickens").unwrap();
+    /// assert!(name.goes_by_middle_name());
+    /// ```
     pub fn goes_by_middle_name(&self) -> bool {
-        !self.word_indices_in_initials.is_empty() && self.word_indices_in_initials[0].0 > 0
+        self.word_indices_in_initials
+            .iter()
+            .take(1)
+            .any(|r| r.start > 0)
     }
 
     /// First and middle initials as a string (always present)
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let name = Name::parse("Jane Doe").unwrap();
+    /// assert_eq!("J", name.initials());
+    ///
+    /// let name = Name::parse("James T. Kirk").unwrap();
+    /// assert_eq!("JT", name.initials());
+    /// ```
     pub fn initials(&self) -> &str {
         &self.initials
     }
 
     /// Middle names as an array of words, if present
-    pub fn middle_names(&self) -> Option<&[String]> {
+    pub fn middle_names(&self) -> Option<SmallVec<[&str; 3]>> {
         if self.surname_index > 1 {
-            Some(&self.words[1..self.surname_index])
+            Some(self.word_iter(1..self.surname_index).collect())
         } else {
             None
         }
     }
 
     /// Middle names as a string, if present
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let name = Name::parse("Jane Doe").unwrap();
+    /// assert_eq!(None, name.middle_name());
+    ///
+    /// let name = Name::parse("James T. Kirk").unwrap();
+    /// assert_eq!(None, name.middle_name());
+    ///
+    /// let name = Name::parse("James Tiberius Kirk").unwrap();
+    /// assert_eq!("Tiberius", name.middle_name().unwrap());
+    ///
+    /// let name = Name::parse("Able Baker Charlie Delta").unwrap();
+    /// assert_eq!("Baker Charlie", name.middle_name().unwrap());
+    /// ```
     pub fn middle_name(&self) -> Option<Cow<str>> {
         match self.middle_names() {
             Some(words) => {
@@ -239,24 +313,51 @@ impl Name {
     }
 
     /// Middle initials as a string, if present
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let name = Name::parse("Jane Doe").unwrap();
+    /// assert_eq!(None, name.middle_initials());
+    ///
+    /// let name = Name::parse("James T. Kirk").unwrap();
+    /// assert_eq!("T", name.middle_initials().unwrap());
+    ///
+    /// let name = Name::parse("James Tiberius Kirk").unwrap();
+    /// assert_eq!("T", name.middle_initials().unwrap());
+    ///
+    /// let name = Name::parse("Able Baker Charlie Delta").unwrap();
+    /// assert_eq!("BC", name.middle_initials().unwrap());
+    /// ```
     pub fn middle_initials(&self) -> Option<&str> {
-        match self.initials().char_indices().skip(1).nth(0) {
-            Some((i, _)) => Some(&self.initials[i..]),
-            None => None,
-        }
+        self.initials()
+            .char_indices()
+            .skip(1)
+            .nth(0)
+            .map(|(i, _)| &self.initials[i..])
     }
 
     /// Surname as a slice of words (always present)
-    pub fn surnames(&self) -> &[String] {
-        &self.words[self.surname_index..]
+    pub fn surnames(&self) -> SmallVec<[&str; 3]> {
+        self.surname_iter().collect()
     }
 
     /// Surname as a string (always present)
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let name = Name::parse("Jane Doe").unwrap();
+    /// assert_eq!("Doe", name.surname());
+    ///
+    /// let name = Name::parse("JOHN ALLEN Q DE LA MACDONALD JR").unwrap();
+    /// assert_eq!("de la MacDonald", name.surname());
+    /// ```
     pub fn surname(&self) -> Cow<str> {
-        if self.surnames().len() > 1 {
+        if self.surname_words() > 1 {
             Cow::Owned(self.surnames().join(" "))
         } else {
-            Cow::Borrowed(&*self.surnames()[0])
+            Cow::Borrowed(self.surname_iter().nth(0).unwrap())
         }
     }
 
@@ -266,24 +367,29 @@ impl Name {
             .map(suffix::display_generational_suffix)
     }
 
-    fn given_names_or_initials(&self) -> GivenNamesOrInitials {
-        GivenNamesOrInitials {
-            initials: self.initials.chars().enumerate(),
-            known_names: self.words[0..self.surname_index].iter(),
-            known_name_indices: self.word_indices_in_initials.iter().peekable(),
-        }
-    }
-
     /// First initial (with period) and surname.
     ///
     /// ```
     /// use human_name::Name;
     ///
+    /// let name = Name::parse("J. Doe").unwrap();
+    /// assert_eq!("J. Doe", name.display_initial_surname());
+    ///
+    /// let name = Name::parse("James T. Kirk").unwrap();
+    /// assert_eq!("J. Kirk", name.display_initial_surname());
+    ///
     /// let name = Name::parse("JOHN ALLEN Q DE LA MACDONALD JR").unwrap();
     /// assert_eq!("J. de la MacDonald", name.display_initial_surname());
     /// ```
-    pub fn display_initial_surname(&self) -> String {
-        format!("{}. {}", self.first_initial(), self.surname())
+    pub fn display_initial_surname(&self) -> Cow<str> {
+        if self.surname_index == 0
+            && self.initials.len() == 1
+            && self.generation_from_suffix.is_none()
+        {
+            Cow::Borrowed(&self.text)
+        } else {
+            Cow::Owned(format!("{}. {}", self.first_initial(), self.surname()))
+        }
     }
 
     /// Given name and surname, if given name is known, otherwise first initial
@@ -292,13 +398,28 @@ impl Name {
     /// ```
     /// use human_name::Name;
     ///
+    /// let name = Name::parse("J. Doe").unwrap();
+    /// assert_eq!("J. Doe", name.display_first_last());
+    ///
+    /// let name = Name::parse("Jane Doe").unwrap();
+    /// assert_eq!("Jane Doe", name.display_first_last());
+    ///
+    /// let name = Name::parse("James T. Kirk").unwrap();
+    /// assert_eq!("James Kirk", name.display_first_last());
+    ///
     /// let name = Name::parse("JOHN ALLEN Q DE LA MACDONALD JR").unwrap();
     /// assert_eq!("John de la MacDonald", name.display_first_last());
     /// ```
-    pub fn display_first_last(&self) -> String {
-        match self.given_name() {
-            Some(ref name) => format!("{} {}", name, self.surname()),
-            None => self.display_initial_surname(),
+    pub fn display_first_last(&self) -> Cow<str> {
+        if self.surname_index <= 1
+            && self.initials.len() == 1
+            && self.generation_from_suffix.is_none()
+        {
+            Cow::Borrowed(&self.text)
+        } else if let Some(ref name) = self.given_name() {
+            Cow::Owned(format!("{} {}", name, self.surname()))
+        } else {
+            self.display_initial_surname()
         }
     }
 
@@ -308,37 +429,11 @@ impl Name {
     /// ```
     /// use human_name::Name;
     ///
-    /// let short_name = Name::parse("John Doe").unwrap();
-    /// assert_eq!("John Doe".len(), short_name.byte_len());
-    ///
-    /// let long_name = Name::parse("JOHN ALLEN Q DE LA MACDÖNALD JR").unwrap();
-    /// assert_eq!("John Allen Q. de la MacDönald, Jr.".len(), long_name.byte_len());
+    /// let name = Name::parse("JOHN ALLEN Q DE LA MACDÖNALD JR").unwrap();
+    /// assert_eq!("John Allen Q. de la MacDönald, Jr.".len(), name.byte_len());
     /// ```
     pub fn byte_len(&self) -> usize {
-        // Words plus spaces
-        let mut len = self
-            .words
-            .iter()
-            .fold(self.words.len() - 1, |sum, ref word| sum + word.len());
-
-        if let Some(suffix) = self.suffix() {
-            len += 2; // Comma and space
-            len += suffix.len();
-        }
-
-        let extra_initials = self.initials.chars().count() - self.surname_index;
-        if extra_initials > 0 {
-            len += self.initials.len()
-                - self.words[0..self.surname_index]
-                    .iter()
-                    .fold(0, |sum, ref word| {
-                        sum + word.chars().nth(0).unwrap().len_utf8()
-                    });
-
-            len += 2 * extra_initials; // Period and space for each initial
-        }
-
-        len
+        self.text.len()
     }
 
     /// The full name, or as much of it as was preserved from the input,
@@ -350,37 +445,8 @@ impl Name {
     /// let name = Name::parse("JOHN ALLEN Q DE LA MACDONALD JR").unwrap();
     /// assert_eq!("John Allen Q. de la MacDonald, Jr.", name.display_full());
     /// ```
-    pub fn display_full(&self) -> String {
-        let mut result = String::with_capacity(self.byte_len());
-
-        for part in self.given_names_or_initials() {
-            match part {
-                NameWordOrInitial::Word(name, _) => {
-                    result.push_str(name);
-                    result.push(' ');
-                }
-                NameWordOrInitial::Initial(initial) => {
-                    result.push(initial);
-                    result.push_str(". ");
-                }
-            }
-        }
-
-        let surnames = self.surnames();
-        if surnames.len() > 1 {
-            for word in surnames[0..surnames.len() - 1].iter() {
-                result.push_str(word);
-                result.push(' ');
-            }
-        }
-        result.push_str(&surnames[surnames.len() - 1]);
-
-        if let Some(suffix) = self.suffix() {
-            result.push_str(", ");
-            result.push_str(suffix);
-        }
-
-        result
+    pub fn display_full(&self) -> &str {
+        &self.text
     }
 
     /// Implements a hash for a name that is always identical for two names that
@@ -405,12 +471,14 @@ impl Name {
     /// We can't use the first initial because we might ignore it if someone goes
     /// by a middle name or nickname, or due to transliteration.
     pub fn surname_hash<H: Hasher>(&self, state: &mut H) {
-        Name::hash_surnames(self.surnames(), state)
+        Name::hash_surnames(self.surname_iter(), state)
     }
 
-    fn hash_surnames<H: Hasher>(surnames: &[String], state: &mut H) {
+    fn hash_surnames<'a, H: Hasher, I: DoubleEndedIterator<Item = &'a str>>(
+        surnames: I,
+        state: &mut H,
+    ) {
         let surname_chars = surnames
-            .iter()
             .flat_map(|w| w.chars())
             .flat_map(transliterate)
             .rev();
@@ -421,48 +489,39 @@ impl Name {
             c.hash(state);
         }
     }
-}
 
-struct GivenNamesOrInitials<'a> {
-    initials: Enumerate<Chars<'a>>,
-    known_names: Iter<'a, String>,
-    known_name_indices: Peekable<Iter<'a, (usize, usize)>>,
-}
+    fn surname_words(&self) -> usize {
+        self.word_indices_in_text.len() - self.surname_index
+    }
 
-#[derive(Debug)]
-enum NameWordOrInitial<'a> {
-    Word(&'a str, usize),
-    Initial(char),
-}
+    fn surname_iter(&self) -> impl DoubleEndedIterator<Item = &str> {
+        self.word_iter(self.surname_index..self.word_indices_in_text.len())
+    }
 
-impl<'a> Iterator for GivenNamesOrInitials<'a> {
-    type Item = NameWordOrInitial<'a>;
-
-    fn next(&mut self) -> Option<NameWordOrInitial<'a>> {
-        match self.initials.next() {
-            Some((i, initial)) => {
-                let mut next_name = None;
-                let mut initials_for_word = 1;
-                if let Some(&&(j, k)) = self.known_name_indices.peek() {
-                    if j == i {
-                        self.known_name_indices.next();
-                        next_name = self.known_names.next();
-
-                        // Handle case of hyphenated name for which we have 2+ initials
-                        for _ in j + 1..k {
-                            self.initials.next();
-                            initials_for_word += 1;
-                        }
-                    }
-                }
-
-                if let Some(name) = next_name {
-                    Some(NameWordOrInitial::Word(name, initials_for_word))
-                } else {
-                    Some(NameWordOrInitial::Initial(initial))
-                }
-            }
-            None => None,
+    fn word_iter(&self, range: Range<usize>) -> Words {
+        Words {
+            text: &self.text,
+            indices: self.word_indices_in_text[range].iter(),
         }
+    }
+}
+
+struct Words<'a> {
+    text: &'a str,
+    indices: Iter<'a, Range<usize>>,
+}
+
+impl<'a> Iterator for Words<'a> {
+    type Item = &'a str;
+    fn next(&mut self) -> Option<&'a str> {
+        self.indices.next().map(|range| &self.text[range.clone()])
+    }
+}
+
+impl<'a> DoubleEndedIterator for Words<'a> {
+    fn next_back(&mut self) -> Option<&'a str> {
+        self.indices
+            .next_back()
+            .map(|range| &self.text[range.clone()])
     }
 }

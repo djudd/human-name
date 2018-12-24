@@ -65,13 +65,12 @@ impl Name {
         }
 
         // Special case: Full initials
-        let full_initials_len = self.initials().len() + self.surnames().len();
+        let full_initials_len = self.initials().len() + self.surname_words();
         if full_initials_len > 2 && normed.len() == full_initials_len {
             let mut initials = String::with_capacity(full_initials_len);
             initials.extend(self.initials().chars().flat_map(char::to_lowercase));
             initials.extend(
-                self.surnames()
-                    .iter()
+                self.surname_iter()
                     .filter_map(|n| n.chars().nth(0))
                     .flat_map(char::to_lowercase),
             );
@@ -83,13 +82,12 @@ impl Name {
 
         // Special case: Given name plus surname initial
         if let Some(name) = self.given_name() {
-            let name_and_initial_len = name.len() + self.surnames().len();
+            let name_and_initial_len = name.len() + self.surname_words();
             if normed.len() == name_and_initial_len {
                 let mut name_and_initial = String::with_capacity(name_and_initial_len);
                 name_and_initial.extend(name.chars().flat_map(char::to_lowercase));
                 name_and_initial.extend(
-                    self.surnames()
-                        .iter()
+                    self.surname_iter()
                         .filter_map(|n| n.chars().nth(0))
                         .flat_map(char::to_lowercase),
                 );
@@ -145,8 +143,7 @@ impl Name {
 
     fn find_surname_in(&self, haystack: &str) -> Option<(usize, usize, bool)> {
         let lower_surname: String = self
-            .surnames()
-            .iter()
+            .surname_iter()
             .flat_map(|n| n.chars().filter_map(lowercase_if_alpha))
             .collect();
         if lower_surname.len() < 2 {
@@ -178,12 +175,10 @@ impl Name {
 
     fn matches_remaining_name_parts(&self, part: &str, allow_unknowns: bool) -> bool {
         let lower_first_initial = self.first_initial().to_lowercase().next().unwrap();
-        let given_names: Option<Cow<String>> = if self.surname_index == 1 {
-            Some(Cow::Borrowed(&self.words[0]))
+        let given_names: Option<Cow<str>> = if self.surname_index == 1 {
+            self.given_name().map(|w| Cow::Borrowed(w))
         } else if self.surname_index > 0 {
-            Some(Cow::Owned(
-                self.words[0..self.surname_index].iter().join(" "),
-            ))
+            Some(Cow::Owned(self.word_iter(0..self.surname_index).join(" ")))
         } else {
             None
         };

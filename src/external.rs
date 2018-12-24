@@ -104,12 +104,12 @@ pub unsafe extern "C" fn human_name_suffix(name: &Name) -> *const c_char {
 
 #[no_mangle]
 pub unsafe extern "C" fn human_name_display_first_last(name: &Name) -> *const c_char {
-    str_to_char_star!(name.display_first_last())
+    str_to_char_star!(name.display_first_last().into_owned())
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn human_name_display_initial_surname(name: &Name) -> *const c_char {
-    str_to_char_star!(name.display_initial_surname())
+    str_to_char_star!(name.display_initial_surname().into_owned())
 }
 
 #[no_mangle]
