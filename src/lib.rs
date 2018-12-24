@@ -7,6 +7,7 @@
 #![feature(plugin)]
 #![plugin(phf_macros)]
 
+extern crate inlinable_string;
 extern crate itertools;
 extern crate phf;
 extern crate rustc_serialize;
@@ -33,6 +34,7 @@ pub mod external;
 #[cfg(feature = "name_eq_hash")]
 mod eq_hash;
 
+use inlinable_string::{InlinableString, StringExt};
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
@@ -60,11 +62,11 @@ use utils::{lowercase_if_alpha, normalize_nfkd_and_hyphens, transliterate};
 /// the same person (see docs on `consistent_with` for details).
 #[derive(Clone, Debug)]
 pub struct Name {
-    text: String,
+    text: InlinableString,
     word_indices_in_text: SmallVec<[Range<usize>; 5]>,
     surname_index: usize,
     generation_from_suffix: Option<usize>,
-    initials: String,
+    initials: InlinableString,
     word_indices_in_initials: SmallVec<[Range<usize>; 5]>,
     pub hash: u64,
 }
@@ -141,8 +143,9 @@ impl Name {
 
         let last_word = words.len() - 1;
 
-        let mut text = String::with_capacity(name.len() + surname_index);
-        let mut initials = String::with_capacity(surname_index);
+        let mut text = InlinableString::with_capacity(name.len() + surname_index);
+        let mut initials = InlinableString::with_capacity(surname_index);
+
         let mut surname_index_in_names = surname_index;
         let mut word_indices_in_initials: SmallVec<[Range<usize>; 5]> =
             SmallVec::with_capacity(surname_index);
