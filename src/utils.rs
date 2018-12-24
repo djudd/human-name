@@ -4,7 +4,6 @@ use unicode_normalization::char::canonical_combining_class;
 use unicode_normalization::UnicodeNormalization;
 use unidecode::unidecode_char;
 
-const VOWELS: &str = "aeiouyAEIOUY";
 const HYPHENS: &str = "-\u{2010}‑‒–—―−－﹘﹣";
 
 pub fn is_mixed_case(s: &str) -> bool {
@@ -65,6 +64,7 @@ pub fn transliterate(c: char) -> Chars<'static> {
 
 #[inline]
 pub fn to_ascii_letter(c: char) -> Option<char> {
+    debug_assert!(c.is_uppercase());
     match c {
         'A'...'Z' => Some(c),
         _ => match transliterate(c).next() {
@@ -145,34 +145,49 @@ pub struct CharacterCounts {
 }
 
 pub fn categorize_chars(word: &str) -> CharacterCounts {
+    debug_assert!(word.len() <= u8::max_value() as usize);
+
     let mut chars = 0;
     let mut alpha = 0;
     let mut upper = 0;
     let mut ascii_alpha = 0;
     let mut ascii_vowels = 0;
 
-    for c in word.chars().take(u8::max_value() as usize) {
-        chars += 1;
-
-        if c.is_alphabetic() {
-            alpha += 1;
-
-            if c.is_uppercase() {
-                upper += 1;
-            }
-
-            if c.is_ascii() {
-                ascii_alpha += 1;
-
-                if VOWELS.contains(c) {
+    for c in word.chars() {
+        match c {
+            'a'...'z' => {
+                if "aeiouy".contains(c) {
                     ascii_vowels += 1;
+                } else {
+                    ascii_alpha += 1;
                 }
             }
-        } else if is_combining(c) {
-            // Honorary; we don't want to count it as _non_alphabetic
-            alpha += 1;
+            'A'...'Z' => {
+                if "AEIOUY".contains(c) {
+                    ascii_vowels += 1;
+                } else {
+                    ascii_alpha += 1;
+                }
+                upper += 1;
+            }
+            _ if c.is_uppercase() => {
+                alpha += 1;
+                upper += 1;
+            }
+            _ if c.is_alphabetic() => {
+                alpha += 1;
+            }
+            _ => {
+                chars += 1;
+            }
         }
     }
+
+    // Maybe skipping individual increments and doing this instead is
+    // premature optimization, but why not
+    ascii_alpha += ascii_vowels;
+    alpha += ascii_alpha;
+    chars += alpha;
 
     CharacterCounts {
         chars,
@@ -185,9 +200,7 @@ pub fn categorize_chars(word: &str) -> CharacterCounts {
 
 pub fn starts_with_consonant(word: &str) -> bool {
     match word.chars().nth(0) {
-        Some(c) => {
-            c.is_alphabetic() && c.is_ascii() && (c == 'y' || c == 'Y' || !VOWELS.contains(c))
-        }
+        Some(c) => is_ascii_alphabetic(c) && !"aeiouAEIOU".contains(c),
         None => false,
     }
 }

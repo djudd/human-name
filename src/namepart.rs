@@ -58,8 +58,10 @@ impl<'a> Iterator for NameParts<'a> {
         };
 
         let word = &self.text[0..next_boundary];
-
-        if word == "&" {
+        if word.len() > u8::max_value() as usize {
+            self.text = &self.text[next_boundary..];
+            self.next()
+        } else if word == "&" {
             // Special case: only allowed word without alphabetical characters
             self.text = &self.text[next_boundary..];
             Some(NamePart {
@@ -68,30 +70,35 @@ impl<'a> Iterator for NameParts<'a> {
                 category: Category::Other,
                 namecased: Cow::Borrowed(word),
             })
-        } else if !word.chars().any(char::is_alphabetic) {
-            // Not a word, skip it by recursing
-            self.text = &self.text[next_boundary..];
-            self.next()
-        } else if !word.chars().any(|c| c.is_ascii()) {
-            // For non-ASCII, we defer to the unicode_segmentation library
-            let (next_word_boundary, subword) = word
-                .split_word_bound_indices()
-                .find(|&(_, subword)| subword.chars().any(char::is_alphabetic))
-                .unwrap();
-            self.text = &self.text[next_word_boundary + subword.len()..];
-            Some(NamePart::from_word(
-                subword,
-                self.trust_capitalization,
-                self.next_location(),
-            ))
         } else {
-            // For ASCII, we split on whitespace and periods only
-            self.text = &self.text[next_boundary..];
-            Some(NamePart::from_word(
-                word,
-                self.trust_capitalization,
-                self.next_location(),
-            ))
+            let counts = categorize_chars(word);
+
+            if counts.alpha == 0 {
+                // Not a word, skip it by recursing
+                self.text = &self.text[next_boundary..];
+                self.next()
+            } else if counts.ascii_alpha == 0 {
+                // For non-ASCII, we defer to the unicode_segmentation library
+                let (next_word_boundary, subword) = word
+                    .split_word_bound_indices()
+                    .find(|&(_, subword)| subword.chars().any(char::is_alphabetic))
+                    .unwrap();
+                self.text = &self.text[next_word_boundary + subword.len()..];
+                Some(NamePart::from_word(
+                    subword,
+                    self.trust_capitalization,
+                    self.next_location(),
+                ))
+            } else {
+                // For ASCII, we split on whitespace and periods only
+                self.text = &self.text[next_boundary..];
+                Some(NamePart::from_word_and_counts(
+                    word,
+                    counts,
+                    self.trust_capitalization,
+                    self.next_location(),
+                ))
+            }
         }
     }
 }
@@ -121,15 +128,24 @@ impl<'a> NamePart<'a> {
         }
     }
 
-    #[allow(clippy::if_same_then_else)]
     pub fn from_word(word: &str, trust_capitalization: bool, location: Location) -> NamePart {
+        NamePart::from_word_and_counts(word, categorize_chars(word), trust_capitalization, location)
+    }
+
+    #[allow(clippy::if_same_then_else)]
+    pub fn from_word_and_counts(
+        word: &str,
+        counts: CharacterCounts,
+        trust_capitalization: bool,
+        location: Location,
+    ) -> NamePart {
         let CharacterCounts {
             chars,
             alpha,
             upper,
             ascii_alpha,
             ascii_vowels,
-        } = categorize_chars(word);
+        } = counts;
 
         debug_assert!(alpha > 0);
 
@@ -145,7 +161,9 @@ impl<'a> NamePart<'a> {
             } else {
                 Category::Initials
             }
-        } else if chars - alpha > 2 {
+        } else if chars - alpha > 2
+            && chars - alpha - word.chars().filter(|c| is_combining(*c)).count() as u8 > 2
+        {
             Category::Other
         } else if ascii_alpha > 0 && ascii_vowels == 0 {
             if trust_capitalization && alpha == upper {
