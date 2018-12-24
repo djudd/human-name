@@ -63,12 +63,13 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
 
     for (i, c) in input.char_indices() {
         if nick_start_ix.is_none() {
-            let close = expected_close_char_if_opens_nickname(c, prev_char.is_whitespace());
-            if close.is_some() {
+            if let Some((close, w)) =
+                expected_close_char_if_opens_nickname(c, prev_char.is_whitespace())
+            {
                 nick_start_ix = Some(i);
                 nick_open_char = c;
-                expected_close_char = close.unwrap().0;
-                must_precede_whitespace = close.unwrap().1
+                expected_close_char = close;
+                must_precede_whitespace = w;
             } else {
                 prev_char = c;
             }
@@ -85,14 +86,14 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
         }
     }
 
-    if nick_start_ix.is_some() {
+    if let Some(i) = nick_start_ix {
         if !must_precede_whitespace {
             // When there's, e.g., an opening parens, but no closing parens, strip the
             // rest of the string
-            let strip_from = strip_from_index(nick_start_ix.unwrap(), prev_char);
+            let strip_from = strip_from_index(i, prev_char);
             return Cow::Borrowed(&input[0..strip_from]);
         } else {
-            let i = nick_start_ix.unwrap() + nick_open_char.len_utf8();
+            let j = i + nick_open_char.len_utf8();
             // Otherwise, even if there's an unmatched opening quote, don't
             // modify the string; assume an unmatched opening quote was just
             // in-name punctuation
@@ -100,10 +101,10 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
             // However, in that case, we need to check the remainder of the
             // string for actual nicknames, whose opening character we might
             // have missed while looking for the first closing character
-            if i >= input.len() {
+            if j >= input.len() {
                 return Cow::Borrowed(input);
             } else {
-                return Cow::Owned(input[0..i].to_string() + &strip_nickname(&input[i..]));
+                return Cow::Owned(input[0..j].to_string() + &strip_nickname(&input[j..]));
             }
         }
     }
