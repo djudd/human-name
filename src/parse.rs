@@ -2,6 +2,7 @@ use super::namepart::{Category, Location, NamePart};
 use super::suffix;
 use super::surname;
 use super::title;
+use super::utils::is_mixed_case;
 use smallvec::SmallVec;
 
 struct ParseOp<'a> {
@@ -13,17 +14,14 @@ struct ParseOp<'a> {
     use_capitalization: bool,
 }
 
-pub fn parse(
-    name: &str,
-    use_capitalization: bool,
-) -> Option<(SmallVec<[NamePart; 7]>, usize, Option<usize>)> {
+pub fn parse(name: &str) -> Option<(SmallVec<[NamePart; 7]>, usize, Option<usize>)> {
     let mut op = ParseOp {
         words: SmallVec::new(),
         surname_index: 0,
         generation_from_suffix: None,
         possible_false_prefix: None,
         possible_false_postfix: None,
-        use_capitalization,
+        use_capitalization: is_mixed_case(name),
     };
 
     if op.run(name) {
@@ -257,7 +255,7 @@ mod tests {
 
     #[test]
     fn first_last() {
-        let (parts, surname_index, generation) = parse("John Doe", false).unwrap();
+        let (parts, surname_index, generation) = parse("John Doe").unwrap();
         assert_eq!("John", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
@@ -266,7 +264,7 @@ mod tests {
 
     #[test]
     fn initial_last() {
-        let (parts, surname_index, generation) = parse("J. Doe", false).unwrap();
+        let (parts, surname_index, generation) = parse("J. Doe").unwrap();
         assert_eq!("J.", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
@@ -275,7 +273,7 @@ mod tests {
 
     #[test]
     fn last_first() {
-        let (parts, surname_index, generation) = parse("Doe, John", false).unwrap();
+        let (parts, surname_index, generation) = parse("Doe, John").unwrap();
         assert_eq!("John", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
@@ -284,7 +282,7 @@ mod tests {
 
     #[test]
     fn last_initial() {
-        let (parts, surname_index, generation) = parse("Doe, J.", false).unwrap();
+        let (parts, surname_index, generation) = parse("Doe, J.").unwrap();
         assert_eq!("J.", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
@@ -293,7 +291,7 @@ mod tests {
 
     #[test]
     fn suffix() {
-        let (parts, surname_index, generation) = parse("John Doe III", false).unwrap();
+        let (parts, surname_index, generation) = parse("John Doe III").unwrap();
         assert_eq!("John", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
@@ -302,7 +300,7 @@ mod tests {
 
     #[test]
     fn suffix_comma() {
-        let (parts, surname_index, generation) = parse("Doe, John III", false).unwrap();
+        let (parts, surname_index, generation) = parse("Doe, John III").unwrap();
         assert_eq!("John", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);

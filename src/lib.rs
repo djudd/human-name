@@ -40,7 +40,7 @@ use std::hash::{Hash, Hasher};
 use std::iter::{Enumerate, Peekable};
 use std::slice::Iter;
 use std::str::Chars;
-use utils::{is_mixed_case, lowercase_if_alpha, normalize_nfkd_and_hyphens, transliterate};
+use utils::{lowercase_if_alpha, normalize_nfkd_and_hyphens, transliterate};
 
 /// Represents a parsed human name.
 ///
@@ -136,9 +136,8 @@ impl Name {
 
         let name = normalize_nfkd_and_hyphens(&name);
         let name = nickname::strip_nickname(&name);
-        let mixed_case = is_mixed_case(&name);
 
-        let (words, surname_index, generation_from_suffix) = parse::parse(&*name, mixed_case)?;
+        let (words, surname_index, generation_from_suffix) = parse::parse(&*name)?;
 
         let mut names: SmallVec<[String; 5]> = SmallVec::with_capacity(words.len());
         let mut initials = String::with_capacity(surname_index);
