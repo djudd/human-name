@@ -26,30 +26,6 @@ pub fn is_mixed_case(s: &str) -> bool {
     false
 }
 
-pub fn is_plausibly_capitalized(word: &str) -> bool {
-    debug_assert!(!word.chars().any(char::is_whitespace));
-
-    // Enforce that the first character is capitalized
-    let initial_upper = match word.chars().nth(0) {
-        Some(c) if c.is_uppercase() => true,
-        _ => false,
-    };
-
-    if initial_upper {
-        // Enforce that every alphabetical character which follows another
-        // alphabetical character is lowercase
-        let mut require_lowercase = true;
-        word.chars().skip(1).all(|c| {
-            let alpha = c.is_alphabetic();
-            let ok = !require_lowercase || !alpha || c.is_lowercase();
-            require_lowercase = alpha;
-            ok
-        })
-    } else {
-        false
-    }
-}
-
 #[inline]
 pub fn is_combining(c: char) -> bool {
     canonical_combining_class(c) > 0
@@ -159,9 +135,52 @@ pub fn normalize_nfkd_and_hyphens(string: &str) -> Cow<str> {
     }
 }
 
-pub fn is_missing_vowels(word: &str) -> bool {
-    word.chars()
-        .all(|c| !c.is_alphabetic() || (c.is_ascii() && !VOWELS.contains(c)))
+#[derive(Debug)]
+pub struct CharacterCounts {
+    pub chars: u8,
+    pub alpha: u8,
+    pub upper: u8,
+    pub ascii_alpha: u8,
+    pub ascii_vowels: u8,
+}
+
+pub fn categorize_chars(word: &str) -> CharacterCounts {
+    let mut chars = 0;
+    let mut alpha = 0;
+    let mut upper = 0;
+    let mut ascii_alpha = 0;
+    let mut ascii_vowels = 0;
+
+    for c in word.chars().take(u8::max_value() as usize) {
+        chars += 1;
+
+        if c.is_alphabetic() {
+            alpha += 1;
+
+            if c.is_uppercase() {
+                upper += 1;
+            }
+
+            if c.is_ascii() {
+                ascii_alpha += 1;
+
+                if VOWELS.contains(c) {
+                    ascii_vowels += 1;
+                }
+            }
+        } else if is_combining(c) {
+            // Honorary; we don't want to count it as _non_alphabetic
+            alpha += 1;
+        }
+    }
+
+    CharacterCounts {
+        chars,
+        alpha,
+        upper,
+        ascii_alpha,
+        ascii_vowels,
+    }
 }
 
 pub fn starts_with_consonant(word: &str) -> bool {
@@ -261,15 +280,5 @@ mod tests {
         assert_eq!("A", capitalize_word("a"));
         assert_eq!("Aa", capitalize_word("aa"));
         assert_eq!("Aa", capitalize_word("AA"));
-    }
-
-    #[test]
-    fn plausibly_capitalized() {
-        assert!(is_plausibly_capitalized("A"));
-        assert!(!is_plausibly_capitalized("a"));
-        assert!(is_plausibly_capitalized("Aa"));
-        assert!(!is_plausibly_capitalized("AA"));
-        assert!(is_plausibly_capitalized("La'Tanya"));
-        assert!(is_plausibly_capitalized("La'tanya"));
     }
 }

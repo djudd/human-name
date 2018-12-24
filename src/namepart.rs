@@ -107,7 +107,7 @@ pub enum Category {
 #[derive(Debug, Clone)]
 pub struct NamePart<'a> {
     pub word: &'a str,
-    pub chars: usize,
+    pub chars: u8,
     pub category: Category,
     pub namecased: Cow<'a, str>,
 }
@@ -122,34 +122,33 @@ impl<'a> NamePart<'a> {
     }
 
     #[allow(clippy::if_same_then_else)]
-    #[allow(clippy::collapsible_if)]
     pub fn from_word(word: &str, trust_capitalization: bool, location: Location) -> NamePart {
-        let chars = word.chars().count();
-        debug_assert!(chars > 0);
+        let CharacterCounts {
+            chars,
+            alpha,
+            upper,
+            ascii_alpha,
+            ascii_vowels,
+        } = categorize_chars(word);
 
-        let ascii = word.is_ascii();
-        debug_assert!(word.chars().any(char::is_alphabetic));
+        debug_assert!(alpha > 0);
 
-        let category = if chars == 1 && ascii {
-            Category::Initials
-        } else if chars == 1 {
-            Category::Name
+        let category = if chars == 1 {
+            if ascii_alpha == chars {
+                Category::Initials
+            } else {
+                Category::Name
+            }
         } else if word.ends_with('.') {
-            if chars > 2 && has_sequential_alphas(word) {
+            if alpha >= 2 && has_sequential_alphas(word) {
                 Category::Abbreviation
             } else {
                 Category::Initials
             }
-        } else if word
-            .chars()
-            .filter(|c| !c.is_alphabetic() && !is_combining(*c))
-            .count()
-            > 2
-        {
+        } else if chars - alpha > 2 {
             Category::Other
-        } else if is_missing_vowels(word) {
-            if trust_capitalization && word.chars().all(|c| !c.is_alphabetic() || c.is_uppercase())
-            {
+        } else if ascii_alpha > 0 && ascii_vowels == 0 {
+            if trust_capitalization && alpha == upper {
                 Category::Initials
             } else if location == Location::End
                 && surname::is_vowelless_surname(word, trust_capitalization)
@@ -160,21 +159,18 @@ impl<'a> NamePart<'a> {
             } else {
                 Category::Other
             }
+        } else if chars <= 5 && trust_capitalization && alpha == upper {
+            Category::Initials
+        } else if chars == 2 && !trust_capitalization && !TWO_LETTER_GIVEN_NAMES.contains(word) {
+            Category::Initials
         } else {
-            if chars <= 5
-                && trust_capitalization
-                && word.chars().all(|c| !c.is_alphabetic() || c.is_uppercase())
-            {
-                Category::Initials
-            } else if chars == 2 && !trust_capitalization && !TWO_LETTER_GIVEN_NAMES.contains(word)
-            {
-                Category::Initials
-            } else {
-                Category::Name
-            }
+            Category::Name
         };
 
-        let namecased = if trust_capitalization && is_plausibly_capitalized(word) {
+        let namecased = if upper == 1
+            && (alpha == 1
+                || (trust_capitalization && word.chars().take(1).all(char::is_uppercase)))
+        {
             Cow::Borrowed(word)
         } else {
             let might_be_particle = location == Location::Middle;
