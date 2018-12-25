@@ -143,7 +143,9 @@ impl Name {
 
         let last_word = words.len() - 1;
 
-        let mut text = InlinableString::with_capacity(name.len() + surname_index);
+        // Add buffer to text for cases where input does not have periods & spaces after initials,
+        // which we'll add.
+        let mut text = InlinableString::with_capacity(name.len() + 2 * surname_index);
         let mut initials = InlinableString::with_capacity(surname_index);
 
         let mut surname_index_in_names = surname_index;
