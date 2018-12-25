@@ -21,17 +21,22 @@ pub struct NameParts<'a> {
 
 impl<'a> NameParts<'a> {
     fn next_location(&mut self) -> Location {
-        if self.location == Location::Middle {
-            // If the whole section is in the middle, so are all parts
-            Location::Middle
-        } else if self.location == Location::Start {
-            self.location = Location::Middle;
+        if self.location == Location::Start {
+            self.location = if self.at_end() {
+                Location::End
+            } else {
+                Location::Middle
+            };
             Location::Start
-        } else if self.text.chars().find(|c| c.is_alphabetic()).is_none() {
+        } else if self.at_end() {
             Location::End
         } else {
             Location::Middle
         }
+    }
+
+    fn at_end(&self) -> bool {
+        self.text.chars().find(|c| c.is_alphabetic()).is_none()
     }
 }
 

@@ -229,6 +229,7 @@ Yin a Le|Le|Yin||Y|A|
 
 # first name that could be particle
 Van Nguyen|Nguyen|Van||V||
+van Nguyen|Nguyen|Van||V||
 Nguyen, Van|Nguyen|Van||V||
 Mr. Van Nguyen|Nguyen|Van||V||
 

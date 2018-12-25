@@ -40,7 +40,7 @@ impl<'a> ParseOp<'a> {
                 // We're in the surname part (if the format is "Smith, John"),
                 // or the only actual name part (if the format is "John Smith,
                 // esq." or just "John Smith")
-                self.handle_before_comma(part);
+                self.handle_before_comma(part, name.contains(','));
             } else if self.surname_index == 0 {
                 // We already processed one comma-separated part, but we think
                 // it was just the surname, so this might be the given name or
@@ -109,7 +109,7 @@ impl<'a> ParseOp<'a> {
     }
 
     // Called only until any words are found
-    fn handle_before_comma(&mut self, part: &'a str) {
+    fn handle_before_comma(&mut self, part: &'a str, any_after: bool) {
         debug_assert!(
             self.words.is_empty()
                 && self.surname_index == 0
@@ -120,7 +120,11 @@ impl<'a> ParseOp<'a> {
         self.words.extend(NamePart::all_from_text(
             part,
             self.use_capitalization,
-            Location::End,
+            if any_after {
+                Location::End
+            } else {
+                Location::Start
+            },
         ));
 
         if self.words.is_empty() {
