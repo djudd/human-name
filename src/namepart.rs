@@ -181,7 +181,7 @@ impl<'a> NamePart<'a> {
                 Category::Initials
             }
         } else if chars - alpha > 2
-            && chars - alpha - word.chars().filter(|c| is_combining(*c)).count() as u8 > 2
+            && chars - alpha - combining_chars(word) as u8 > 2
         {
             Category::Other
         } else if ascii_alpha > 0 && ascii_vowels == 0 {

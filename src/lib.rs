@@ -467,18 +467,11 @@ impl Name {
     /// We can't use the first initial because we might ignore it if someone goes
     /// by a middle name or nickname, or due to transliteration.
     pub fn surname_hash<H: Hasher>(&self, state: &mut H) {
-        Name::hash_surnames(self.surname_iter(), state)
-    }
-
-    fn hash_surnames<'a, H: Hasher, I: DoubleEndedIterator<Item = &'a str>>(
-        surnames: I,
-        state: &mut H,
-    ) {
-        let surname_chars = surnames
+        for c in self
+            .surname_iter()
             .flat_map(|w| w.chars())
             .flat_map(transliterate)
-            .rev();
-        for c in surname_chars
+            .rev()
             .filter_map(lowercase_if_alpha)
             .take(comparison::MIN_SURNAME_CHAR_MATCH)
         {

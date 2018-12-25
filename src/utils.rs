@@ -5,7 +5,7 @@ use unicode_normalization::UnicodeNormalization;
 use unidecode::unidecode_char;
 
 const HYPHENS: &str = "-\u{2010}‑‒–—―−－﹘﹣";
-const ASCII_WHITESPACE: &[char] = &['\t', '\r', '\n'];
+const ASCII_UNUSUAL_WHITESPACE: &[char] = &['\t', '\r', '\n'];
 
 pub fn is_mixed_case(s: &str) -> bool {
     let mut has_lowercase = false;
@@ -135,7 +135,7 @@ pub fn capitalize_word(word: &str) -> String {
 }
 
 pub fn normalize_nfkd_hyphens_spaces(string: &str) -> Cow<str> {
-    if string.is_ascii() && !string.contains(ASCII_WHITESPACE) {
+    if string.is_ascii() && !string.contains(ASCII_UNUSUAL_WHITESPACE) {
         Cow::Borrowed(string)
     } else {
         let string = string
@@ -227,6 +227,10 @@ pub fn starts_with_consonant(word: &str) -> bool {
 
 pub fn starts_with_uppercase(word: &str) -> bool {
     word.chars().take(1).all(char::is_uppercase)
+}
+
+pub fn combining_chars(word: &str) -> usize {
+    word.chars().filter(|c| is_combining(*c)).count()
 }
 
 pub fn has_sequential_alphas(word: &str) -> bool {
