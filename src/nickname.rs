@@ -260,7 +260,7 @@ fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::{Bencher, black_box};
+    use test::{black_box, Bencher};
 
     #[test]
     fn nick_and_name() {

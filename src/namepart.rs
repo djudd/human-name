@@ -180,9 +180,7 @@ impl<'a> NamePart<'a> {
             } else {
                 Category::Initials
             }
-        } else if chars - alpha > 2
-            && chars - alpha - combining_chars(word) as u8 > 2
-        {
+        } else if chars - alpha > 2 && chars - alpha - combining_chars(word) as u8 > 2 {
             Category::Other
         } else if ascii_alpha > 0 && ascii_vowels == 0 {
             if trust_capitalization && all_upper {
@@ -271,7 +269,7 @@ impl<'a> NamePart<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::{Bencher, black_box};
+    use test::{black_box, Bencher};
 
     #[test]
     fn one_word() {
@@ -299,30 +297,22 @@ mod tests {
 
     #[bench]
     fn all_from_text_simple(b: &mut Bencher) {
-        b.iter(|| {
-            black_box(NamePart::all_from_text("John Doe", true, Location::Start).count())
-        })
+        b.iter(|| black_box(NamePart::all_from_text("John Doe", true, Location::Start).count()))
     }
 
     #[bench]
     fn all_from_text_initials(b: &mut Bencher) {
-        b.iter(|| {
-            black_box(NamePart::all_from_text("J. Doe", true, Location::Start).count())
-        })
+        b.iter(|| black_box(NamePart::all_from_text("J. Doe", true, Location::Start).count()))
     }
 
     #[bench]
     fn all_from_text_nonascii(b: &mut Bencher) {
-        b.iter(|| {
-            black_box(NamePart::all_from_text("이용희", false, Location::Start).count())
-        })
+        b.iter(|| black_box(NamePart::all_from_text("이용희", false, Location::Start).count()))
     }
 
     #[bench]
     fn all_from_text_all_caps(b: &mut Bencher) {
-        b.iter(|| {
-            black_box(NamePart::all_from_text("JOHN DOE", false, Location::Start).count())
-        })
+        b.iter(|| black_box(NamePart::all_from_text("JOHN DOE", false, Location::Start).count()))
     }
 
     #[test]

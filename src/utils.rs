@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use std::str::Chars;
-use unicode_normalization::char::canonical_combining_class;
+use unicode_normalization::char::{canonical_combining_class, decompose_compatible};
 use unicode_normalization::UnicodeNormalization;
 use unidecode::unidecode_char;
 
@@ -134,8 +134,26 @@ pub fn capitalize_word(word: &str) -> String {
         .collect()
 }
 
+// Ideally we'd use the unicode standard `quick_check` algorithm, but Rust
+// doesn't expose that for compatibility forms, and this is simpler to implement,
+// though it will have more false negatives.
+fn stable_nfkd(c: char) -> bool {
+    if is_combining(c) {
+        false
+    } else {
+        let mut stable = true;
+        decompose_compatible(c, |d| stable = stable && d == c);
+        stable
+    }
+}
+
 pub fn normalize_nfkd_hyphens_spaces(string: &str) -> Cow<str> {
     if string.is_ascii() && !string.contains(ASCII_UNUSUAL_WHITESPACE) {
+        Cow::Borrowed(string)
+    } else if string
+        .chars()
+        .all(|c| stable_nfkd(c) && (c == ' ' || !c.is_whitespace()))
+    {
         Cow::Borrowed(string)
     } else {
         let string = string
@@ -302,7 +320,7 @@ macro_rules! eq_or_ends_with {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::{Bencher, black_box};
+    use test::{black_box, Bencher};
 
     #[test]
     fn sequential_alphas() {
@@ -325,16 +343,17 @@ mod tests {
     }
 
     #[bench]
-    fn normalize_no_change(b: &mut Bencher) {
-        b.iter(|| {
-            black_box(normalize_nfkd_hyphens_spaces("James S. Brown MD, FRCS").len())
-        })
+    fn normalize_ascii(b: &mut Bencher) {
+        b.iter(|| black_box(normalize_nfkd_hyphens_spaces("James 'J' S. Brown MD").len()))
+    }
+
+    #[bench]
+    fn normalize_nfkd_stable(b: &mut Bencher) {
+        b.iter(|| black_box(normalize_nfkd_hyphens_spaces("James «J» S. Brown MD").len()))
     }
 
     #[bench]
     fn normalize_needs_fix(b: &mut Bencher) {
-        b.iter(|| {
-            black_box(normalize_nfkd_hyphens_spaces("Björn O'Malley-Muñoz").len())
-        })
+        b.iter(|| black_box(normalize_nfkd_hyphens_spaces("James 'J' S. Bröwn MD").len()))
     }
 }
