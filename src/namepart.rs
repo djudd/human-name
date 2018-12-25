@@ -221,6 +221,49 @@ impl<'a> NamePart<'a> {
             _ => false,
         }
     }
+
+    // Called on Initials and also on given or middle Names
+    pub fn with_initials<F>(&self, mut f: F)
+    where
+        F: FnMut(char),
+    {
+        match self.category {
+            Category::Name(ref namecased) if !namecased.contains('-') => {
+                f(namecased.chars().nth(0).unwrap())
+            }
+            Category::Name(ref namecased) => namecased
+                .split('-')
+                .filter_map(|w| w.chars().find(|c| c.is_alphabetic()))
+                .flat_map(|c| c.to_uppercase())
+                .for_each(f),
+            Category::Initials if self.counts.upper == self.counts.chars => {
+                self.word.chars().for_each(f)
+            }
+            Category::Initials => self.word.chars().filter_map(uppercase_if_alpha).for_each(f),
+            _ => panic!("Called extract_initials on {:?}", self),
+        }
+    }
+
+    // Normally called on a Name, but may be called on Initials if part was mis-categorized
+    pub fn with_namecased<F>(&self, mut f: F)
+    where
+        F: FnMut(&str),
+    {
+        match self.category {
+            Category::Name(ref namecased) => f(namecased),
+            Category::Initials
+                if self.counts.upper == 1
+                    && (self.counts.alpha == 1 || starts_with_uppercase(self.word)) =>
+            {
+                f(self.word)
+            }
+            Category::Initials => {
+                let namecased = namecase::namecase(self.word, true);
+                f(&namecased)
+            }
+            _ => panic!("Called extract_initials on {:?}", self),
+        }
+    }
 }
 
 #[cfg(test)]
