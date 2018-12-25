@@ -67,7 +67,7 @@ pub struct Name {
     surname_index: usize,
     generation_from_suffix: Option<usize>,
     initials: InlinableString,
-    word_indices_in_initials: SmallVec<[Range<usize>; 5]>,
+    word_indices_in_initials: SmallVec<[Range<usize>; 3]>,
     pub hash: u64,
 }
 
@@ -147,7 +147,7 @@ impl Name {
         let mut initials = InlinableString::with_capacity(surname_index);
 
         let mut surname_index_in_names = surname_index;
-        let mut word_indices_in_initials: SmallVec<[Range<usize>; 5]> =
+        let mut word_indices_in_initials: SmallVec<[Range<usize>; 3]> =
             SmallVec::with_capacity(surname_index);
         let mut word_indices_in_text: SmallVec<[Range<usize>; 5]> =
             SmallVec::with_capacity(words.len());
