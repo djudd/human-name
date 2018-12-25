@@ -23,7 +23,7 @@ static SURNAME_PREFIXES: phf::Set<&'static str> = phf_set! {
     "dei",
     "der",
     "di",
-    "dí",
+    "dí",
     "do",
     "dos",
     "du",

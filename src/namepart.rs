@@ -392,6 +392,62 @@ mod tests {
         assert!(NamePart::from_word("AT", true, Location::Start).is_initials());
         assert!(NamePart::from_word("AT", false, Location::Start).is_initials());
     }
+
+    #[bench]
+    fn from_word_simple(b: &mut Bencher) {
+        let name = "Jonathan";
+        let counts = categorize_chars(name);
+        b.iter(|| {
+            black_box(NamePart::from_word_and_counts(
+                name,
+                counts.clone(),
+                true,
+                Location::Start,
+            ))
+        })
+    }
+
+    #[bench]
+    fn from_word_initials(b: &mut Bencher) {
+        let name = "J.";
+        let counts = categorize_chars(name);
+        b.iter(|| {
+            black_box(NamePart::from_word_and_counts(
+                name,
+                counts.clone(),
+                true,
+                Location::Start,
+            ))
+        })
+    }
+
+    #[bench]
+    fn from_word_nonascii(b: &mut Bencher) {
+        let name = "희";
+        let counts = categorize_chars(name);
+        b.iter(|| {
+            black_box(NamePart::from_word_and_counts(
+                name,
+                counts.clone(),
+                false,
+                Location::Start,
+            ))
+        })
+    }
+
+    #[bench]
+    fn from_word_all_caps(b: &mut Bencher) {
+        let name = "JONATHAN";
+        let counts = categorize_chars(name);
+        b.iter(|| {
+            black_box(NamePart::from_word_and_counts(
+                name,
+                counts.clone(),
+                false,
+                Location::Start,
+            ))
+        })
+    }
 }
 
 // Everything with a vowel reasonably popular in the Social Security data:

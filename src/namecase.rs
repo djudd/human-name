@@ -16,7 +16,7 @@ static UNCAPITALIZED_PARTICLES: phf::Set<&'static str> = phf_set! {
     "Dei",
     "Der",
     "Di",
-    "Dí",
+    "Dí",
     "Do",
     "Dos",
     "Du",

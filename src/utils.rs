@@ -343,6 +343,21 @@ mod tests {
     }
 
     #[bench]
+    fn is_mixed_case_false(b: &mut Bencher) {
+        b.iter(|| black_box(is_mixed_case("JOHN MACDONALD")))
+    }
+
+    #[bench]
+    fn is_mixed_case_true(b: &mut Bencher) {
+        b.iter(|| black_box(is_mixed_case("J. MacDonald")))
+    }
+
+    #[bench]
+    fn capitalize_uppercase_word(b: &mut Bencher) {
+        b.iter(|| black_box(capitalize_word("JONATHAN")))
+    }
+
+    #[bench]
     fn normalize_ascii(b: &mut Bencher) {
         b.iter(|| black_box(normalize_nfkd_hyphens_spaces("James 'J' S. Brown MD").len()))
     }

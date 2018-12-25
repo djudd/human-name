@@ -148,6 +148,7 @@ O'Malley y Muñoz, C. Björn Roger III|O'Malley y Muñoz|Björn|Roger|C|BR|III
 # other particles
 Buca di Beppo|di Beppo|Buca||B||
 Buca di Beppo|di Beppo|Buca||B||
+Buca dí Beppo|dí Beppo|Buca||B||
 Juan del Sur|del Sur|Juan||J||
 pennie von bergen wessels|von Bergen Wessels|Pennie||P||
 pennie von bergen wessels iii|von Bergen Wessels|Pennie||P||III
