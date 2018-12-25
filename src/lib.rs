@@ -35,13 +35,14 @@ pub mod external;
 mod eq_hash;
 
 use inlinable_string::{InlinableString, StringExt};
+use namepart::Category;
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::ops::Range;
 use std::slice::Iter;
-use utils::{lowercase_if_alpha, normalize_nfkd_and_hyphens, transliterate};
+use utils::{lowercase_if_alpha, normalize_nfkd_and_hyphens, transliterate, uppercase_if_alpha};
 
 /// Represents a parsed human name.
 ///
@@ -154,38 +155,41 @@ impl Name {
 
         for (i, word) in words.into_iter().enumerate() {
             if word.is_initials() && i < surname_index {
-                word.word
-                    .chars()
-                    .filter(|c| c.is_alphabetic())
-                    .flat_map(|c| c.to_uppercase())
-                    .for_each(|c| {
-                        text.push(c);
-                        text.push_str(". ");
+                for c in word.word.chars().filter_map(uppercase_if_alpha) {
+                    text.push(c);
+                    text.push_str(". ");
 
-                        initials.push(c);
-                    });
+                    initials.push(c);
+                }
 
                 surname_index_in_names -= 1;
             } else {
+                let namecased: Cow<str> = match &word.category {
+                    Category::Name(namecased) => Cow::Borrowed(namecased),
+                    Category::Initials => Cow::Owned(namecase::namecase(word.word, true)),
+                    _ => unreachable!(),
+                };
+
                 let prior_len = text.len();
-                text.push_str(&*word.namecased);
+                text.push_str(&*namecased);
                 word_indices_in_text.push(prior_len..text.len());
 
                 if i < last_word {
                     text.push(' ');
-                }
 
-                if i < surname_index {
-                    let prior_len = initials.len();
+                    if i < surname_index {
+                        debug_assert!(word.is_namelike());
+                        let prior_len = initials.len();
 
-                    initials.extend(
-                        word.namecased
-                            .split('-')
-                            .filter_map(|w| w.chars().find(|c| c.is_alphabetic()))
-                            .flat_map(|c| c.to_uppercase()),
-                    );
+                        initials.extend(
+                            namecased
+                                .split('-')
+                                .filter_map(|w| w.chars().find(|c| c.is_alphabetic()))
+                                .flat_map(|c| c.to_uppercase()),
+                        );
 
-                    word_indices_in_initials.push(prior_len..initials.len());
+                        word_indices_in_initials.push(prior_len..initials.len());
+                    }
                 }
             }
         }

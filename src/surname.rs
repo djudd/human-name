@@ -1,4 +1,4 @@
-use super::namepart::NamePart;
+use super::namepart::{Category, NamePart};
 use phf;
 
 static VOWELLESS_SURNAMES: [&'static str; 4] = ["Ng", "Lv", "Mtz", "Hdz"];
@@ -96,7 +96,11 @@ pub fn find_surname_index(words: &[NamePart]) -> usize {
     }
 
     for (i, word) in words[0..words.len() - 1].iter().enumerate() {
-        if SURNAME_PREFIXES.contains(&*word.namecased) {
+        let key: &str = match word.category {
+            Category::Name(ref namecased) => &*namecased,
+            _ => word.word,
+        };
+        if SURNAME_PREFIXES.contains(key) {
             return i;
         }
 

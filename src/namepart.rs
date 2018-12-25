@@ -6,7 +6,7 @@ use std::borrow::Cow;
 use unicode_segmentation::UnicodeSegmentation;
 
 // If Start and End overlap, use End
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub enum Location {
     Start,
     Middle,
@@ -68,7 +68,6 @@ impl<'a> Iterator for NameParts<'a> {
                 word,
                 chars: 1,
                 category: Category::Other,
-                namecased: Cow::Borrowed(word),
             })
         } else {
             let counts = categorize_chars(word);
@@ -103,9 +102,9 @@ impl<'a> Iterator for NameParts<'a> {
     }
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Copy)]
-pub enum Category {
-    Name,
+#[derive(Eq, PartialEq, Debug, Clone)]
+pub enum Category<'a> {
+    Name(Cow<'a, str>),
     Initials,
     Abbreviation,
     Other,
@@ -115,8 +114,7 @@ pub enum Category {
 pub struct NamePart<'a> {
     pub word: &'a str,
     pub chars: u8,
-    pub category: Category,
-    pub namecased: Cow<'a, str>,
+    pub category: Category<'a>,
 }
 
 impl<'a> NamePart<'a> {
@@ -149,11 +147,25 @@ impl<'a> NamePart<'a> {
 
         debug_assert!(alpha > 0);
 
+        let all_upper = alpha == upper;
+
+        let namecased = || {
+            if upper == 1
+                && (all_upper
+                    || (trust_capitalization && word.chars().take(1).all(char::is_uppercase)))
+            {
+                Cow::Borrowed(word)
+            } else {
+                let might_be_particle = location == Location::Middle;
+                Cow::Owned(namecase::namecase(word, might_be_particle))
+            }
+        };
+
         let category = if chars == 1 {
             if ascii_alpha == chars {
                 Category::Initials
             } else {
-                Category::Name
+                Category::Name(namecased())
             }
         } else if word.ends_with('.') {
             if alpha >= 2 && has_sequential_alphas(word) {
@@ -166,40 +178,29 @@ impl<'a> NamePart<'a> {
         {
             Category::Other
         } else if ascii_alpha > 0 && ascii_vowels == 0 {
-            if trust_capitalization && alpha == upper {
+            if trust_capitalization && all_upper {
                 Category::Initials
             } else if location == Location::End
                 && surname::is_vowelless_surname(word, trust_capitalization)
             {
-                Category::Name
+                Category::Name(namecased())
             } else if chars <= 5 {
                 Category::Initials
             } else {
                 Category::Other
             }
-        } else if chars <= 5 && trust_capitalization && alpha == upper {
+        } else if chars <= 5 && trust_capitalization && all_upper {
             Category::Initials
         } else if chars == 2 && !trust_capitalization && !TWO_LETTER_GIVEN_NAMES.contains(word) {
             Category::Initials
         } else {
-            Category::Name
-        };
-
-        let namecased = if upper == 1
-            && (alpha == 1
-                || (trust_capitalization && word.chars().take(1).all(char::is_uppercase)))
-        {
-            Cow::Borrowed(word)
-        } else {
-            let might_be_particle = location == Location::Middle;
-            Cow::Owned(namecase::namecase(word, might_be_particle))
+            Category::Name(namecased())
         };
 
         NamePart {
             word,
             chars,
             category,
-            namecased,
         }
     }
 
@@ -210,12 +211,10 @@ impl<'a> NamePart<'a> {
 
     #[inline]
     pub fn is_namelike(&self) -> bool {
-        self.category == Category::Name
-    }
-
-    #[inline]
-    pub fn is_abbreviation(&self) -> bool {
-        self.category == Category::Abbreviation
+        match self.category {
+            Category::Name(_) => true,
+            _ => false,
+        }
     }
 }
 
@@ -249,26 +248,17 @@ mod tests {
 
     #[test]
     fn single_ascii() {
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("I", true, Location::Start).category
-        );
+        assert!(NamePart::from_word("I", true, Location::Start).is_initials());
     }
 
     #[test]
     fn single_han() {
-        assert_eq!(
-            Category::Name,
-            NamePart::from_word("鄭", true, Location::Start).category
-        );
+        assert!(NamePart::from_word("鄭", true, Location::Start).is_namelike());
     }
 
     #[test]
     fn abbreviated_ascii() {
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("I.", true, Location::Start).category
-        );
+        assert!(NamePart::from_word("I.", true, Location::Start).is_initials());
     }
 
     #[test]
@@ -281,10 +271,7 @@ mod tests {
 
     #[test]
     fn double_abbreviated_double_ascii() {
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("M.I.", true, Location::Start).category
-        );
+        assert!(NamePart::from_word("M.I.", true, Location::Start).is_initials());
     }
 
     #[test]
@@ -297,22 +284,10 @@ mod tests {
 
     #[test]
     fn no_vowels() {
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("JM", true, Location::Start).category
-        );
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("jm", true, Location::Start).category
-        );
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("JM", false, Location::Start).category
-        );
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("JMMMMM", true, Location::Start).category
-        );
+        assert!(NamePart::from_word("JM", true, Location::Start).is_initials());
+        assert!(NamePart::from_word("jm", true, Location::Start).is_initials());
+        assert!(NamePart::from_word("JM", false, Location::Start).is_initials());
+        assert!(NamePart::from_word("JMMMMM", true, Location::Start).is_initials());
         assert_eq!(
             Category::Other,
             NamePart::from_word("jmmmmm", true, Location::Start).category
@@ -325,70 +300,28 @@ mod tests {
 
     #[test]
     fn vowelless_surname() {
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("NG", true, Location::Start).category
-        );
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("Ng", true, Location::Start).category
-        );
-        assert_eq!(
-            Category::Name,
-            NamePart::from_word("Ng", true, Location::End).category
-        );
-        assert_eq!(
-            Category::Name,
-            NamePart::from_word("NG", false, Location::End).category
-        );
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("NG", true, Location::End).category
-        );
+        assert!(NamePart::from_word("NG", true, Location::Start).is_initials());
+        assert!(NamePart::from_word("Ng", true, Location::Start).is_initials());
+        assert!(NamePart::from_word("Ng", true, Location::End).is_namelike());
+        assert!(NamePart::from_word("NG", false, Location::End).is_namelike());
+        assert!(NamePart::from_word("NG", true, Location::End).is_initials());
     }
 
     #[test]
     fn word() {
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("JEM", true, Location::Start).category
-        );
-        assert_eq!(
-            Category::Name,
-            NamePart::from_word("Jem", true, Location::Start).category
-        );
-        assert_eq!(
-            Category::Name,
-            NamePart::from_word("JEM", false, Location::Start).category
-        );
+        assert!(NamePart::from_word("JEM", true, Location::Start).is_initials());
+        assert!(NamePart::from_word("Jem", true, Location::Start).is_namelike());
+        assert!(NamePart::from_word("JEM", false, Location::Start).is_namelike());
     }
 
     #[test]
     fn two_letters() {
-        assert_eq!(
-            Category::Name,
-            NamePart::from_word("Al", true, Location::Start).category
-        );
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("AL", true, Location::Start).category
-        );
-        assert_eq!(
-            Category::Name,
-            NamePart::from_word("AL", false, Location::Start).category
-        );
-        assert_eq!(
-            Category::Name,
-            NamePart::from_word("At", true, Location::Start).category
-        );
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("AT", true, Location::Start).category
-        );
-        assert_eq!(
-            Category::Initials,
-            NamePart::from_word("AT", false, Location::Start).category
-        );
+        assert!(NamePart::from_word("Al", true, Location::Start).is_namelike());
+        assert!(NamePart::from_word("AL", true, Location::Start).is_initials());
+        assert!(NamePart::from_word("AL", false, Location::Start).is_namelike());
+        assert!(NamePart::from_word("At", true, Location::Start).is_namelike());
+        assert!(NamePart::from_word("AT", true, Location::Start).is_initials());
+        assert!(NamePart::from_word("AT", false, Location::Start).is_initials());
     }
 }
 

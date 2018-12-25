@@ -1,4 +1,4 @@
-use super::namepart::NamePart;
+use super::namepart::{Category, NamePart};
 use super::suffix;
 use phf;
 use std::cmp;
@@ -408,12 +408,14 @@ fn might_be_title_part(word: &NamePart) -> bool {
     if word.chars < 3 {
         // Allow any word with 1 or 2 characters as part of a title (but see below)
         true
-    } else if !word.is_namelike() {
-        true
-    } else if word.word.chars().any(char::is_numeric) {
-        true
     } else {
-        PREFIX_TITLE_PARTS.contains(&*word.namecased)
+        match &word.category {
+            Category::Name(ref namecased) => {
+                let namecased: &str = &*namecased;
+                PREFIX_TITLE_PARTS.contains(namecased) || namecased.chars().any(char::is_numeric)
+            }
+            _ => true,
+        }
     }
 }
 
@@ -453,12 +455,15 @@ fn is_prefix_title(words: &[NamePart]) -> bool {
 }
 
 fn is_postfix_title(word: &NamePart, might_be_initials: bool) -> bool {
-    if word.is_namelike() {
-        POSTFIX_TITLES.contains(&*word.namecased) || word.word.chars().any(char::is_numeric)
-    } else if word.is_initials() {
-        !might_be_initials && word.word.chars().filter(|c| c.is_alphabetic()).count() > 1
-    } else {
-        true
+    match word.category {
+        Category::Name(ref namecased) => {
+            let namecased: &str = &*namecased;
+            POSTFIX_TITLES.contains(namecased) || namecased.chars().any(char::is_numeric)
+        }
+        Category::Initials => {
+            !might_be_initials && word.word.chars().filter(|c| c.is_alphabetic()).count() > 1
+        }
+        _ => true,
     }
 }
 

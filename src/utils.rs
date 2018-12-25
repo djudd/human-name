@@ -58,6 +58,17 @@ pub fn lowercase_if_alpha(c: char) -> Option<char> {
 }
 
 #[inline]
+pub fn uppercase_if_alpha(c: char) -> Option<char> {
+    if c.is_lowercase() {
+        c.to_uppercase().next()
+    } else if c.is_alphabetic() {
+        Some(c)
+    } else {
+        None
+    }
+}
+
+#[inline]
 pub fn transliterate(c: char) -> Chars<'static> {
     unidecode_char(c).chars()
 }

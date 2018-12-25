@@ -1,4 +1,4 @@
-use super::namepart::{Category, Location, NamePart};
+use super::namepart::{Location, NamePart};
 use super::suffix;
 use super::surname;
 use super::title;
@@ -68,7 +68,7 @@ impl<'a> ParseOp<'a> {
 
         // Anything trailing that looks like initials is probably a stray postfix
         while self.words.last().iter().any(|w| !w.is_namelike()) {
-            let mut removed = self.words.pop().unwrap();
+            let removed = self.words.pop().unwrap();
 
             // If we guessed the surname previously, our guess is no longer valid
             self.surname_index = 0;
@@ -77,13 +77,12 @@ impl<'a> ParseOp<'a> {
             // check if we can treat the last word as a name if we just ignore
             // case; this handles the not-quite-rare-enough case of an all-caps
             // last name (e.g.Neto John SMITH), among others
-            if self.use_capitalization
-                && !self.valid()
-                && NamePart::from_word(&*removed.namecased, false, Location::End).is_namelike()
-            {
-                removed.category = Category::Name;
-                self.words.push(removed);
-                break;
+            if self.use_capitalization && !self.valid() {
+                let word = NamePart::from_word(removed.word, false, Location::End);
+                if word.is_namelike() {
+                    self.words.push(word);
+                    break;
+                }
             }
         }
 

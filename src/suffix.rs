@@ -1,7 +1,8 @@
-use namepart::NamePart;
+use namepart::{Category, NamePart};
 use phf;
 
 static GENERATION_BY_SUFFIX: phf::Map<&'static str, usize> = phf_map! {
+    // Namecased
     "1" => 1,
     "2" => 2,
     "3" => 3,
@@ -28,21 +29,63 @@ static GENERATION_BY_SUFFIX: phf::Map<&'static str, usize> = phf_map! {
     "Jnr" => 2,
     "Sr" => 1,
     "Snr" => 1,
+
+    // Uppercased
+    "1ST" => 1,
+    "2ND" => 2,
+    "3RD" => 3,
+    "4TH" => 4,
+    "5TH" => 5,
+    "II" => 2,
+    "III" => 3,
+    "IV" => 4,
+    "PÈRE" => 1,
+    "FILS" => 2,
+    "JÚNIOR" => 2,
+    "FILHO" => 2,
+    "NETO" => 3,
+    "JUNIOR" => 2,
+    "SENIOR" => 1,
+    "JR" => 2,
+    "JNR" => 2,
+    "SR" => 1,
+    "SNR" => 1,
+
+    // Lowercased
+    "i" => 1,
+    "ii" => 2,
+    "iii" => 3,
+    "iv" => 4,
+    "v" => 5,
+    "père" => 1,
+    "fils" => 2,
+    "júnior" => 2,
+    "filho" => 2,
+    "neto" => 3,
+    "junior" => 2,
+    "senior" => 1,
+    "jr" => 2,
+    "jnr" => 2,
+    "sr" => 1,
+    "snr" => 1,
 };
 
 static SUFFIX_BY_GENERATION: [&'static str; 5] = ["Sr.", "Jr.", "III", "IV", "V"];
 
 pub fn generation_from_suffix(part: &NamePart, might_be_initials: bool) -> Option<usize> {
-    let namecased = &*part.namecased;
-
-    if part.is_namelike() || (part.is_initials() && !(part.chars == 1 && might_be_initials)) {
-        GENERATION_BY_SUFFIX.get(namecased).cloned()
-    } else if part.is_abbreviation() {
-        GENERATION_BY_SUFFIX
-            .get(&namecased[0..namecased.len() - 1])
-            .cloned()
-    } else {
-        None
+    match part.category {
+        Category::Name(ref namecased) => {
+            let namecased: &str = &*namecased;
+            GENERATION_BY_SUFFIX.get(namecased).map(|i| *i)
+        }
+        Category::Abbreviation => {
+            let without_period = &part.word[0..part.word.len() - 1];
+            GENERATION_BY_SUFFIX.get(without_period).map(|i| *i)
+        }
+        Category::Initials if part.chars > 1 || !might_be_initials => {
+            GENERATION_BY_SUFFIX.get(part.word).map(|i| *i)
+        }
+        _ => None,
     }
 }
 
