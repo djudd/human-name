@@ -133,7 +133,7 @@ impl Name {
     /// for canonicalizing names. The goal here is to do the best we can without
     /// large statistical models.
     pub fn parse(name: &str) -> Option<Name> {
-        if name.len() >= 1000 || !name.chars().any(char::is_alphabetic) {
+        if name.len() >= 1024 {
             return None;
         }
 
