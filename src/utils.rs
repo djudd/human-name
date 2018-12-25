@@ -112,26 +112,35 @@ pub fn to_ascii(s: &str) -> Cow<str> {
     }
 }
 
-pub fn capitalize_word(word: &str) -> String {
-    debug_assert!(!word.chars().any(char::is_whitespace));
+pub fn capitalize_word(word: &str, simple: bool) -> String {
+    debug_assert!(simple == word.chars().all(is_ascii_alphabetic));
 
-    let mut capitalize_next = true;
+    if simple {
+        let bytes = word.as_bytes();
+        let mut result = String::with_capacity(word.len());
+        result.push(bytes[0].to_ascii_uppercase() as char);
+        result.extend(bytes[1..].iter().map(|c| c.to_ascii_lowercase() as char));
+        result
+    } else {
+        let mut capitalize_next = true;
 
-    word.chars()
-        .filter_map(|c| {
-            let result = if !c.is_alphanumeric() {
-                Some(c)
-            } else if capitalize_next {
-                c.to_uppercase().next()
-            } else {
-                c.to_lowercase().next()
-            };
+        word.chars()
+            .map(|c| {
+                let result = if capitalize_next {
+                    c.to_uppercase().next()
+                } else {
+                    c.to_lowercase().next()
+                }
+                .unwrap();
 
-            capitalize_next = !c.is_alphanumeric() && !is_combining(c);
+                // If the character doesn't have both uppercase and lowercase versions,
+                // it'll be unchanged. That's a prerequisite for it being a separator.
+                capitalize_next = result == c && !c.is_alphanumeric() && !is_combining(c);
 
-            result
-        })
-        .collect()
+                result
+            })
+            .collect()
+    }
 }
 
 // Ideally we'd use the unicode standard `quick_check` algorithm, but Rust
@@ -337,9 +346,9 @@ mod tests {
 
     #[test]
     fn capitalization() {
-        assert_eq!("A", capitalize_word("a"));
-        assert_eq!("Aa", capitalize_word("aa"));
-        assert_eq!("Aa", capitalize_word("AA"));
+        assert_eq!("A", capitalize_word("a", true));
+        assert_eq!("Aa", capitalize_word("aa", true));
+        assert_eq!("Aa", capitalize_word("AA", true));
     }
 
     #[bench]
@@ -354,7 +363,12 @@ mod tests {
 
     #[bench]
     fn capitalize_uppercase_word(b: &mut Bencher) {
-        b.iter(|| black_box(capitalize_word("JONATHAN")))
+        b.iter(|| black_box(capitalize_word("JONATHAN", true)))
+    }
+
+    #[bench]
+    fn capitalize_complex_word(b: &mut Bencher) {
+        b.iter(|| black_box(capitalize_word("föö-bar", false)))
     }
 
     #[bench]

@@ -164,7 +164,11 @@ impl<'a> NamePart<'a> {
                 Cow::Borrowed(word)
             } else {
                 let might_be_particle = location == Location::Middle;
-                Cow::Owned(namecase::namecase(word, might_be_particle))
+                Cow::Owned(namecase::namecase(
+                    word,
+                    chars == ascii_alpha,
+                    might_be_particle,
+                ))
             }
         };
 
@@ -258,7 +262,11 @@ impl<'a> NamePart<'a> {
                 f(self.word)
             }
             Category::Initials => {
-                let namecased = namecase::namecase(self.word, true);
+                let namecased = namecase::namecase(
+                    self.word,
+                    self.counts.chars == self.counts.ascii_alpha,
+                    true,
+                );
                 f(&namecased)
             }
             _ => panic!("Called extract_initials on {:?}", self),
