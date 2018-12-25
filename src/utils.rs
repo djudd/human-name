@@ -5,6 +5,7 @@ use unicode_normalization::UnicodeNormalization;
 use unidecode::unidecode_char;
 
 const HYPHENS: &str = "-\u{2010}‑‒–—―−－﹘﹣";
+const ASCII_WHITESPACE: &[char] = &['\t', '\r', '\n'];
 
 pub fn is_mixed_case(s: &str) -> bool {
     let mut has_lowercase = false;
@@ -133,13 +134,21 @@ pub fn capitalize_word(word: &str) -> String {
         .collect()
 }
 
-pub fn normalize_nfkd_and_hyphens(string: &str) -> Cow<str> {
-    if string.is_ascii() {
+pub fn normalize_nfkd_hyphens_spaces(string: &str) -> Cow<str> {
+    if string.is_ascii() && !string.contains(ASCII_WHITESPACE) {
         Cow::Borrowed(string)
     } else {
         let string = string
             .nfkd()
-            .map(|c| if HYPHENS.contains(c) { '-' } else { c })
+            .map(|c| {
+                if HYPHENS.contains(c) {
+                    '-'
+                } else if c.is_whitespace() {
+                    ' '
+                } else {
+                    c
+                }
+            })
             .collect();
 
         Cow::Owned(string)

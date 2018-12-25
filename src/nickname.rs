@@ -40,12 +40,8 @@ fn expected_close_char_if_opens_nickname(
     }
 }
 
-fn starts_with_whitespace(text: &str) -> bool {
-    text.chars().nth(0).unwrap().is_whitespace()
-}
-
 fn strip_from_index(nick_start_ix: usize, prev_char: char) -> usize {
-    if prev_char.is_whitespace() {
+    if prev_char == ' ' {
         nick_start_ix - prev_char.len_utf8()
     } else {
         nick_start_ix
@@ -63,9 +59,7 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
 
     for (i, c) in input.char_indices() {
         if nick_start_ix.is_none() {
-            if let Some((close, w)) =
-                expected_close_char_if_opens_nickname(c, prev_char.is_whitespace())
-            {
+            if let Some((close, w)) = expected_close_char_if_opens_nickname(c, prev_char == ' ') {
                 nick_start_ix = Some(i);
                 nick_open_char = c;
                 expected_close_char = close;
@@ -77,7 +71,7 @@ pub fn strip_nickname(input: &str) -> Cow<str> {
             let j = i + c.len_utf8();
             if j >= input.len() {
                 return Cow::Borrowed(&input[0..nick_start_ix.unwrap()]);
-            } else if !must_precede_whitespace || starts_with_whitespace(&input[j..]) {
+            } else if !must_precede_whitespace || input[j..].starts_with(' ') {
                 let strip_from = strip_from_index(nick_start_ix.unwrap(), prev_char);
                 return Cow::Owned(input[0..strip_from].to_string() + &strip_nickname(&input[j..]));
             } else {

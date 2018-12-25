@@ -41,7 +41,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::ops::Range;
 use std::slice::Iter;
-use utils::{lowercase_if_alpha, normalize_nfkd_and_hyphens, transliterate};
+use utils::{lowercase_if_alpha, normalize_nfkd_hyphens_spaces, transliterate};
 
 /// Represents a parsed human name.
 ///
@@ -136,7 +136,7 @@ impl Name {
             return None;
         }
 
-        let name = normalize_nfkd_and_hyphens(&name);
+        let name = normalize_nfkd_hyphens_spaces(&name);
         let name = nickname::strip_nickname(&name);
 
         let (words, surname_index, generation_from_suffix) = parse::parse(&*name)?;

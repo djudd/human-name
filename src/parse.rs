@@ -58,7 +58,6 @@ impl<'a> ParseOp<'a> {
         // (not initials, which should only be at the end of the input
         // if they are comma-separated, and we already handled that case)
         if !self.valid() {
-            // TODO See if clones can be avoided
             if let Some(ref postfix) = self.possible_false_postfix {
                 self.words.push(postfix.clone());
             } else if let Some(ref prefix) = self.possible_false_prefix {

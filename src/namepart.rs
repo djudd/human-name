@@ -59,10 +59,7 @@ impl<'a> Iterator for NameParts<'a> {
         }
 
         // Now look for the next whitespace that remains
-        let next_whitespace = self
-            .text
-            .find(char::is_whitespace)
-            .unwrap_or_else(|| self.text.len());
+        let next_whitespace = self.text.find(' ').unwrap_or_else(|| self.text.len());
         let next_inner_period = self.text[0..next_whitespace].find('.');
         let next_boundary = match next_inner_period {
             Some(i) => i + 1,
