@@ -405,7 +405,7 @@ static POSTFIX_TITLES: phf::Set<&'static str> = phf_set! {
 
 #[allow(clippy::if_same_then_else)]
 fn might_be_title_part(word: &NamePart) -> bool {
-    if word.chars < 3 {
+    if word.counts.chars < 3 {
         // Allow any word with 1 or 2 characters as part of a title (but see below)
         true
     } else {
@@ -423,13 +423,12 @@ fn might_be_last_title_part(word: &NamePart) -> bool {
     // Don't allow 1 or 2-character words as the whole or final piece of
     // a title, except a set of very-common two-character title abbreviations,
     // because otherwise we are more likely dealing with initials
-    if word.chars < 3 || word.word.chars().filter(|c| c.is_alphanumeric()).count() < 2 {
-        word.chars == 2
-            && TWO_CHAR_TITLES
-                .iter()
-                .any(|title| title.eq_ignore_ascii_case(word.word))
-    } else {
-        might_be_title_part(word)
+    match word.counts.alpha {
+        0...1 => false,
+        2 if word.counts.chars == 2 => TWO_CHAR_TITLES
+            .iter()
+            .any(|title| title.eq_ignore_ascii_case(word.word)),
+        _ => might_be_title_part(word),
     }
 }
 
@@ -460,9 +459,7 @@ fn is_postfix_title(word: &NamePart, might_be_initials: bool) -> bool {
             let namecased: &str = &*namecased;
             POSTFIX_TITLES.contains(namecased) || namecased.chars().any(char::is_numeric)
         }
-        Category::Initials => {
-            !might_be_initials && word.word.chars().filter(|c| c.is_alphabetic()).count() > 1
-        }
+        Category::Initials => !might_be_initials && word.counts.alpha > 1,
         _ => true,
     }
 }

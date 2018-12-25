@@ -35,6 +35,18 @@ impl<'a> NameParts<'a> {
     }
 }
 
+static AMPERSAND: NamePart = NamePart {
+    word: "&",
+    counts: CharacterCounts {
+        chars: 1,
+        alpha: 0,
+        upper: 0,
+        ascii_alpha: 0,
+        ascii_vowels: 0,
+    },
+    category: Category::Other,
+};
+
 impl<'a> Iterator for NameParts<'a> {
     type Item = NamePart<'a>;
 
@@ -64,11 +76,7 @@ impl<'a> Iterator for NameParts<'a> {
         } else if word == "&" {
             // Special case: only allowed word without alphabetical characters
             self.text = &self.text[next_boundary..];
-            Some(NamePart {
-                word,
-                chars: 1,
-                category: Category::Other,
-            })
+            Some(AMPERSAND.clone())
         } else {
             let counts = categorize_chars(word);
 
@@ -113,7 +121,7 @@ pub enum Category<'a> {
 #[derive(Debug, Clone)]
 pub struct NamePart<'a> {
     pub word: &'a str,
-    pub chars: u8,
+    pub counts: CharacterCounts,
     pub category: Category<'a>,
 }
 
@@ -150,10 +158,7 @@ impl<'a> NamePart<'a> {
         let all_upper = alpha == upper;
 
         let namecased = || {
-            if upper == 1
-                && (all_upper
-                    || (trust_capitalization && word.chars().take(1).all(char::is_uppercase)))
-            {
+            if upper == 1 && (all_upper || (trust_capitalization && starts_with_uppercase(word))) {
                 Cow::Borrowed(word)
             } else {
                 let might_be_particle = location == Location::Middle;
@@ -199,7 +204,7 @@ impl<'a> NamePart<'a> {
 
         NamePart {
             word,
-            chars,
+            counts,
             category,
         }
     }

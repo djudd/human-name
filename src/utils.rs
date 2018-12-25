@@ -146,7 +146,7 @@ pub fn normalize_nfkd_and_hyphens(string: &str) -> Cow<str> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CharacterCounts {
     pub chars: u8,
     pub alpha: u8,
@@ -214,6 +214,10 @@ pub fn starts_with_consonant(word: &str) -> bool {
         Some(c) => is_ascii_alphabetic(c) && !"aeiouAEIOU".contains(c),
         None => false,
     }
+}
+
+pub fn starts_with_uppercase(word: &str) -> bool {
+    word.chars().take(1).all(char::is_uppercase)
 }
 
 pub fn has_sequential_alphas(word: &str) -> bool {

@@ -42,7 +42,10 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::ops::Range;
 use std::slice::Iter;
-use utils::{lowercase_if_alpha, normalize_nfkd_and_hyphens, transliterate, uppercase_if_alpha};
+use utils::{
+    lowercase_if_alpha, normalize_nfkd_and_hyphens, starts_with_uppercase, transliterate,
+    uppercase_if_alpha,
+};
 
 /// Represents a parsed human name.
 ///
@@ -164,10 +167,17 @@ impl Name {
 
                 surname_index_in_names -= 1;
             } else {
-                let namecased: Cow<str> = match &word.category {
-                    Category::Name(namecased) => Cow::Borrowed(namecased),
-                    Category::Initials => Cow::Owned(namecase::namecase(word.word, true)),
-                    _ => unreachable!(),
+                let namecased: Cow<str> = if let Category::Name(ref namecased) = word.category {
+                    // Normal case
+                    Cow::Borrowed(namecased)
+                } else if word.counts.upper == 1
+                    && (word.counts.alpha == 1 || starts_with_uppercase(word.word))
+                {
+                    // We were mistaken about initials, but get lucky with case
+                    Cow::Borrowed(word.word)
+                } else {
+                    // We were mistaken about initials & must re-case
+                    Cow::Owned(namecase::namecase(word.word, true))
                 };
 
                 let prior_len = text.len();

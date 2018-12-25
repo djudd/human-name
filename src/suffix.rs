@@ -82,7 +82,7 @@ pub fn generation_from_suffix(part: &NamePart, might_be_initials: bool) -> Optio
             let without_period = &part.word[0..part.word.len() - 1];
             GENERATION_BY_SUFFIX.get(without_period).map(|i| *i)
         }
-        Category::Initials if part.chars > 1 || !might_be_initials => {
+        Category::Initials if part.counts.chars > 1 || !might_be_initials => {
             GENERATION_BY_SUFFIX.get(part.word).map(|i| *i)
         }
         _ => None,
