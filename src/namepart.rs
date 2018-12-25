@@ -230,7 +230,7 @@ impl<'a> NamePart<'a> {
         F: FnMut(char),
     {
         match self.category {
-            Category::Name(ref namecased) if !namecased.contains('-') => {
+            Category::Name(ref namecased) if !namecased.contains('-') && self.counts.upper > 0 => {
                 f(namecased.chars().nth(0).unwrap())
             }
             Category::Name(ref namecased) => namecased

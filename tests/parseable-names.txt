@@ -155,6 +155,8 @@ pennie von bergen wessels, iii|von Bergen Wessels|Pennie||P||III
 von bergen wessels, pennie III|von Bergen Wessels|Pennie||P||III
 Éleuthère Irénée du Pont|du Pont|Éleuthère|Irénée|E|I|
 Steven Den Beste|Den Beste|Steven||S||
+Elana Carolina de Souza Medeiros|de Souza Medeiros|Elana|Carolina|E|C|
+Medeiros, Elana Carolina de Souza|Medeiros|Elana|Carolina de Souza|E|CDS|
 
 # other prefix and postfix titles
 John Doe, CLU, CFP, LUTC|Doe|John||J||
