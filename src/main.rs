@@ -1,8 +1,8 @@
 #![feature(test)]
 
 extern crate human_name;
-extern crate rustc_serialize;
 extern crate test;
+extern crate rustc_serialize;
 
 use rustc_serialize::json::ToJson;
 use std::env;
@@ -122,8 +122,7 @@ mod bench {
     use std::fs::File;
     use std::io::prelude::*;
     use std::io::BufReader;
-    use test::black_box;
-    use test::Bencher;
+    use test::{Bencher, black_box};
 
     #[bench]
     fn bench_parsing_first_last(b: &mut Bencher) {

@@ -254,6 +254,7 @@ impl<'a> ParseOp<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::{Bencher, black_box};
 
     #[test]
     fn first_last() {
@@ -307,5 +308,40 @@ mod tests {
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
         assert_eq!(Some(3), generation);
+    }
+
+    #[bench]
+    fn parse_simple(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(parse("John Doe").is_some())
+        })
+    }
+
+    #[bench]
+    fn parse_nonascii(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(parse("이용희").is_some())
+        })
+    }
+
+    #[bench]
+    fn parse_comma(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(parse("Doe, John").is_some())
+        })
+    }
+
+    #[bench]
+    fn parse_all_caps(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(parse("JOHN DOE").is_some())
+        })
+    }
+
+    #[bench]
+    fn parse_complex(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(parse("James S. Brown MD, FRCS, FDSRCS").is_some())
+        })
     }
 }

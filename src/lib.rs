@@ -5,6 +5,7 @@
 #![doc(html_root_url = "https://djudd.github.io/human-name/")]
 #![feature(libc)]
 #![feature(plugin)]
+#![feature(test)]
 #![plugin(phf_macros)]
 
 extern crate inlinable_string;
@@ -15,6 +16,7 @@ extern crate smallvec;
 extern crate unicode_normalization;
 extern crate unicode_segmentation;
 extern crate unidecode;
+extern crate test;
 
 #[macro_use]
 mod utils;
@@ -42,6 +44,7 @@ use std::hash::{Hash, Hasher};
 use std::ops::Range;
 use std::slice::Iter;
 use utils::{lowercase_if_alpha, normalize_nfkd_hyphens_spaces, transliterate};
+use namepart::NamePart;
 
 /// Represents a parsed human name.
 ///
@@ -141,11 +144,21 @@ impl Name {
 
         let (words, surname_index, generation_from_suffix) = parse::parse(&*name)?;
 
+        let mut name = Name::initialize_struct(&words, surname_index, generation_from_suffix, name.len());
+
+        let mut s = DefaultHasher::new();
+        name.surname_hash(&mut s);
+        name.hash = s.finish();
+
+        Some(name)
+    }
+
+    fn initialize_struct(words: &[NamePart], surname_index: usize, generation_from_suffix: Option<usize>, name_len: usize) -> Name {
         let last_word = words.len() - 1;
 
         // Add buffer to text for cases where input does not have periods & spaces after initials,
         // which we'll add.
-        let mut text = InlinableString::with_capacity(name.len() + 2 * surname_index);
+        let mut text = InlinableString::with_capacity(name_len + 2 * surname_index);
         let mut initials = InlinableString::with_capacity(surname_index);
 
         let mut surname_index_in_names = surname_index;
@@ -196,7 +209,7 @@ impl Name {
         initials.shrink_to_fit();
         word_indices_in_initials.shrink_to_fit();
 
-        let mut name = Name {
+        Name {
             text,
             word_indices_in_text,
             surname_index: surname_index_in_names,
@@ -204,13 +217,7 @@ impl Name {
             initials,
             word_indices_in_initials,
             hash: 0,
-        };
-
-        let mut s = DefaultHasher::new();
-        name.surname_hash(&mut s);
-        name.hash = s.finish();
-
-        Some(name)
+        }
     }
 
     /// First initial (always present)
@@ -512,5 +519,38 @@ impl<'a> DoubleEndedIterator for Words<'a> {
         self.indices
             .next_back()
             .map(|range| &self.text[range.clone()])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test::{Bencher, black_box};
+
+    #[bench]
+    fn initialize_struct_initial_surname(b: &mut Bencher) {
+        let name = "J. Doe";
+        let (words, surname_index, generation) = parse::parse(&*name).unwrap();
+        b.iter(|| {
+            black_box(Name::initialize_struct(&words, surname_index, generation, name.len()).byte_len())
+        })
+    }
+
+    #[bench]
+    fn initialize_struct_first_last(b: &mut Bencher) {
+        let name = "John Doe";
+        let (words, surname_index, generation) = parse::parse(&*name).unwrap();
+        b.iter(|| {
+            black_box(Name::initialize_struct(&words, surname_index, generation, name.len()).byte_len())
+        })
+    }
+
+    #[bench]
+    fn initialize_struct_complex(b: &mut Bencher) {
+        let name = "John Allen Q.R. de la MacDonald Jr.";
+        let (words, surname_index, generation) = parse::parse(&*name).unwrap();
+        b.iter(|| {
+            black_box(Name::initialize_struct(&words, surname_index, generation, name.len()).byte_len())
+        })
     }
 }

@@ -260,6 +260,7 @@ fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::{Bencher, black_box};
 
     #[test]
     fn nick_and_name() {
@@ -348,6 +349,20 @@ mod tests {
     #[test]
     fn unspaced_quotes() {
         assert_eq!("Ro'bert R'oberts", strip_nickname("Ro'bert R'oberts"));
+    }
+
+    #[bench]
+    fn strip_nick_no_nick(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(strip_nickname("James T. Kirk").len());
+        })
+    }
+
+    #[bench]
+    fn strip_nick_with_nick(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(strip_nickname("James T. 'Jimmy' Kirk").len());
+        })
     }
 }
 

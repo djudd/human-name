@@ -302,6 +302,7 @@ macro_rules! eq_or_ends_with {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::{Bencher, black_box};
 
     #[test]
     fn sequential_alphas() {
@@ -321,5 +322,19 @@ mod tests {
         assert_eq!("A", capitalize_word("a"));
         assert_eq!("Aa", capitalize_word("aa"));
         assert_eq!("Aa", capitalize_word("AA"));
+    }
+
+    #[bench]
+    fn normalize_no_change(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(normalize_nfkd_hyphens_spaces("James S. Brown MD, FRCS").len())
+        })
+    }
+
+    #[bench]
+    fn normalize_needs_fix(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(normalize_nfkd_hyphens_spaces("Björn O'Malley-Muñoz").len())
+        })
     }
 }

@@ -271,6 +271,7 @@ impl<'a> NamePart<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::{Bencher, black_box};
 
     #[test]
     fn one_word() {
@@ -294,6 +295,34 @@ mod tests {
             0,
             NamePart::all_from_text(" ... 23 ", true, Location::Start).count()
         );
+    }
+
+    #[bench]
+    fn all_from_text_simple(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(NamePart::all_from_text("John Doe", true, Location::Start).count())
+        })
+    }
+
+    #[bench]
+    fn all_from_text_initials(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(NamePart::all_from_text("J. Doe", true, Location::Start).count())
+        })
+    }
+
+    #[bench]
+    fn all_from_text_nonascii(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(NamePart::all_from_text("이용희", false, Location::Start).count())
+        })
+    }
+
+    #[bench]
+    fn all_from_text_all_caps(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(NamePart::all_from_text("JOHN DOE", false, Location::Start).count())
+        })
     }
 
     #[test]
