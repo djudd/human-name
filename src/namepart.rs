@@ -36,7 +36,7 @@ impl<'a> NameParts<'a> {
     }
 
     fn at_end(&self) -> bool {
-        !has_alpha(self.text)
+        self.text.chars().find(|c| c.is_alphabetic()).is_none()
     }
 }
 
@@ -90,7 +90,7 @@ impl<'a> Iterator for NameParts<'a> {
                 // For non-ASCII, we defer to the unicode_segmentation library
                 let (next_word_boundary, subword) = word
                     .split_word_bound_indices()
-                    .find(|&(_, subword)| has_alpha(subword))
+                    .find(|&(_, subword)| subword.chars().any(char::is_alphabetic))
                     .unwrap();
                 self.text = &self.text[next_word_boundary + subword.len()..];
                 Some(NamePart::from_word(

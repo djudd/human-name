@@ -1,9 +1,9 @@
 use super::namepart::{Category, NamePart};
 use super::suffix;
-use super::utils::has_number;
 use phf;
-use regex::Regex;
 use std::cmp;
+
+static TWO_CHAR_TITLES: [&'static str; 4] = ["mr", "ms", "sr", "dr"];
 
 static PREFIX_TITLE_PARTS: phf::Set<&'static str> = phf_set! {
     "Aunt",
@@ -403,6 +403,7 @@ static POSTFIX_TITLES: phf::Set<&'static str> = phf_set! {
     "Al",
 };
 
+#[allow(clippy::if_same_then_else)]
 fn might_be_title_part(word: &NamePart) -> bool {
     if word.counts.chars < 3 {
         // Allow any word with 1 or 2 characters as part of a title (but see below)
@@ -411,7 +412,7 @@ fn might_be_title_part(word: &NamePart) -> bool {
         match &word.category {
             Category::Name(ref namecased) => {
                 let namecased: &str = &*namecased;
-                PREFIX_TITLE_PARTS.contains(namecased) || has_number(namecased)
+                PREFIX_TITLE_PARTS.contains(namecased) || namecased.chars().any(char::is_numeric)
             }
             _ => true,
         }
@@ -422,12 +423,11 @@ fn might_be_last_title_part(word: &NamePart) -> bool {
     // Don't allow 1 or 2-character words as the whole or final piece of
     // a title, except a set of very-common two-character title abbreviations,
     // because otherwise we are more likely dealing with initials
-    lazy_static! {
-        static ref TWO_CHAR_TITLES: Regex = Regex::new(r"(?i)^mr|ms|sr|dr$").unwrap();
-    }
     match word.counts.alpha {
         0...1 => false,
-        2 if word.counts.chars == 2 => TWO_CHAR_TITLES.is_match(word.word),
+        2 if word.counts.chars == 2 => TWO_CHAR_TITLES
+            .iter()
+            .any(|title| title.eq_ignore_ascii_case(word.word)),
         _ => might_be_title_part(word),
     }
 }
@@ -457,7 +457,7 @@ fn is_postfix_title(word: &NamePart, might_be_initials: bool) -> bool {
     match word.category {
         Category::Name(ref namecased) => {
             let namecased: &str = &*namecased;
-            POSTFIX_TITLES.contains(namecased) || has_number(namecased)
+            POSTFIX_TITLES.contains(namecased) || namecased.chars().any(char::is_numeric)
         }
         Category::Initials => !might_be_initials && word.counts.alpha > 1,
         _ => true,

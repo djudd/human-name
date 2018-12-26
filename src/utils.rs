@@ -1,4 +1,3 @@
-use regex::Regex;
 use std::borrow::Cow;
 use std::str::Chars;
 use unicode_normalization::char::{canonical_combining_class, decompose_compatible};
@@ -247,36 +246,36 @@ pub fn categorize_chars(word: &str) -> CharacterCounts {
 }
 
 pub fn starts_with_consonant(word: &str) -> bool {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"^[a-zA-Z--aeiouAEIOU]").unwrap();
+    match word.chars().nth(0) {
+        Some(c) => is_ascii_alphabetic(c) && !"aeiouAEIOU".contains(c),
+        None => false,
     }
-    RE.is_match(word)
 }
 
-#[inline]
 pub fn starts_with_uppercase(word: &str) -> bool {
-    word.chars().nth(0).filter(|c| c.is_uppercase()).is_some()
+    word.chars().take(1).all(char::is_uppercase)
 }
 
 pub fn combining_chars(word: &str) -> usize {
     word.chars().filter(|c| is_combining(*c)).count()
 }
 
-#[inline]
-pub fn has_number(word: &str) -> bool {
-    word.chars().any(char::is_numeric)
-}
-
-#[inline]
-pub fn has_alpha(word: &str) -> bool {
-    word.chars().any(char::is_alphabetic)
-}
-
 pub fn has_sequential_alphas(word: &str) -> bool {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"\p{Alphabetic}{2,}").unwrap();
+    let mut iter = word.chars().peekable();
+    while let Some(c) = iter.next() {
+        match iter.peek() {
+            Some(nc) => {
+                if c.is_alphabetic() && nc.is_alphabetic() {
+                    return true;
+                }
+            }
+            None => {
+                break;
+            }
+        }
     }
-    RE.is_match(word)
+
+    false
 }
 
 #[macro_export]
