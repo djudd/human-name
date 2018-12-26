@@ -1,115 +1,16 @@
 use super::namecase;
+use super::segment::{Segment, Segments};
 use super::surname;
 use super::utils::*;
 use phf;
 use std::borrow::Cow;
-use unicode_segmentation::UnicodeSegmentation;
+use std::iter::Peekable;
 
-// If Start and End overlap, use End
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub enum Location {
     Start,
     Middle,
     End,
-}
-
-pub struct NameParts<'a> {
-    text: &'a str,
-    trust_capitalization: bool,
-    location: Location,
-}
-
-impl<'a> NameParts<'a> {
-    fn next_location(&mut self) -> Location {
-        if self.location == Location::Start {
-            self.location = if self.at_end() {
-                Location::End
-            } else {
-                Location::Middle
-            };
-            Location::Start
-        } else if self.at_end() {
-            Location::End
-        } else {
-            Location::Middle
-        }
-    }
-
-    fn at_end(&self) -> bool {
-        self.text.chars().find(|c| c.is_alphabetic()).is_none()
-    }
-}
-
-static AMPERSAND: NamePart = NamePart {
-    word: "&",
-    counts: CharacterCounts {
-        chars: 1,
-        alpha: 0,
-        upper: 0,
-        ascii_alpha: 0,
-        ascii_vowels: 0,
-    },
-    category: Category::Other,
-};
-
-impl<'a> Iterator for NameParts<'a> {
-    type Item = NamePart<'a>;
-
-    fn next(&mut self) -> Option<NamePart<'a>> {
-        // Skip any leading whitespace
-        self.text = self.text.trim_start();
-
-        if self.text.is_empty() {
-            return None;
-        }
-
-        // Now look for the next whitespace that remains
-        let next_whitespace = self.text.find(' ').unwrap_or_else(|| self.text.len());
-        let next_inner_period = self.text[0..next_whitespace].find('.');
-        let next_boundary = match next_inner_period {
-            Some(i) => i + 1,
-            None => next_whitespace,
-        };
-
-        let word = &self.text[0..next_boundary];
-        if word.len() > u8::max_value() as usize {
-            self.text = &self.text[next_boundary..];
-            self.next()
-        } else if word == "&" {
-            // Special case: only allowed word without alphabetical characters
-            self.text = &self.text[next_boundary..];
-            Some(AMPERSAND.clone())
-        } else {
-            let counts = categorize_chars(word);
-
-            if counts.alpha == 0 {
-                // Not a word, skip it by recursing
-                self.text = &self.text[next_boundary..];
-                self.next()
-            } else if counts.ascii_alpha == 0 {
-                // For non-ASCII, we defer to the unicode_segmentation library
-                let (next_word_boundary, subword) = word
-                    .split_word_bound_indices()
-                    .find(|&(_, subword)| subword.chars().any(char::is_alphabetic))
-                    .unwrap();
-                self.text = &self.text[next_word_boundary + subword.len()..];
-                Some(NamePart::from_word(
-                    subword,
-                    self.trust_capitalization,
-                    self.next_location(),
-                ))
-            } else {
-                // For ASCII, we split on whitespace and periods only
-                self.text = &self.text[next_boundary..];
-                Some(NamePart::from_word_and_counts(
-                    word,
-                    counts,
-                    self.trust_capitalization,
-                    self.next_location(),
-                ))
-            }
-        }
-    }
 }
 
 #[derive(Eq, PartialEq, Debug, Clone)]
@@ -127,12 +28,41 @@ pub struct NamePart<'a> {
     pub category: Category<'a>,
 }
 
+pub struct NameParts<'a> {
+    segments: Peekable<Segments<'a>>,
+    location: Location,
+    trust_capitalization: bool,
+}
+
+impl<'a> Iterator for NameParts<'a> {
+    type Item = NamePart<'a>;
+
+    fn next(&mut self) -> Option<NamePart<'a>> {
+        self.segments.next().map(|Segment { word, counts }| {
+            let location = if self.location == Location::Start {
+                self.location = Location::Middle;
+                Location::Start
+            } else if self.segments.peek().is_none() {
+                Location::End
+            } else {
+                Location::Middle
+            };
+
+            NamePart::from_word_and_counts(word, counts, self.trust_capitalization, location)
+        })
+    }
+}
+
 impl<'a> NamePart<'a> {
-    pub fn all_from_text(text: &str, trust_capitalization: bool, location: Location) -> NameParts {
+    pub fn all_from_text(
+        text: &'a str,
+        trust_capitalization: bool,
+        location: Location,
+    ) -> NameParts<'a> {
         NameParts {
-            text,
-            trust_capitalization,
+            segments: Segments::from_text(text).peekable(),
             location,
+            trust_capitalization,
         }
     }
 
@@ -155,7 +85,7 @@ impl<'a> NamePart<'a> {
             ascii_vowels,
         } = counts;
 
-        debug_assert!(alpha > 0);
+        debug_assert!(alpha > 0 || word == "&");
 
         let all_upper = alpha == upper;
 
@@ -175,8 +105,10 @@ impl<'a> NamePart<'a> {
         let category = if chars == 1 {
             if ascii_alpha == chars {
                 Category::Initials
-            } else {
+            } else if alpha > 0 {
                 Category::Name(namecased())
+            } else {
+                Category::Other
             }
         } else if word.ends_with('.') {
             if alpha >= 2 && has_sequential_alphas(word) {

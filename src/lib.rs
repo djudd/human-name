@@ -25,6 +25,7 @@ mod namecase;
 mod namepart;
 mod nickname;
 mod parse;
+mod segment;
 mod serialization;
 mod suffix;
 mod surname;
