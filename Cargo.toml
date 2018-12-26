@@ -18,6 +18,8 @@ phf_macros = "0.7"
 libc = "0.2"
 smallvec = "0.6"
 inlinable_string = "0.1"
+regex = "1"
+lazy_static = "1.2"
 
 [features]
 default = ["name_eq_hash"]

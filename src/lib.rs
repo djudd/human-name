@@ -10,7 +10,10 @@
 
 extern crate inlinable_string;
 extern crate itertools;
+#[macro_use]
+extern crate lazy_static;
 extern crate phf;
+extern crate regex;
 extern crate rustc_serialize;
 extern crate smallvec;
 extern crate test;
