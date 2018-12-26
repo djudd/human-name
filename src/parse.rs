@@ -96,17 +96,16 @@ impl<'a> ParseOp<'a> {
             self.surname_index = surname::find_surname_index(&self.words[1..]) + 1;
         }
 
-        debug_assert!(self
-            .words
-            .iter()
-            .all(|w| w.is_namelike() || w.is_initials()));
-
         // Check the plausibility of what we've found
         self.valid()
     }
 
     fn valid(&self) -> bool {
         self.words.len() >= 2
+            && self
+                .words
+                .iter()
+                .all(|w| w.is_namelike() || w.is_initials())
             && self.words[self.surname_index..]
                 .iter()
                 .any(|w| w.is_namelike())
@@ -137,14 +136,23 @@ impl<'a> ParseOp<'a> {
 
         // Check for title as prefix (e.g. "Dr. John Smith" or "Right Hon.
         // John Smith")
-        let prefix_title_len = title::find_prefix_len(&self.words);
+        let prefix_title_len = if any_after || self.words.len() > 2 {
+            title::find_prefix_len(&self.words)
+        } else {
+            0
+        };
         for i in (0..prefix_title_len).rev() {
             let word = self.words.remove(i);
             self.found_prefix(word);
         }
 
         // Strip non-comma-separated titles & suffixes (e.g. "John Smith Jr.")
-        let first_postfix_index = title::find_postfix_index(&self.words[1..], false) + 1;
+        let first_postfix_index =
+            if any_after || self.words.len() + self.possible_false_prefix.iter().count() > 2 {
+                title::find_postfix_index(&self.words[1..], false) + 1
+            } else {
+                self.words.len()
+            };
         if first_postfix_index < self.words.len() {
             let postfix = self.words.swap_remove(first_postfix_index);
             self.found_suffix_or_postfix(postfix, false);
