@@ -10,20 +10,31 @@ const ASCII_UNUSUAL_WHITESPACE: &[char] = &['\t', '\r', '\n'];
 pub fn is_mixed_case(s: &str) -> bool {
     let mut has_lowercase = false;
     let mut has_uppercase = false;
+    let mut iter = s.chars();
 
-    for c in s.chars() {
-        if c.is_uppercase() {
-            has_uppercase = true;
-        };
-        if c.is_lowercase() {
-            has_lowercase = true;
-        };
-        if has_lowercase && has_uppercase {
-            return true;
-        };
+    loop {
+        match iter.next() {
+            Some(c) => {
+                if c.is_uppercase() {
+                    has_uppercase = true;
+                    break;
+                } else if c.is_lowercase() {
+                    has_lowercase = true;
+                    break;
+                }
+            }
+            None => {
+                return false;
+            }
+        }
     }
 
-    false
+    if has_lowercase {
+        iter.any(|c| c.is_uppercase())
+    } else {
+        debug_assert!(has_uppercase);
+        iter.any(|c| c.is_lowercase())
+    }
 }
 
 #[inline]
@@ -79,10 +90,9 @@ pub fn to_ascii_letter(c: char) -> Option<char> {
     debug_assert!(c.is_uppercase(), c.to_string());
     match c {
         'A'...'Z' => Some(c),
-        _ => match transliterate(c).next() {
-            Some(c) => c.to_uppercase().next(),
-            None => None,
-        },
+        _ => transliterate(c)
+            .next()
+            .and_then(|c| c.to_uppercase().next()),
     }
 }
 
@@ -92,19 +102,24 @@ pub fn to_ascii(s: &str) -> Cow<str> {
     } else {
         let mut capitalized_any = false;
 
+        // When transliterating, allow the first character to be either
+        // capitalized or lowercase, but otherwise enforce lowercase.
+        // Also drop any non-alphabetic characters.
         Cow::Owned(
             s.chars()
                 .flat_map(transliterate)
                 .filter_map(|c| {
-                    if !c.is_alphabetic() {
-                        None
-                    } else if c.is_uppercase() && !capitalized_any {
-                        capitalized_any = true;
-                        Some(c)
-                    } else if c.is_lowercase() && capitalized_any {
+                    if c.is_uppercase() {
+                        if !capitalized_any {
+                            capitalized_any = true;
+                            Some(c)
+                        } else {
+                            c.to_lowercase().next()
+                        }
+                    } else if c.is_alphabetic() {
                         Some(c)
                     } else {
-                        c.to_lowercase().next()
+                        None
                     }
                 })
                 .collect(),
@@ -146,6 +161,7 @@ pub fn capitalize_word(word: &str, simple: bool) -> String {
 // Ideally we'd use the unicode standard `quick_check` algorithm, but Rust
 // doesn't expose that for compatibility forms, and this is simpler to implement,
 // though it will have more false negatives.
+#[inline]
 fn stable_nfkd(c: char) -> bool {
     if is_combining(c) {
         false
@@ -246,14 +262,14 @@ pub fn categorize_chars(word: &str) -> CharacterCounts {
 }
 
 pub fn starts_with_consonant(word: &str) -> bool {
-    match word.chars().nth(0) {
-        Some(c) => is_ascii_alphabetic(c) && !"aeiouAEIOU".contains(c),
-        None => false,
-    }
+    word.chars()
+        .nth(0)
+        .filter(|c| is_ascii_alphabetic(*c) && !"aeiouAEIOU".contains(*c))
+        .is_some()
 }
 
 pub fn starts_with_uppercase(word: &str) -> bool {
-    word.chars().take(1).all(char::is_uppercase)
+    word.chars().nth(0).filter(|c| c.is_uppercase()).is_some()
 }
 
 pub fn combining_chars(word: &str) -> usize {
@@ -261,17 +277,13 @@ pub fn combining_chars(word: &str) -> usize {
 }
 
 pub fn has_sequential_alphas(word: &str) -> bool {
-    let mut iter = word.chars().peekable();
-    while let Some(c) = iter.next() {
-        match iter.peek() {
-            Some(nc) => {
-                if c.is_alphabetic() && nc.is_alphabetic() {
-                    return true;
-                }
-            }
-            None => {
-                break;
-            }
+    let mut prev_alpha = false;
+    for c in word.chars() {
+        let alpha = c.is_alphabetic();
+        if prev_alpha && alpha {
+            return true;
+        } else {
+            prev_alpha = alpha;
         }
     }
 
