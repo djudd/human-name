@@ -35,22 +35,26 @@ impl<'a> ParseOp<'a> {
     fn run(&mut self, name: &'a str) -> bool {
         // Separate comma-separated titles and suffixes, then flip remaining words
         // around remaining comma, if any
-        for part in name.split(',') {
-            if self.words.is_empty() {
-                // We're in the surname part (if the format is "Smith, John"),
-                // or the only actual name part (if the format is "John Smith,
-                // esq." or just "John Smith")
-                self.handle_before_comma(part, name.contains(','));
-            } else if self.surname_index == 0 {
-                // We already processed one comma-separated part, but we think
-                // it was just the surname, so this might be the given name or
-                // initials
-                self.handle_after_comma(part);
-            } else {
-                // We already found the full name, so this is a comma-separated
-                // postfix title or suffix
-                self.handle_after_surname(part);
+        if name.contains(',') {
+            for part in name.split(',') {
+                if self.words.is_empty() {
+                    // We're in the surname part (if the format is "Smith, John"),
+                    // or the only actual name part (if the format is "John Smith,
+                    // esq." or just "John Smith")
+                    self.handle_before_comma(part, true);
+                } else if self.surname_index == 0 {
+                    // We already processed one comma-separated part, but we think
+                    // it was just the surname, so this might be the given name or
+                    // initials
+                    self.handle_after_comma(part);
+                } else {
+                    // We already found the full name, so this is a comma-separated
+                    // postfix title or suffix
+                    self.handle_after_surname(part);
+                }
             }
+        } else {
+            self.handle_before_comma(name, false);
         }
 
         // If there are two or fewer words, e.g. "JOHN MA", we treat
@@ -66,7 +70,7 @@ impl<'a> ParseOp<'a> {
         }
 
         // Anything trailing that looks like initials is probably a stray postfix
-        while self.words.last().iter().any(|w| !w.is_namelike()) {
+        while self.words.last().filter(|w| !w.is_namelike()).is_some() {
             let removed = self.words.pop().unwrap();
 
             // If we guessed the surname previously, our guess is no longer valid
@@ -147,7 +151,7 @@ impl<'a> ParseOp<'a> {
             self.words.truncate(first_postfix_index);
         }
 
-        if prefix_title_len > 0 {
+        if prefix_title_len > 0 || !any_after {
             // Finding a prefix title means the next word is a first name or
             // initial (we don't support "Dr. Smith, John")
             self.surname_index = surname::find_surname_index(&self.words[1..]) + 1;
