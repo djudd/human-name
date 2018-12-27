@@ -104,7 +104,7 @@ impl Name {
     fn given_names_or_initials(&self) -> GivenNamesOrInitials {
         GivenNamesOrInitials {
             initials: self.initials.chars().enumerate(),
-            known_names: self.word_iter(0..self.surname_index),
+            known_names: self.given_iter(),
             known_name_indices: self.word_indices_in_initials.iter().peekable(),
         }
     }

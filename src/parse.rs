@@ -9,13 +9,15 @@ use smallvec::SmallVec;
 struct ParseOp<'a> {
     words: SmallVec<[NamePart<'a>; 7]>,
     surname_index: usize,
-    generation_from_suffix: Option<usize>,
+    generation_from_suffix: Option<u8>,
     possible_false_prefix: Option<NamePart<'a>>,
     possible_false_postfix: Option<NamePart<'a>>,
     use_capitalization: bool,
 }
 
-pub fn parse(name: &str) -> Option<(SmallVec<[NamePart; 7]>, usize, Option<usize>)> {
+pub const MAX_WORDS: usize = u8::max_value() as usize;
+
+pub fn parse(name: &str) -> Option<(SmallVec<[NamePart; 7]>, usize, Option<u8>)> {
     let mut op = ParseOp {
         words: SmallVec::new(),
         surname_index: 0,
@@ -107,6 +109,7 @@ impl<'a> ParseOp<'a> {
 
     fn valid(&self) -> bool {
         self.words.len() >= 2
+            && self.words.len() <= MAX_WORDS
             && self
                 .words
                 .iter()

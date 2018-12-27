@@ -1,7 +1,7 @@
 use super::utils::*;
 use unicode_segmentation::UnicodeSegmentation;
 
-const MAX_LEN: usize = u8::max_value() as usize;
+pub const MAX_LEN: usize = u8::max_value() as usize;
 
 #[derive(Debug, Clone)]
 pub struct Segment<'a> {

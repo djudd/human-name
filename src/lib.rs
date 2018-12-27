@@ -47,6 +47,10 @@ use std::ops::Range;
 use std::slice::Iter;
 use utils::{lowercase_if_alpha, normalize_nfkd_hyphens_spaces, transliterate};
 
+pub const MAX_NAME_LEN: usize = 1024;
+pub const MAX_SEGMENT_LEN: usize = segment::MAX_LEN;
+pub const MAX_SEGMENTS: usize = parse::MAX_WORDS;
+
 /// Represents a parsed human name.
 ///
 /// Guaranteed to contain (what we think is) a surname, a first initial, and
@@ -69,7 +73,7 @@ pub struct Name {
     text: SmallString<[u8; 36]>,
     word_indices_in_text: SmallVec<[Range<usize>; 5]>,
     surname_index: usize,
-    generation_from_suffix: Option<usize>,
+    generation_from_suffix: Option<u8>,
     initials: SmallString<[u8; 8]>,
     word_indices_in_initials: SmallVec<[Range<usize>; 3]>,
     pub hash: u64,
@@ -136,7 +140,7 @@ impl Name {
     /// for canonicalizing names. The goal here is to do the best we can without
     /// large statistical models.
     pub fn parse(name: &str) -> Option<Name> {
-        if name.len() >= 1024 {
+        if name.len() >= MAX_NAME_LEN {
             return None;
         }
 
@@ -158,7 +162,7 @@ impl Name {
     fn initialize_struct(
         words: &[NamePart],
         surname_index: usize,
-        generation_from_suffix: Option<usize>,
+        generation_from_suffix: Option<u8>,
         name_len: usize,
     ) -> Name {
         let last_word = words.len() - 1;
@@ -242,7 +246,7 @@ impl Name {
     /// assert_eq!(None, name.given_name());
     /// ```
     pub fn given_name(&self) -> Option<&str> {
-        self.word_iter(0..self.surname_index).nth(0)
+        self.given_iter().nth(0)
     }
 
     /// Does this person use a middle name in place of their given name?
@@ -495,8 +499,12 @@ impl Name {
         self.word_indices_in_text.len() - self.surname_index
     }
 
-    fn surname_iter(&self) -> impl DoubleEndedIterator<Item = &str> {
+    fn surname_iter(&self) -> Words {
         self.word_iter(self.surname_index..self.word_indices_in_text.len())
+    }
+
+    fn given_iter(&self) -> Words {
+        self.word_iter(0..self.surname_index)
     }
 
     fn word_iter(&self, range: Range<usize>) -> Words {

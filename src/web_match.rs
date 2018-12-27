@@ -178,7 +178,7 @@ impl Name {
         let given_names: Option<Cow<str>> = if self.surname_index == 1 {
             self.given_name().map(|w| Cow::Borrowed(w))
         } else if self.surname_index > 0 {
-            Some(Cow::Owned(self.word_iter(0..self.surname_index).join(" ")))
+            Some(Cow::Owned(self.given_iter().join(" ")))
         } else {
             None
         };

@@ -1,7 +1,7 @@
 use namepart::{Category, NamePart};
 use phf;
 
-static GENERATION_BY_SUFFIX: phf::Map<&'static str, usize> = phf_map! {
+static GENERATION_BY_SUFFIX: phf::Map<&'static str, u8> = phf_map! {
     // Namecased
     "1" => 1,
     "2" => 2,
@@ -72,7 +72,7 @@ static GENERATION_BY_SUFFIX: phf::Map<&'static str, usize> = phf_map! {
 
 static SUFFIX_BY_GENERATION: [&'static str; 5] = ["Sr.", "Jr.", "III", "IV", "V"];
 
-pub fn generation_from_suffix(part: &NamePart, might_be_initials: bool) -> Option<usize> {
+pub fn generation_from_suffix(part: &NamePart, might_be_initials: bool) -> Option<u8> {
     match part.category {
         Category::Name(ref namecased) => {
             let namecased: &str = &*namecased;
@@ -89,8 +89,8 @@ pub fn generation_from_suffix(part: &NamePart, might_be_initials: bool) -> Optio
     }
 }
 
-pub fn display_generational_suffix(generation: usize) -> &'static str {
-    SUFFIX_BY_GENERATION[generation - 1]
+pub fn display_generational_suffix(generation: u8) -> &'static str {
+    SUFFIX_BY_GENERATION[generation as usize - 1]
 }
 
 #[cfg(test)]
