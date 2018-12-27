@@ -170,7 +170,7 @@ impl<'a> NamePart<'a> {
             Category::Name(ref namecased) => namecased
                 .split('-')
                 .filter_map(|w| w.chars().find(|c| c.is_alphabetic()))
-                .flat_map(|c| c.to_uppercase())
+                .filter_map(|c| c.to_uppercase().next())
                 .for_each(f),
             Category::Initials if self.counts.upper == self.counts.chars => {
                 self.word.chars().for_each(f)
