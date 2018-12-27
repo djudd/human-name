@@ -38,8 +38,8 @@ pub mod external;
 mod eq_hash;
 
 use namepart::NamePart;
-use smallvec::SmallVec;
 use smallstr::SmallString;
+use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
@@ -171,10 +171,8 @@ impl Name {
         let mut initials = SmallString::with_capacity(surname_index);
 
         let mut surname_index_in_names = surname_index;
-        let mut word_indices_in_initials: SmallVec<[Range<usize>; 3]> =
-            SmallVec::with_capacity(surname_index);
-        let mut word_indices_in_text: SmallVec<[Range<usize>; 5]> =
-            SmallVec::with_capacity(words.len());
+        let mut word_indices_in_initials = SmallVec::with_capacity(surname_index);
+        let mut word_indices_in_text = SmallVec::with_capacity(words.len());
 
         for (i, word) in words.into_iter().enumerate() {
             if word.is_initials() && i < surname_index {
