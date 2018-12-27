@@ -8,10 +8,10 @@
 #![feature(test)]
 #![plugin(phf_macros)]
 
-extern crate inlinable_string;
 extern crate itertools;
 extern crate phf;
 extern crate rustc_serialize;
+extern crate smallstr;
 extern crate smallvec;
 extern crate test;
 extern crate unicode_normalization;
@@ -37,9 +37,9 @@ pub mod external;
 #[cfg(feature = "name_eq_hash")]
 mod eq_hash;
 
-use inlinable_string::{InlinableString, StringExt};
 use namepart::NamePart;
 use smallvec::SmallVec;
+use smallstr::SmallString;
 use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
@@ -66,11 +66,11 @@ use utils::{lowercase_if_alpha, normalize_nfkd_hyphens_spaces, transliterate};
 /// the same person (see docs on `consistent_with` for details).
 #[derive(Clone, Debug)]
 pub struct Name {
-    text: InlinableString,
+    text: SmallString<[u8; 36]>,
     word_indices_in_text: SmallVec<[Range<usize>; 5]>,
     surname_index: usize,
     generation_from_suffix: Option<usize>,
-    initials: InlinableString,
+    initials: SmallString<[u8; 8]>,
     word_indices_in_initials: SmallVec<[Range<usize>; 3]>,
     pub hash: u64,
 }
@@ -163,10 +163,8 @@ impl Name {
     ) -> Name {
         let last_word = words.len() - 1;
 
-        // Add buffer to text for cases where input does not have periods & spaces after initials,
-        // which we'll add.
-        let mut text = InlinableString::with_capacity(name_len + 2 * surname_index);
-        let mut initials = InlinableString::with_capacity(surname_index);
+        let mut text = SmallString::with_capacity(name_len);
+        let mut initials = SmallString::with_capacity(surname_index);
 
         let mut surname_index_in_names = surname_index;
         let mut word_indices_in_initials: SmallVec<[Range<usize>; 3]> =
