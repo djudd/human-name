@@ -172,6 +172,7 @@ fn stable_nfkd(c: char) -> bool {
     }
 }
 
+#[allow(clippy::if_same_then_else)]
 pub fn normalize_nfkd_hyphens_spaces(string: &str) -> Cow<str> {
     if string.is_ascii() && !string.contains(ASCII_UNUSUAL_WHITESPACE) {
         Cow::Borrowed(string)

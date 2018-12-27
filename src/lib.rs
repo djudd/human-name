@@ -174,7 +174,7 @@ impl Name {
         let mut word_indices_in_initials = SmallVec::with_capacity(surname_index);
         let mut word_indices_in_text = SmallVec::with_capacity(words.len());
 
-        for (i, word) in words.into_iter().enumerate() {
+        for (i, word) in words.iter().enumerate() {
             if word.is_initials() && i < surname_index {
                 word.with_initials(|c| {
                     text.push(c);

@@ -76,14 +76,14 @@ pub fn generation_from_suffix(part: &NamePart, might_be_initials: bool) -> Optio
     match part.category {
         Category::Name(ref namecased) => {
             let namecased: &str = &*namecased;
-            GENERATION_BY_SUFFIX.get(namecased).map(|i| *i)
+            GENERATION_BY_SUFFIX.get(namecased).cloned()
         }
         Category::Abbreviation => {
             let without_period = &part.word[0..part.word.len() - 1];
-            GENERATION_BY_SUFFIX.get(without_period).map(|i| *i)
+            GENERATION_BY_SUFFIX.get(without_period).cloned()
         }
         Category::Initials if part.counts.chars > 1 || !might_be_initials => {
-            GENERATION_BY_SUFFIX.get(part.word).map(|i| *i)
+            GENERATION_BY_SUFFIX.get(part.word).cloned()
         }
         _ => None,
     }
