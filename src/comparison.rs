@@ -521,4 +521,8 @@ impl<'a> Iterator for GivenNamesOrInitials<'a> {
                 _ => NameWordOrInitial::Initial(initial),
             })
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.initials.size_hint()
+    }
 }

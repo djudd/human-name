@@ -518,6 +518,10 @@ impl<'a> Iterator for Words<'a> {
     fn next(&mut self) -> Option<&'a str> {
         self.indices.next().map(|range| &self.text[range.clone()])
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.indices.size_hint()
+    }
 }
 
 impl<'a> DoubleEndedIterator for Words<'a> {
