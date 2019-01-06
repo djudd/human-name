@@ -1,6 +1,6 @@
 [package]
 name = "human_name"
-version = "0.8.0"
+version = "0.8.1"
 authors = ["David Judd <david.a.judd@gmail.com>"]
 description = "A library for parsing and comparing human names"
 license = "Apache-2.0"
@@ -8,7 +8,6 @@ repository = "https://github.com/djudd/human-name"
 documentation = "http://djudd.github.io/human-name"
 
 [dependencies]
-itertools = "0.8"
 unicode-segmentation = "1.2"
 unicode-normalization = "0.1"
 unidecode = "0.3"

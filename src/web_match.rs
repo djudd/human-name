@@ -1,6 +1,5 @@
 use super::utils::*;
 use super::Name;
-use itertools::Itertools;
 use std::borrow::Cow;
 
 impl Name {
@@ -34,10 +33,7 @@ impl Name {
 
         // Special case: Nice punctuation lets us actually parse a name directly
         if string.chars().any(is_nonalphanumeric) {
-            let subbed = string
-                .split(is_nonalphanumeric)
-                .filter(|p| !p.is_empty())
-                .join(" ");
+            let subbed = join(string.split(is_nonalphanumeric).filter(|p| !p.is_empty()));
 
             if let Some(name) = Name::parse(&subbed) {
                 if name.consistent_with(self) {
@@ -178,7 +174,7 @@ impl Name {
         let given_names: Option<Cow<str>> = if self.surname_index == 1 {
             self.given_name().map(|w| Cow::Borrowed(w))
         } else if self.surname_index > 0 {
-            Some(Cow::Owned(self.given_iter().join(" ")))
+            Some(join(self.given_iter()))
         } else {
             None
         };

@@ -8,7 +8,6 @@
 #![feature(test)]
 #![plugin(phf_macros)]
 
-extern crate itertools;
 extern crate phf;
 extern crate rustc_serialize;
 extern crate smallstr;
@@ -45,7 +44,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::ops::Range;
 use std::slice::Iter;
-use utils::{lowercase_if_alpha, normalize_nfkd_hyphens_spaces, transliterate};
+use utils::{lowercase_if_alpha, normalize_nfkd_hyphens_spaces, transliterate, join};
 
 pub const MAX_NAME_LEN: usize = 1024;
 pub const MAX_SEGMENT_LEN: usize = segment::MAX_LEN;
@@ -285,11 +284,7 @@ impl Name {
 
     /// Middle names as an array of words, if present
     pub fn middle_names(&self) -> Option<SmallVec<[&str; 3]>> {
-        if self.surname_index > 1 {
-            Some(self.word_iter(1..self.surname_index).collect())
-        } else {
-            None
-        }
+        self.middle_name_iter().map(|i| i.collect())
     }
 
     /// Middle names as a string, if present
@@ -310,16 +305,7 @@ impl Name {
     /// assert_eq!("Baker Charlie", name.middle_name().unwrap());
     /// ```
     pub fn middle_name(&self) -> Option<Cow<str>> {
-        match self.middle_names() {
-            Some(words) => {
-                if words.len() == 1 {
-                    Some(Cow::Borrowed(&*words[0]))
-                } else {
-                    Some(Cow::Owned(words.join(" ")))
-                }
-            }
-            None => None,
-        }
+        self.middle_name_iter().map(|i| join(i))
     }
 
     /// Middle initials as a string, if present
@@ -364,11 +350,7 @@ impl Name {
     /// assert_eq!("de la MacDonald", name.surname());
     /// ```
     pub fn surname(&self) -> Cow<str> {
-        if self.surname_words() > 1 {
-            Cow::Owned(self.surnames().join(" "))
-        } else {
-            Cow::Borrowed(self.surname_iter().nth(0).unwrap())
-        }
+        join(self.surname_iter())
     }
 
     /// Generational suffix, if present
@@ -493,18 +475,31 @@ impl Name {
         }
     }
 
+    #[inline]
     fn surname_words(&self) -> usize {
         self.word_indices_in_text.len() - self.surname_index
     }
 
+    #[inline]
     fn surname_iter(&self) -> Words {
         self.word_iter(self.surname_index..self.word_indices_in_text.len())
     }
 
+    #[inline]
+    fn middle_name_iter(&self) -> Option<Words> {
+        if self.surname_index > 1 {
+            Some(self.word_iter(1..self.surname_index))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
     fn given_iter(&self) -> Words {
         self.word_iter(0..self.surname_index)
     }
 
+    #[inline]
     fn word_iter(&self, range: Range<usize>) -> Words {
         Words {
             text: &self.text,
