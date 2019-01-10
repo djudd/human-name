@@ -1,6 +1,6 @@
 use super::namepart::{Category, NamePart};
 use super::suffix;
-use phf;
+use phf::phf_set;
 use std::cmp;
 
 static TWO_CHAR_TITLES: [&'static str; 4] = ["mr", "ms", "sr", "dr"];

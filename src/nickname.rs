@@ -1,5 +1,5 @@
 use super::utils::*;
-use phf;
+use phf::{phf_map, phf_set};
 use std::borrow::Cow;
 use std::iter;
 

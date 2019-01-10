@@ -1,5 +1,5 @@
 use super::utils::capitalize_word;
-use phf;
+use phf::phf_set;
 
 // Store capitalized versions because we check after doing the initial,
 // naive capitalization

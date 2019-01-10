@@ -1,5 +1,5 @@
 use super::namepart::{Category, NamePart};
-use phf;
+use phf::phf_set;
 
 static VOWELLESS_SURNAMES: [&'static str; 4] = ["Ng", "Lv", "Mtz", "Hdz"];
 

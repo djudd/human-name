@@ -36,7 +36,6 @@ version = "0.8.1"
 dependencies = [
  "libc 0.2.46 (registry+https://github.com/rust-lang/crates.io-index)",
  "phf 0.7.24 (registry+https://github.com/rust-lang/crates.io-index)",
- "phf_macros 0.7.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "smallstr 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "smallvec 0.6.7 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -55,6 +54,7 @@ name = "phf"
 version = "0.7.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
+ "phf_macros 0.7.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "phf_shared 0.7.24 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

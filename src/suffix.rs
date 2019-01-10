@@ -1,5 +1,5 @@
 use namepart::{Category, NamePart};
-use phf;
+use phf::phf_map;
 
 static GENERATION_BY_SUFFIX: phf::Map<&'static str, u8> = phf_map! {
     // Namecased

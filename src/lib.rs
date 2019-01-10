@@ -6,7 +6,7 @@
 #![feature(libc)]
 #![feature(plugin)]
 #![feature(test)]
-#![plugin(phf_macros)]
+#![feature(proc_macro_hygiene)]
 
 extern crate phf;
 extern crate rustc_serialize;
