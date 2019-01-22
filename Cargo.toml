@@ -14,7 +14,7 @@ unidecode = "0.3"
 rustc-serialize = "0.3"
 phf = { version = "0.7.24", features = ["macros"] }
 libc = "0.2"
-smallvec = "0.6"
+smallvec = { version = "0.6", features = ["union"] }
 smallstr = "0.1"
 
 [features]
