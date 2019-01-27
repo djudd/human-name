@@ -122,6 +122,8 @@ Dr. Juan Q. Xavier Velasquez y Garcia III|Velasquez y Garcia|Juan|Xavier|J|QX|II
 Velasquez y Garcia, Dr. Juan Q. Xavier |Velasquez y Garcia|Juan|Xavier|J|QX|
 Velasquez y Garcia, Dr. Juan Q. Xavier, Jr.|Velasquez y Garcia|Juan|Xavier|J|QX|Jr.
 Velasquez y Garcia, Dr. Juan Q. Xavier III|Velasquez y Garcia|Juan|Xavier|J|QX|III
+velasquez y garcia, juan|Velasquez y Garcia|Juan||J||
+VELASQUEZ Y GARCIA, JUAN|Velasquez y Garcia|Juan||J||
 
 # name with accents, with and without middle names, suffix, initials, particles, sort order
 Björn O'Malley-Muñoz|O'Malley-Muñoz|Björn||B||

@@ -189,7 +189,8 @@ impl<'a> NamePart<'a> {
             Category::Name(ref namecased) => f(namecased),
             Category::Initials
                 if self.counts.upper == 1
-                    && (self.counts.alpha == 1 || starts_with_uppercase(self.word)) =>
+                    && (self.counts.alpha == 1 || starts_with_uppercase(self.word))
+                    && (self.word != "Y" && self.word != "E") =>
             {
                 f(self.word)
             }
