@@ -1,11 +1,10 @@
 use std::borrow::Cow;
 use std::str::Chars;
-use unicode_normalization::char::{canonical_combining_class, decompose_compatible};
-use unicode_normalization::UnicodeNormalization;
+use unicode_normalization::char::canonical_combining_class;
+use unicode_normalization::{is_nfkd_quick, IsNormalized, UnicodeNormalization};
 use unidecode::unidecode_char;
 
-const HYPHENS: &str = "-\u{2010}‑‒–—―−－﹘﹣";
-const ASCII_UNUSUAL_WHITESPACE: &[char] = &['\t', '\r', '\n'];
+const NONASCII_HYPHENS: &str = "\u{2010}‑‒–—―−－﹘﹣";
 
 pub fn is_mixed_case(s: &str) -> bool {
     let mut has_lowercase = false;
@@ -127,6 +126,7 @@ pub fn to_ascii(s: &str) -> Cow<str> {
     }
 }
 
+// Specialized for name-casing
 pub fn capitalize_word(word: &str, simple: bool) -> String {
     debug_assert!(simple == word.chars().all(is_ascii_alphabetic));
 
@@ -151,48 +151,34 @@ pub fn capitalize_word(word: &str, simple: bool) -> String {
                 // If the character doesn't have both uppercase and lowercase versions,
                 // it'll be unchanged. That's a prerequisite for it being a separator.
                 capitalize_next = result == c && !c.is_alphanumeric() && !is_combining(c);
-
-                result
+                if capitalize_next && NONASCII_HYPHENS.contains(c) {
+                    '-'
+                } else {
+                    result
+                }
             })
             .collect()
     }
 }
 
-// Ideally we'd use the unicode standard `quick_check` algorithm, but Rust
-// doesn't expose that for compatibility forms, and this is simpler to implement,
-// though it will have more false negatives.
 #[inline]
-fn stable_nfkd(c: char) -> bool {
-    if is_combining(c) {
-        false
-    } else {
-        let mut stable = true;
-        decompose_compatible(c, |d| stable = stable && d == c);
-        stable
-    }
+fn already_normalized(string: &str) -> bool {
+    let mut banned_char = false;
+    let normalized = is_nfkd_quick(string.chars().take_while(|&c| {
+        banned_char = c.is_whitespace() && c != ' ';
+        !banned_char
+    }));
+    normalized == IsNormalized::Yes && !banned_char
 }
 
-#[allow(clippy::if_same_then_else)]
 pub fn normalize_nfkd_hyphens_spaces(string: &str) -> Cow<str> {
-    if string.is_ascii() && !string.contains(ASCII_UNUSUAL_WHITESPACE) {
-        Cow::Borrowed(string)
-    } else if string
-        .chars()
-        .all(|c| stable_nfkd(c) && (c == ' ' || !c.is_whitespace()))
-    {
+    if already_normalized(string) {
         Cow::Borrowed(string)
     } else {
         let string = string
+            .chars()
+            .map(|c| if c.is_whitespace() { ' ' } else { c })
             .nfkd()
-            .map(|c| {
-                if HYPHENS.contains(c) {
-                    '-'
-                } else if c.is_whitespace() {
-                    ' '
-                } else {
-                    c
-                }
-            })
             .collect();
 
         Cow::Owned(string)
