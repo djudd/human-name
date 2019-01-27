@@ -4,8 +4,6 @@ use unicode_normalization::char::canonical_combining_class;
 use unicode_normalization::{is_nfkd_quick, IsNormalized, UnicodeNormalization};
 use unidecode::unidecode_char;
 
-const NONASCII_HYPHENS: &str = "\u{2010}‑‒–—―−－﹘﹣";
-
 pub fn is_mixed_case(s: &str) -> bool {
     let mut has_lowercase = false;
     let mut has_uppercase = false;
@@ -128,6 +126,8 @@ pub fn to_ascii(s: &str) -> Cow<str> {
 
 // Specialized for name-casing
 pub fn capitalize_word(word: &str, simple: bool) -> String {
+    const NONASCII_HYPHENS: &str = "\u{2010}‑‒–—―−－﹘﹣";
+
     debug_assert!(simple == word.chars().all(is_ascii_alphabetic));
 
     if simple {
@@ -191,7 +191,6 @@ pub struct CharacterCounts {
     pub alpha: u8,
     pub upper: u8,
     pub ascii_alpha: u8,
-    pub ascii_vowels: u8,
 }
 
 pub fn categorize_chars(word: &str) -> CharacterCounts {
@@ -201,23 +200,14 @@ pub fn categorize_chars(word: &str) -> CharacterCounts {
     let mut alpha = 0;
     let mut upper = 0;
     let mut ascii_alpha = 0;
-    let mut ascii_vowels = 0;
 
     for c in word.chars() {
         match c {
             'a'...'z' => {
-                if "aeiouy".contains(c) {
-                    ascii_vowels += 1;
-                } else {
-                    ascii_alpha += 1;
-                }
+                ascii_alpha += 1;
             }
             'A'...'Z' => {
-                if "AEIOUY".contains(c) {
-                    ascii_vowels += 1;
-                } else {
-                    ascii_alpha += 1;
-                }
+                ascii_alpha += 1;
                 upper += 1;
             }
             _ if c.is_uppercase() => {
@@ -235,7 +225,6 @@ pub fn categorize_chars(word: &str) -> CharacterCounts {
 
     // Maybe skipping individual increments and doing this instead is
     // premature optimization, but why not
-    ascii_alpha += ascii_vowels;
     alpha += ascii_alpha;
     chars += alpha;
 
@@ -244,8 +233,12 @@ pub fn categorize_chars(word: &str) -> CharacterCounts {
         alpha,
         upper,
         ascii_alpha,
-        ascii_vowels,
     }
+}
+
+pub fn has_no_vowels(word: &str) -> bool {
+    const VOWELS: &[char] = &['a', 'e', 'i', 'o', 'u', 'y', 'A', 'E', 'I', 'O', 'U', 'Y'];
+    !word.contains(VOWELS)
 }
 
 pub fn starts_with_consonant(word: &str) -> bool {

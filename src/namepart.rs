@@ -82,15 +82,12 @@ impl<'a> NamePart<'a> {
             alpha,
             upper,
             ascii_alpha,
-            ascii_vowels,
         } = counts;
 
         debug_assert!(alpha > 0 || word == "&");
 
-        let all_upper = alpha == upper;
-
         let namecased = || {
-            if upper == 1 && (all_upper || (trust_capitalization && starts_with_uppercase(word))) {
+            if trust_capitalization && starts_with_uppercase(word) {
                 Cow::Borrowed(word)
             } else {
                 let might_be_particle = location == Location::Middle;
@@ -105,8 +102,10 @@ impl<'a> NamePart<'a> {
         let category = if chars == 1 {
             if ascii_alpha == chars {
                 Category::Initials
+            } else if upper > 0 {
+                Category::Name(Cow::Borrowed(word))
             } else if alpha > 0 {
-                Category::Name(namecased())
+                Category::Name(Cow::Owned(word.to_uppercase()))
             } else {
                 Category::Other
             }
@@ -118,10 +117,14 @@ impl<'a> NamePart<'a> {
             }
         } else if chars - alpha > 2 && chars - alpha - combining_chars(word) as u8 > 2 {
             Category::Other
-        } else if ascii_alpha > 0 && ascii_vowels == 0 {
-            if trust_capitalization && all_upper {
+        } else if trust_capitalization && alpha == upper {
+            if chars <= 5 || (ascii_alpha > 0 && has_no_vowels(word)) {
                 Category::Initials
-            } else if location == Location::End
+            } else {
+                Category::Name(namecased())
+            }
+        } else if ascii_alpha > 0 && has_no_vowels(word) {
+            if location == Location::End
                 && surname::is_vowelless_surname(word, trust_capitalization)
             {
                 Category::Name(namecased())
@@ -130,8 +133,6 @@ impl<'a> NamePart<'a> {
             } else {
                 Category::Other
             }
-        } else if chars <= 5 && trust_capitalization && all_upper {
-            Category::Initials
         } else if chars == 2 && !trust_capitalization && !TWO_LETTER_GIVEN_NAMES.contains(word) {
             Category::Initials
         } else {

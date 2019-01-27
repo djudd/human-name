@@ -21,7 +21,6 @@ static AMPERSAND: Segment = Segment {
         alpha: 0,
         upper: 0,
         ascii_alpha: 0,
-        ascii_vowels: 0,
     },
 };
 
