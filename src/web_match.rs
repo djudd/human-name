@@ -1,5 +1,6 @@
 use super::utils::*;
 use super::Name;
+use smallvec::SmallVec;
 use std::borrow::Cow;
 
 impl Name {
@@ -33,7 +34,11 @@ impl Name {
 
         // Special case: Nice punctuation lets us actually parse a name directly
         if string.chars().any(is_nonalphanumeric) {
-            let subbed = join(string.split(is_nonalphanumeric).filter(|p| !p.is_empty()));
+            let subbed = string
+                .split(is_nonalphanumeric)
+                .filter(|p| !p.is_empty())
+                .collect::<SmallVec<[&str; 5]>>()
+                .join(" ");
 
             if let Some(name) = Name::parse(&subbed) {
                 if name.consistent_with(self) {
@@ -174,7 +179,7 @@ impl Name {
         let given_names: Option<Cow<str>> = if self.surname_index == 1 {
             self.given_name().map(|w| Cow::Borrowed(w))
         } else if self.surname_index > 0 {
-            Some(join(self.given_iter()))
+            Some(self.given_iter().join())
         } else {
             None
         };

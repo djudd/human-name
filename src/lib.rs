@@ -44,7 +44,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::ops::Range;
 use std::slice::Iter;
-use utils::{lowercase_if_alpha, normalize_nfkd_hyphens_spaces, transliterate, join};
+use utils::{lowercase_if_alpha, normalize_nfkd_hyphens_spaces, transliterate};
 
 pub const MAX_NAME_LEN: usize = 1024;
 pub const MAX_SEGMENT_LEN: usize = segment::MAX_LEN;
@@ -305,7 +305,7 @@ impl Name {
     /// assert_eq!("Baker Charlie", name.middle_name().unwrap());
     /// ```
     pub fn middle_name(&self) -> Option<Cow<str>> {
-        self.middle_name_iter().map(|i| join(i))
+        self.middle_name_iter().map(|i| i.join())
     }
 
     /// Middle initials as a string, if present
@@ -350,7 +350,7 @@ impl Name {
     /// assert_eq!("de la MacDonald", name.surname());
     /// ```
     pub fn surname(&self) -> Cow<str> {
-        join(self.surname_iter())
+        self.surname_iter().join()
     }
 
     /// Generational suffix, if present
@@ -513,6 +513,16 @@ struct Words<'a> {
     indices: Iter<'a, Range<usize>>,
 }
 
+impl<'a> Words<'a> {
+    pub fn join(mut self) -> Cow<'a, str> {
+        match self.len() {
+            0 => Cow::Borrowed(""),
+            1 => Cow::Borrowed(self.next().unwrap()),
+            _ => Cow::Owned(self.collect::<SmallVec<[&str; 5]>>().join(" ")),
+        }
+    }
+}
+
 impl<'a> Iterator for Words<'a> {
     type Item = &'a str;
     fn next(&mut self) -> Option<&'a str> {
@@ -531,6 +541,8 @@ impl<'a> DoubleEndedIterator for Words<'a> {
             .map(|range| &self.text[range.clone()])
     }
 }
+
+impl<'a> ExactSizeIterator for Words<'a> {}
 
 #[cfg(test)]
 mod tests {

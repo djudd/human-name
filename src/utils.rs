@@ -3,7 +3,6 @@ use std::str::Chars;
 use unicode_normalization::char::{canonical_combining_class, decompose_compatible};
 use unicode_normalization::UnicodeNormalization;
 use unidecode::unidecode_char;
-use smallvec::SmallVec;
 
 const HYPHENS: &str = "-\u{2010}‑‒–—―−－﹘﹣";
 const ASCII_UNUSUAL_WHITESPACE: &[char] = &['\t', '\r', '\n'];
@@ -290,15 +289,6 @@ pub fn has_sequential_alphas(word: &str) -> bool {
     }
 
     false
-}
-
-pub fn join<'a, I: Iterator<Item = &'a str>>(parts: I) -> Cow<'a, str> {
-    let vec = parts.map(|s| &*s).collect::<SmallVec<[&str; 5]>>();
-    match vec.len() {
-        0 => Cow::Borrowed(""),
-        1 => Cow::Borrowed(vec[0]),
-        _ => Cow::Owned(vec.join(" ")),
-    }
 }
 
 #[macro_export]
