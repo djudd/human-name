@@ -9,13 +9,18 @@
 #![feature(proc_macro_hygiene)]
 
 extern crate phf;
-extern crate rustc_serialize;
 extern crate smallstr;
 extern crate smallvec;
 extern crate test;
 extern crate unicode_normalization;
 extern crate unicode_segmentation;
 extern crate unidecode;
+
+#[cfg(feature = "serialization")]
+extern crate serde;
+#[cfg(feature = "serialization")]
+#[macro_use]
+extern crate serde_derive;
 
 #[macro_use]
 mod utils;
@@ -25,7 +30,6 @@ mod namepart;
 mod nickname;
 mod parse;
 mod segment;
-mod serialization;
 mod suffix;
 mod surname;
 mod title;
@@ -35,6 +39,9 @@ pub mod external;
 
 #[cfg(feature = "name_eq_hash")]
 mod eq_hash;
+
+#[cfg(feature = "serialization")]
+mod serialization;
 
 use namepart::NamePart;
 use smallstr::SmallString;

@@ -1,10 +1,9 @@
 #![feature(test)]
 
 extern crate human_name;
-extern crate rustc_serialize;
+extern crate serde_json;
 extern crate test;
 
-use rustc_serialize::json::ToJson;
 use std::env;
 use std::io;
 use std::io::prelude::*;
@@ -92,7 +91,7 @@ fn parse_mode(args: &[String]) {
                 Some(input) => {
                     let parsed = human_name::Name::parse(&input);
                     let output = match parsed {
-                        Some(name) => name.to_json().to_string(),
+                        Some(name) => serde_json::to_string(&name).unwrap(),
                         None => "".to_string(),
                     };
 
@@ -110,7 +109,7 @@ fn parse_mode(args: &[String]) {
         if parsed.is_none() {
             process::exit(1);
         } else {
-            println!("{}", parsed.unwrap().to_json().to_string());
+            println!("{}", serde_json::to_string(&parsed.unwrap()).unwrap());
         }
     }
 }
