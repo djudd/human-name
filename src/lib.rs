@@ -349,8 +349,10 @@ impl Name {
     /// let name = Name::parse("JOHN ALLEN Q DE LA MACDONALD JR").unwrap();
     /// assert_eq!("de la MacDonald", name.surname());
     /// ```
-    pub fn surname(&self) -> Cow<str> {
-        self.surname_iter().join()
+    pub fn surname(&self) -> &str {
+        let start = self.word_indices_in_text[self.surname_index].start;
+        let end = self.word_indices_in_text.last().unwrap().end;
+        &self.text[start..end]
     }
 
     /// Generational suffix, if present

@@ -55,7 +55,7 @@ pub unsafe extern "C" fn human_name_hash(name: &Name) -> u64 {
 
 #[no_mangle]
 pub unsafe extern "C" fn human_name_surname(name: &Name) -> *const c_char {
-    str_to_char_star!(name.surname().into_owned())
+    str_to_char_star!(name.surname())
 }
 
 #[no_mangle]
