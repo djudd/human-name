@@ -110,6 +110,26 @@ Smith, Jason A.
 Jay Smith
 ```
 
+# Optional Features
+
+The following features are enabled by default, but can be turned off when `human_name`
+is being used as a library.
+
+## name_eq_hash
+
+Implements `Eq` for `Name` using `consistent_with`, and `Hash` using `surname_hash`.
+
+Optional because both of these implementations are questionable for general-purpose
+use: this `Eq` is not transitive, and `Hash` is collision-prone. See docs for details.
+
+## serialization
+
+Implements serialization for `Name` using `serde`. This serialization format is
+intended to allow programs not using `human_name` to see the parse results;
+deserialization isn't implemented because when round-tripping is desired, just
+using `display_full` to serialize as a string and then `parse` to deserialize
+should produce a more compact and reasonably performant result.
+
 # Bindings in other languages
 
 Ruby bindings using the `ffi` gem are available at [github.com/djudd/human-name-rb](https://github.com/djudd/human-name-rb)
