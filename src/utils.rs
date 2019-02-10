@@ -171,7 +171,7 @@ fn already_normalized(string: &str) -> bool {
     normalized == IsNormalized::Yes && !banned_char
 }
 
-pub fn normalize_nfkd_hyphens_spaces(string: &str) -> Cow<str> {
+pub fn normalize_nfkd_whitespace(string: &str) -> Cow<str> {
     if already_normalized(string) {
         Cow::Borrowed(string)
     } else {
@@ -223,8 +223,6 @@ pub fn categorize_chars(word: &str) -> CharacterCounts {
         }
     }
 
-    // Maybe skipping individual increments and doing this instead is
-    // premature optimization, but why not
     alpha += ascii_alpha;
     chars += alpha;
 
@@ -365,16 +363,16 @@ mod tests {
 
     #[bench]
     fn normalize_ascii(b: &mut Bencher) {
-        b.iter(|| black_box(normalize_nfkd_hyphens_spaces("James 'J' S. Brown MD").len()))
+        b.iter(|| black_box(normalize_nfkd_whitespace("James 'J' S. Brown MD").len()))
     }
 
     #[bench]
     fn normalize_nfkd_stable(b: &mut Bencher) {
-        b.iter(|| black_box(normalize_nfkd_hyphens_spaces("James «J» S. Brown MD").len()))
+        b.iter(|| black_box(normalize_nfkd_whitespace("James «J» S. Brown MD").len()))
     }
 
     #[bench]
     fn normalize_needs_fix(b: &mut Bencher) {
-        b.iter(|| black_box(normalize_nfkd_hyphens_spaces("James 'J' S. Bröwn MD").len()))
+        b.iter(|| black_box(normalize_nfkd_whitespace("James 'J' S. Bröwn MD").len()))
     }
 }

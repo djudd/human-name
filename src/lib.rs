@@ -53,7 +53,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::ops::Range;
 use std::slice::Iter;
-use utils::{lowercase_if_alpha, normalize_nfkd_hyphens_spaces, transliterate};
+use utils::{lowercase_if_alpha, normalize_nfkd_whitespace, transliterate};
 
 #[cfg(test)]
 use alloc_counter::AllocCounterSystem;
@@ -159,7 +159,7 @@ impl Name {
             return None;
         }
 
-        let name = normalize_nfkd_hyphens_spaces(&name);
+        let name = normalize_nfkd_whitespace(&name);
         let name = nickname::strip_nickname(&name);
 
         let (words, surname_index, generation_from_suffix) = parse::parse(&*name)?;
