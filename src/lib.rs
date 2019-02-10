@@ -21,6 +21,8 @@ extern crate serde;
 #[cfg(feature = "serialization")]
 #[macro_use]
 extern crate serde_derive;
+#[cfg(test)]
+extern crate alloc_counter;
 
 #[macro_use]
 mod utils;
@@ -52,6 +54,13 @@ use std::hash::{Hash, Hasher};
 use std::ops::Range;
 use std::slice::Iter;
 use utils::{lowercase_if_alpha, normalize_nfkd_hyphens_spaces, transliterate};
+
+#[cfg(test)]
+use alloc_counter::AllocCounterSystem;
+
+#[cfg(test)]
+#[global_allocator]
+static A: AllocCounterSystem = AllocCounterSystem;
 
 pub const MAX_NAME_LEN: usize = 1024;
 pub const MAX_SEGMENT_LEN: usize = segment::MAX_LEN;
@@ -557,6 +566,24 @@ impl<'a> ExactSizeIterator for Words<'a> {}
 mod tests {
     use super::*;
     use test::{black_box, Bencher};
+    use alloc_counter::deny_alloc;
+
+    #[test]
+    fn fast_path_parse_does_not_allocate() {
+        deny_alloc(|| Name::parse("Jane Doe").unwrap());
+        deny_alloc(|| Name::parse("J. Doe").unwrap());
+    }
+
+    #[test]
+    fn fast_path_eq_does_not_allocate() {
+        let n1 = Name::parse("Jane Doe").unwrap();
+        let n2 = Name::parse("John Doe").unwrap();
+        let n3 = Name::parse("J. Doe").unwrap();
+        deny_alloc(|| {
+            assert!(!n1.consistent_with(&n2));
+            assert!(n1.consistent_with(&n3));
+        });
+    }
 
     #[bench]
     fn initialize_struct_initial_surname(b: &mut Bencher) {

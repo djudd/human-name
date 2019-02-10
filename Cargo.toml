@@ -19,6 +19,9 @@ serde_json = "1.0"
 smallvec = { version = "0.6", features = ["union"] }
 smallstr = "0.1"
 
+[dev-dependencies]
+alloc_counter = "0.0.2"
+
 [features]
 default = ["name_eq_hash", "serialization"]
 name_eq_hash = []
