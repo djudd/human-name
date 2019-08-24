@@ -6,11 +6,6 @@ rust:
 os:
 - linux
 - osx
-matrix:
-  # We depend on phf's compiler plugin & plugins are not yet stable
-  allow_failures:
-  - rust: stable
-  - rust: beta
 # from http://hoverbear.org/2015/03/07/rust-travis-github-pages/
 after_success: |
   [ $TRAVIS_BRANCH = master ] &&

@@ -41,11 +41,6 @@ Because the goals of this library include both name comparison and memory effici
 parsed names are Unicode NFKD-normalized and capitalized in a conventional way
 (handling "Mc" and a few other edge cases), and the raw input is not preserved.
 
-# Supported environments
-
-Anywhere that *nightly* Rust will run. (We depend on nightly Rust because we make
-use of [Rust-PHF](git@github.com:sfackler/rust-phf.git)'s syntax extensions.)
-
 # From Rust code
 
 ```rust
