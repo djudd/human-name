@@ -38,7 +38,6 @@ pub fn parse(name: &str) -> Option<(SmallVec<[NamePart; 7]>, usize, Option<u8>)>
 }
 
 impl<'a> ParseOp<'a> {
-
     /// Responsible for the main parse operation: segments input by commas,
     /// then by word separators, while assigning a preliminary categorization
     /// to each segment, and then determines a final categorization for each
