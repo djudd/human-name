@@ -3,7 +3,7 @@ use super::suffix;
 use phf::phf_set;
 use std::cmp;
 
-static TWO_CHAR_TITLES: [&'static str; 4] = ["mr", "ms", "sr", "dr"];
+static TWO_CHAR_TITLES: [&str; 4] = ["mr", "ms", "sr", "dr"];
 
 static PREFIX_TITLE_PARTS: phf::Set<&'static str> = phf_set! {
     "Aunt",
@@ -424,7 +424,7 @@ fn might_be_last_title_part(word: &NamePart) -> bool {
     // a title, except a set of very-common two-character title abbreviations,
     // because otherwise we are more likely dealing with initials
     match word.counts.alpha {
-        0...1 => false,
+        0..=1 => false,
         2 if word.counts.chars == 2 => TWO_CHAR_TITLES
             .iter()
             .any(|title| title.eq_ignore_ascii_case(word.word)),

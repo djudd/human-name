@@ -42,8 +42,8 @@ pub fn is_combining(c: char) -> bool {
 #[inline]
 pub fn is_ascii_alphabetic(c: char) -> bool {
     match c {
-        'a'...'z' => true,
-        'A'...'Z' => true,
+        'a'..='z' => true,
+        'A'..='Z' => true,
         _ => false,
     }
 }
@@ -86,7 +86,7 @@ pub fn transliterate(c: char) -> Chars<'static> {
 pub fn to_ascii_letter(c: char) -> Option<char> {
     debug_assert!(c.is_uppercase(), c.to_string());
     match c {
-        'A'...'Z' => Some(c),
+        'A'..='Z' => Some(c),
         _ => transliterate(c)
             .next()
             .and_then(|c| c.to_uppercase().next()),
@@ -203,10 +203,10 @@ pub fn categorize_chars(word: &str) -> CharacterCounts {
 
     for c in word.chars() {
         match c {
-            'a'...'z' => {
+            'a'..='z' => {
                 ascii_alpha += 1;
             }
-            'A'...'Z' => {
+            'A'..='Z' => {
                 ascii_alpha += 1;
                 upper += 1;
             }

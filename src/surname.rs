@@ -1,9 +1,9 @@
 use super::namepart::{Category, NamePart};
 use phf::phf_set;
 
-static VOWELLESS_SURNAMES: [&'static str; 4] = ["Ng", "Lv", "Mtz", "Hdz"];
+static VOWELLESS_SURNAMES: [&str; 4] = ["Ng", "Lv", "Mtz", "Hdz"];
 
-static SINGLE_LETTER_CONJUNCTIONS: [&'static str; 4] = ["e", "y", "E", "Y"];
+static SINGLE_LETTER_CONJUNCTIONS: [&str; 4] = ["e", "y", "E", "Y"];
 
 // Uncapitalized list should match UNCAPITALIZED_PARTICLES in `namecase.rs`
 //
