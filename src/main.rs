@@ -1,7 +1,10 @@
-#![feature(test)]
+#![cfg_attr(feature = "bench", feature(test))]
 
 extern crate human_name;
 extern crate serde_json;
+
+#[cfg(test)]
+#[cfg(feature = "bench")]
 extern crate test;
 
 use std::env;
@@ -114,6 +117,7 @@ fn parse_mode(args: &[String]) {
     }
 }
 
+#[cfg(feature = "bench")]
 #[cfg(test)]
 mod bench {
     use human_name::Name;
@@ -121,6 +125,8 @@ mod bench {
     use std::fs::File;
     use std::io::prelude::*;
     use std::io::BufReader;
+
+    #[cfg(feature = "bench")]
     use test::{black_box, Bencher};
 
     #[bench]

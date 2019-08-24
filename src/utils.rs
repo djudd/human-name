@@ -319,6 +319,8 @@ macro_rules! eq_or_ends_with {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(feature = "bench")]
     use test::{black_box, Bencher};
 
     #[test]
@@ -341,36 +343,43 @@ mod tests {
         assert_eq!("Aa", capitalize_word("AA", true));
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn is_mixed_case_false(b: &mut Bencher) {
         b.iter(|| black_box(is_mixed_case("JOHN MACDONALD")))
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn is_mixed_case_true(b: &mut Bencher) {
         b.iter(|| black_box(is_mixed_case("J. MacDonald")))
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn capitalize_uppercase_word(b: &mut Bencher) {
         b.iter(|| black_box(capitalize_word("JONATHAN", true)))
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn capitalize_complex_word(b: &mut Bencher) {
         b.iter(|| black_box(capitalize_word("föö-bar", false)))
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn normalize_ascii(b: &mut Bencher) {
         b.iter(|| black_box(normalize_nfkd_whitespace("James 'J' S. Brown MD").len()))
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn normalize_nfkd_stable(b: &mut Bencher) {
         b.iter(|| black_box(normalize_nfkd_whitespace("James «J» S. Brown MD").len()))
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn normalize_needs_fix(b: &mut Bencher) {
         b.iter(|| black_box(normalize_nfkd_whitespace("James 'J' S. Bröwn MD").len()))

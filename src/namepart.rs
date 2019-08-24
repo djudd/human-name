@@ -211,6 +211,8 @@ impl<'a> NamePart<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(feature = "bench")]
     use test::{black_box, Bencher};
 
     #[test]
@@ -237,21 +239,25 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn all_from_text_simple(b: &mut Bencher) {
         b.iter(|| black_box(NamePart::all_from_text("John Doe", true, Location::Start).count()))
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn all_from_text_initials(b: &mut Bencher) {
         b.iter(|| black_box(NamePart::all_from_text("J. Doe", true, Location::Start).count()))
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn all_from_text_nonascii(b: &mut Bencher) {
         b.iter(|| black_box(NamePart::all_from_text("이용희", false, Location::Start).count()))
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn all_from_text_all_caps(b: &mut Bencher) {
         b.iter(|| black_box(NamePart::all_from_text("JOHN DOE", false, Location::Start).count()))
@@ -335,6 +341,7 @@ mod tests {
         assert!(NamePart::from_word("AT", false, Location::Start).is_initials());
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn from_word_simple(b: &mut Bencher) {
         let name = "Jonathan";
@@ -349,6 +356,7 @@ mod tests {
         })
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn from_word_initials(b: &mut Bencher) {
         let name = "J.";
@@ -363,6 +371,7 @@ mod tests {
         })
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn from_word_nonascii(b: &mut Bencher) {
         let name = "희";
@@ -377,6 +386,7 @@ mod tests {
         })
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn from_word_all_caps(b: &mut Bencher) {
         let name = "JONATHAN";

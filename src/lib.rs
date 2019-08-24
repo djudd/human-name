@@ -3,18 +3,19 @@
 //! See the documentation of the `Name` struct for details.
 
 #![doc(html_root_url = "https://djudd.github.io/human-name/")]
-#![feature(libc)]
-#![feature(plugin)]
-#![feature(test)]
 #![feature(proc_macro_hygiene)]
+#![cfg_attr(feature = "bench", feature(test))]
 
 extern crate phf;
 extern crate smallstr;
 extern crate smallvec;
-extern crate test;
 extern crate unicode_normalization;
 extern crate unicode_segmentation;
 extern crate unidecode;
+
+#[cfg(test)]
+#[cfg(feature = "bench")]
+extern crate test;
 
 #[cfg(feature = "serialization")]
 extern crate serde;
@@ -565,8 +566,10 @@ impl<'a> ExactSizeIterator for Words<'a> {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::{black_box, Bencher};
     use alloc_counter::deny_alloc;
+
+    #[cfg(feature = "bench")]
+    use test::{black_box, Bencher};
 
     #[test]
     fn fast_path_parse_does_not_allocate() {
@@ -585,6 +588,7 @@ mod tests {
         });
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn initialize_struct_initial_surname(b: &mut Bencher) {
         let name = "J. Doe";
@@ -596,6 +600,7 @@ mod tests {
         })
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn initialize_struct_first_last(b: &mut Bencher) {
         let name = "John Doe";
@@ -607,6 +612,7 @@ mod tests {
         })
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn initialize_struct_complex(b: &mut Bencher) {
         let name = "John Allen Q.R. de la MacDonald Jr.";

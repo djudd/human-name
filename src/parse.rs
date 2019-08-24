@@ -7,9 +7,12 @@ use smallvec::SmallVec;
 
 #[derive(Debug)]
 struct ParseOp<'a> {
+    // Output
     words: SmallVec<[NamePart<'a>; 7]>,
     surname_index: usize,
     generation_from_suffix: Option<u8>,
+
+    // Working space
     possible_false_prefix: Option<NamePart<'a>>,
     possible_false_postfix: Option<NamePart<'a>>,
     use_capitalization: bool,
@@ -35,6 +38,14 @@ pub fn parse(name: &str) -> Option<(SmallVec<[NamePart; 7]>, usize, Option<u8>)>
 }
 
 impl<'a> ParseOp<'a> {
+
+    /// Responsible for the main parse operation: segments input by commas,
+    /// then by word separators, while assigning a preliminary categorization
+    /// to each segment, and then determines a final categorization for each
+    /// segment taking into account the sequence of statements.
+    ///
+    /// Returns true on success & false on inability to parse into a plausible
+    /// name.
     fn run(&mut self, name: &'a str) -> bool {
         // Separate comma-separated titles and suffixes, then flip remaining words
         // around remaining comma, if any
@@ -319,6 +330,8 @@ impl<'a> ParseOp<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(feature = "bench")]
     use test::{black_box, Bencher};
 
     #[test]
@@ -390,26 +403,31 @@ mod tests {
         assert_eq!(Some(2), generation);
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn parse_simple(b: &mut Bencher) {
         b.iter(|| black_box(parse("John Doe").is_some()))
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn parse_nonascii(b: &mut Bencher) {
         b.iter(|| black_box(parse("이용희").is_some()))
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn parse_comma(b: &mut Bencher) {
         b.iter(|| black_box(parse("Doe, John").is_some()))
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn parse_all_caps(b: &mut Bencher) {
         b.iter(|| black_box(parse("JOHN DOE").is_some()))
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn parse_complex(b: &mut Bencher) {
         b.iter(|| black_box(parse("James S. Brown MD, FRCS, FDSRCS").is_some()))

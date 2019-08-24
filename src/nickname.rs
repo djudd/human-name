@@ -260,6 +260,8 @@ fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(feature = "bench")]
     use test::{black_box, Bencher};
 
     #[test]
@@ -351,6 +353,7 @@ mod tests {
         assert_eq!("Ro'bert R'oberts", strip_nickname("Ro'bert R'oberts"));
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn strip_nick_no_nick(b: &mut Bencher) {
         b.iter(|| {
@@ -358,6 +361,7 @@ mod tests {
         })
     }
 
+    #[cfg(feature = "bench")]
     #[bench]
     fn strip_nick_with_nick(b: &mut Bencher) {
         b.iter(|| {
