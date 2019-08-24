@@ -3,7 +3,6 @@
 //! See the documentation of the `Name` struct for details.
 
 #![doc(html_root_url = "https://djudd.github.io/human-name/")]
-#![feature(proc_macro_hygiene)]
 #![cfg_attr(feature = "bench", feature(test))]
 
 extern crate phf;

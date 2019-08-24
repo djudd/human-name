@@ -11,12 +11,12 @@ documentation = "http://djudd.github.io/human-name"
 unicode-segmentation = "1.2"
 unicode-normalization = "0.1"
 unidecode = "0.3"
-phf = { version = "0.7.24", features = ["macros"] }
+phf = { features = ["macros"], git = "https://github.com/sfackler/rust-phf" }
 libc = "0.2"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
-smallvec = { version = "0.6", features = ["union"] }
+smallvec = { version = "0.6" }
 smallstr = "0.1"
 
 [dev-dependencies]
