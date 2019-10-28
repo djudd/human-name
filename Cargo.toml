@@ -11,7 +11,7 @@ documentation = "http://djudd.github.io/human-name"
 unicode-segmentation = "1.2"
 unicode-normalization = "0.1"
 unidecode = "0.3"
-phf = { features = ["macros"], git = "https://github.com/sfackler/rust-phf" }
+phf = { features = ["macros"], version = "0.8" }
 libc = "0.2"
 serde = "1.0"
 serde_derive = "1.0"
