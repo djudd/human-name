@@ -30,7 +30,7 @@ bench = []
 
 [profile.release]
 debug = true
-lto = true
+lto = "thin"
 
 [[bin]]
 name = "human_name"
