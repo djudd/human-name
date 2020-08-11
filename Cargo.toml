@@ -20,7 +20,7 @@ smallvec = "1.0"
 smallstr = "0.2"
 
 [dev-dependencies]
-alloc_counter = "0.0.2"
+alloc_counter = "0.0"
 
 [features]
 default = ["name_eq_hash", "serialization"]
