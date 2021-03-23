@@ -15,3 +15,6 @@ callgrind.*
 
 # rustfmt
 *.rs.bk
+
+# vim
+*.swp

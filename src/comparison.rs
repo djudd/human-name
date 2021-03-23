@@ -197,11 +197,11 @@ impl Name {
                 return true;
             }
 
-            let mut advance_by = my_part.initials_count();
+            let mut advance_by = my_part.initials_count() as isize;
             while advance_by > 0 && their_part_if_any.is_some() {
                 their_part_if_any = their_parts.next();
                 if let Some(ref their_part) = their_part_if_any {
-                    advance_by -= their_part.initials_count();
+                    advance_by -= their_part.initials_count() as isize;
                 }
             }
         }
@@ -524,5 +524,17 @@ impl<'a> Iterator for GivenNamesOrInitials<'a> {
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.initials.size_hint()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bug() {
+        let a = Name::parse("Peter Martin-Le Bore").unwrap();
+        let b = Name::parse("Peter Martin-Le Bore").unwrap();
+        assert!(a.consistent_with(&b));
     }
 }
