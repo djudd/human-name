@@ -72,7 +72,7 @@ impl Name {
             initials.extend(self.initials().chars().flat_map(char::to_lowercase));
             initials.extend(
                 self.surname_iter()
-                    .filter_map(|n| n.chars().nth(0))
+                    .filter_map(|n| n.chars().next())
                     .flat_map(char::to_lowercase),
             );
 
@@ -89,7 +89,7 @@ impl Name {
                 name_and_initial.extend(name.chars().flat_map(char::to_lowercase));
                 name_and_initial.extend(
                     self.surname_iter()
-                        .filter_map(|n| n.chars().nth(0))
+                        .filter_map(|n| n.chars().next())
                         .flat_map(char::to_lowercase),
                 );
 
@@ -167,17 +167,13 @@ impl Name {
             }
         }
 
-        if let Some(i) = match_begin {
-            Some((i, match_len, match_len == lower_surname.len()))
-        } else {
-            None
-        }
+        match_begin.map(|i| (i, match_len, match_len == lower_surname.len()))
     }
 
     fn matches_remaining_name_parts(&self, part: &str, allow_unknowns: bool) -> bool {
         let lower_first_initial = self.first_initial().to_lowercase().next().unwrap();
         let given_names: Option<Cow<str>> = if self.surname_index == 1 {
-            self.given_name().map(|w| Cow::Borrowed(w))
+            self.given_name().map(Cow::Borrowed)
         } else if self.surname_index > 0 {
             Some(self.given_iter().join())
         } else {
@@ -244,7 +240,7 @@ impl Name {
 
         if self.goes_by_middle_name()
             && part.len() == lower_first_initial.len_utf8()
-            && part.chars().nth(0) == Some(lower_first_initial)
+            && part.starts_with(lower_first_initial)
         {
             return true;
         }

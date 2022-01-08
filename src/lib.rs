@@ -159,7 +159,7 @@ impl Name {
             return None;
         }
 
-        let name = normalize_nfkd_whitespace(&name);
+        let name = normalize_nfkd_whitespace(name);
         let name = nickname::strip_nickname(&name);
 
         let (words, surname_index, generation_from_suffix) = parse::parse(&*name)?;
@@ -244,7 +244,7 @@ impl Name {
 
     /// First initial (always present)
     pub fn first_initial(&self) -> char {
-        self.initials.chars().nth(0).unwrap()
+        self.initials.chars().next().unwrap()
     }
 
     /// Given name as a string, if present
@@ -259,7 +259,7 @@ impl Name {
     /// assert_eq!(None, name.given_name());
     /// ```
     pub fn given_name(&self) -> Option<&str> {
-        self.given_iter().nth(0)
+        self.given_iter().next()
     }
 
     /// Does this person use a middle name in place of their given name?
@@ -344,8 +344,7 @@ impl Name {
     pub fn middle_initials(&self) -> Option<&str> {
         self.initials()
             .char_indices()
-            .skip(1)
-            .nth(0)
+            .nth(1)
             .map(|(i, _)| &self.initials[i..])
     }
 
