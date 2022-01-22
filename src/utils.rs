@@ -41,11 +41,7 @@ pub fn is_combining(c: char) -> bool {
 
 #[inline]
 pub fn is_ascii_alphabetic(c: char) -> bool {
-    match c {
-        'a'..='z' => true,
-        'A'..='Z' => true,
-        _ => false,
-    }
+    matches!(c, 'a'..='z' | 'A'..='Z')
 }
 
 // Sadly necessary because string split gives "type of this value must be known"
@@ -84,7 +80,7 @@ pub fn transliterate(c: char) -> Chars<'static> {
 
 #[inline]
 pub fn to_ascii_letter(c: char) -> Option<char> {
-    debug_assert!(c.is_uppercase(), c.to_string());
+    debug_assert!(c.is_uppercase(), "{}", c.to_string());
     match c {
         'A'..='Z' => Some(c),
         _ => transliterate(c)
@@ -241,13 +237,13 @@ pub fn has_no_vowels(word: &str) -> bool {
 
 pub fn starts_with_consonant(word: &str) -> bool {
     word.chars()
-        .nth(0)
+        .next()
         .filter(|c| is_ascii_alphabetic(*c) && !"aeiouAEIOU".contains(*c))
         .is_some()
 }
 
 pub fn starts_with_uppercase(word: &str) -> bool {
-    word.chars().nth(0).filter(|c| c.is_uppercase()).is_some()
+    word.chars().next().filter(|c| c.is_uppercase()).is_some()
 }
 
 pub fn combining_chars(word: &str) -> usize {

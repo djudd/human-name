@@ -1,3 +1,4 @@
+#![allow(clippy::missing_safety_doc)]
 //! A C API for interacting with `Name` objects.
 
 extern crate libc;

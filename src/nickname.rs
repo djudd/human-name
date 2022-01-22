@@ -50,6 +50,7 @@ fn strip_from_index(nick_start_ix: usize, prev_char: char) -> usize {
 
 // Optimized for the case where there is no nickname, and secondarily for the
 // case where there is only one. Two or more probably means bad input.
+#[allow(clippy::unnecessary_unwrap)]
 pub fn strip_nickname(input: &str) -> Cow<str> {
     let mut nick_start_ix = None;
     let mut nick_open_char = '\0';

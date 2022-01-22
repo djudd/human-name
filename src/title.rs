@@ -435,7 +435,7 @@ fn might_be_last_title_part(word: &NamePart) -> bool {
 fn is_prefix_title(words: &[NamePart]) -> bool {
     match words.last() {
         Some(word) => {
-            if !might_be_last_title_part(&word) {
+            if !might_be_last_title_part(word) {
                 return false;
             }
         }
@@ -447,7 +447,7 @@ fn is_prefix_title(words: &[NamePart]) -> bool {
     if words.len() > 1 {
         words[0..words.len() - 1]
             .iter()
-            .all(|word| might_be_title_part(&word))
+            .all(might_be_title_part)
     } else {
         true
     }
@@ -486,8 +486,8 @@ pub fn find_prefix_len(words: &[NamePart]) -> usize {
 
 pub fn find_postfix_index(words: &[NamePart], expect_initials: bool) -> usize {
     let last_nonpostfix_index = words.iter().rposition(|word| {
-        suffix::generation_from_suffix(&word, expect_initials).is_none()
-            && !is_postfix_title(&word, expect_initials)
+        suffix::generation_from_suffix(word, expect_initials).is_none()
+            && !is_postfix_title(word, expect_initials)
     });
 
     let first_abbr_index = words

@@ -232,7 +232,7 @@ impl Name {
                 }
             } else {
                 // Normal case, given the absence of (true) given names
-                if my_initials.chars().nth(0) != their_initials.chars().nth(0) {
+                if my_initials.chars().next() != their_initials.chars().next() {
                     return false;
                 }
             }
@@ -401,7 +401,7 @@ enum ComparisonResult {
 impl<'a> NameWordOrInitial<'a> {
     fn initial(&self) -> Option<char> {
         match *self {
-            NameWordOrInitial::Word(word, _) => word.chars().nth(0).and_then(to_ascii_letter),
+            NameWordOrInitial::Word(word, _) => word.chars().next().and_then(to_ascii_letter),
             NameWordOrInitial::Initial(initial) => to_ascii_letter(initial),
         }
     }

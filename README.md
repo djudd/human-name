@@ -3,7 +3,7 @@ A library and command-line client for parsing and comparing human names.
 
 [![Build Status](https://travis-ci.org/djudd/human-name.svg?branch=master)](https://travis-ci.org/djudd/human-name)
 
-[`Documentation`](http://djudd.github.io/human-name)
+[`Documentation`](https://docs.rs/human_name)
 
 # Uses and limitations
 
@@ -62,7 +62,7 @@ assert_eq!("Oscar de la Hoya, Jr.", oscar.display_full());
 assert!(Name::parse("foo@bar.com").is_none());
 ```
 
-See the [docs](http://djudd.github.io/human-name) for details.
+See the [docs](https://docs.rs/human_name) for details.
 
 # From the command line
 

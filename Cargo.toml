@@ -3,20 +3,22 @@ name = "human_name"
 version = "1.0.1"
 authors = ["David Judd <david.a.judd@gmail.com>"]
 description = "A library for parsing and comparing human names"
+keywords = ["human", "name", "language", "nlp"]
+categories = ["parsing", "text-processing", "command-line-utilities",]
 license = "Apache-2.0"
 repository = "https://github.com/djudd/human-name"
-documentation = "http://djudd.github.io/human-name"
+documentation = "https://docs.rs/human_name/"
 
 [dependencies]
-unicode-segmentation = "1.2"
+unicode-segmentation = "1.8"
 unicode-normalization = "0.1"
 unidecode = "0.3"
-phf = { features = ["macros"], version = "0.8" }
+phf = { features = ["macros"], version = "0.10" }
 libc = "0.2"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
-smallvec = "1.0"
+smallvec = "1.7"
 smallstr = "0.2"
 
 [dev-dependencies]

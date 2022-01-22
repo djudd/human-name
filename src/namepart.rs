@@ -153,10 +153,7 @@ impl<'a> NamePart<'a> {
 
     #[inline]
     pub fn is_namelike(&self) -> bool {
-        match self.category {
-            Category::Name(_) => true,
-            _ => false,
-        }
+        matches!(self.category, Category::Name(_))
     }
 
     // Called on Initials and also on given or middle Names
@@ -166,7 +163,7 @@ impl<'a> NamePart<'a> {
     {
         match self.category {
             Category::Name(ref namecased) if !namecased.contains('-') && self.counts.upper > 0 => {
-                f(namecased.chars().nth(0).unwrap())
+                f(namecased.chars().next().unwrap())
             }
             Category::Name(ref namecased) => namecased
                 .split('-')
