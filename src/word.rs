@@ -7,6 +7,11 @@ use SmallVec;
 
 pub struct Words<'a> {
     text: &'a str,
+
+    // Storing as u16 is sufficient because MAX_NAME_LEN is 1024.
+    //
+    // We could compress a bit further (especially given that the common case is much shorter)
+    // but it's not obviously worth the code complexity.
     indices: Peekable<slice::Iter<'a, Range<u16>>>,
 }
 
