@@ -36,6 +36,7 @@ mod suffix;
 mod surname;
 mod title;
 mod web_match;
+mod word;
 
 pub mod external;
 
@@ -52,8 +53,8 @@ use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::ops::Range;
-use std::slice::Iter;
 use utils::{lowercase_if_alpha, normalize_nfkd_whitespace, transliterate};
+use word::{WordIndices, Words};
 
 #[cfg(test)]
 use alloc_counter::AllocCounterSystem;
@@ -86,11 +87,11 @@ pub const MAX_SEGMENTS: usize = parse::MAX_WORDS;
 #[derive(Clone, Debug)]
 pub struct Name {
     text: SmallString<[u8; 36]>,
-    word_indices_in_text: SmallVec<[Range<usize>; 5]>,
+    word_indices_in_text: WordIndices,
     surname_index: usize,
     generation_from_suffix: Option<u8>,
     initials: SmallString<[u8; 8]>,
-    word_indices_in_initials: SmallVec<[Range<usize>; 3]>,
+    word_indices_in_initials: WordIndices,
     pub hash: u64,
 }
 
@@ -162,7 +163,7 @@ impl Name {
         let name = normalize_nfkd_whitespace(name);
         let name = nickname::strip_nickname(&name);
 
-        let (words, surname_index, generation_from_suffix) = parse::parse(&*name)?;
+        let (words, surname_index, generation_from_suffix) = parse::parse(&name)?;
 
         let mut name =
             Name::initialize_struct(&words, surname_index, generation_from_suffix, name.len());
@@ -186,8 +187,8 @@ impl Name {
         let mut initials = SmallString::with_capacity(surname_index);
 
         let mut surname_index_in_names = surname_index;
-        let mut word_indices_in_initials = SmallVec::with_capacity(surname_index);
-        let mut word_indices_in_text = SmallVec::with_capacity(words.len());
+        let mut word_indices_in_initials = WordIndices::new();
+        let mut word_indices_in_text = WordIndices::new();
 
         for (i, word) in words.iter().enumerate() {
             if word.is_initials() && i < surname_index {
@@ -277,10 +278,11 @@ impl Name {
     /// assert!(name.goes_by_middle_name());
     /// ```
     pub fn goes_by_middle_name(&self) -> bool {
-        self.word_indices_in_initials
-            .iter()
-            .take(1)
-            .any(|r| r.start > 0)
+        if let Some(&Range { start, .. }) = self.word_indices_in_initials.get(0) {
+            start > 0
+        } else {
+            false
+        }
     }
 
     /// First and middle initials as a string (always present)
@@ -365,9 +367,14 @@ impl Name {
     /// assert_eq!("de la MacDonald", name.surname());
     /// ```
     pub fn surname(&self) -> &str {
-        let start = self.word_indices_in_text[self.surname_index].start;
-        let end = self.word_indices_in_text.last().unwrap().end;
-        &self.text[start..end]
+        let mut surname_indices = self
+            .word_indices_in_text
+            .iter()
+            .skip(self.surname_index)
+            .peekable();
+        let start = surname_indices.peek().unwrap().start;
+        let end = surname_indices.last().unwrap().end;
+        &self.text[start.into()..end.into()]
     }
 
     /// Generational suffix, if present
@@ -518,48 +525,9 @@ impl Name {
 
     #[inline]
     fn word_iter(&self, range: Range<usize>) -> Words {
-        Words {
-            text: &self.text,
-            indices: self.word_indices_in_text[range].iter(),
-        }
+        Words::new(&self.text, &self.word_indices_in_text[range])
     }
 }
-
-struct Words<'a> {
-    text: &'a str,
-    indices: Iter<'a, Range<usize>>,
-}
-
-impl<'a> Words<'a> {
-    pub fn join(mut self) -> Cow<'a, str> {
-        match self.len() {
-            0 => Cow::Borrowed(""),
-            1 => Cow::Borrowed(self.next().unwrap()),
-            _ => Cow::Owned(self.collect::<SmallVec<[&str; 5]>>().join(" ")),
-        }
-    }
-}
-
-impl<'a> Iterator for Words<'a> {
-    type Item = &'a str;
-    fn next(&mut self) -> Option<&'a str> {
-        self.indices.next().map(|range| &self.text[range.clone()])
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.indices.size_hint()
-    }
-}
-
-impl<'a> DoubleEndedIterator for Words<'a> {
-    fn next_back(&mut self) -> Option<&'a str> {
-        self.indices
-            .next_back()
-            .map(|range| &self.text[range.clone()])
-    }
-}
-
-impl<'a> ExactSizeIterator for Words<'a> {}
 
 #[cfg(test)]
 mod tests {
@@ -568,6 +536,12 @@ mod tests {
 
     #[cfg(feature = "bench")]
     use test::{black_box, Bencher};
+
+    #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+    #[test]
+    fn struct_size() {
+        assert_eq!(144, std::mem::size_of::<Name>());
+    }
 
     #[test]
     fn fast_path_parse_does_not_allocate() {

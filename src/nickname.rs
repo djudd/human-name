@@ -173,8 +173,8 @@ pub fn have_matching_variants(original_a: &str, original_b: &str) -> bool {
     let original_a = to_ascii(original_a);
     let original_b = to_ascii(original_b);
 
-    let a_variants = NameVariants::for_name(&*original_a);
-    let b_variants = NameVariants::for_name(&*original_b);
+    let a_variants = NameVariants::for_name(&original_a);
+    let b_variants = NameVariants::for_name(&original_b);
 
     a_variants.iter_with_original().any(|a| {
         b_variants
