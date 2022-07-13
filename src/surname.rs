@@ -97,7 +97,7 @@ pub fn find_surname_index(words: &[NamePart]) -> usize {
 
     for (i, word) in words[0..words.len() - 1].iter().enumerate() {
         let key: &str = match word.category {
-            Category::Name(ref namecased) => &*namecased,
+            Category::Name(ref namecased) => namecased,
             _ => word.word,
         };
         if SURNAME_PREFIXES.contains(key) {

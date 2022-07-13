@@ -31,7 +31,7 @@ macro_rules! option_str_to_char_star {
 #[no_mangle]
 pub unsafe extern "C" fn human_name_parse(input: *const libc::c_char) -> Option<Box<Name>> {
     let s = CStr::from_ptr(input).to_string_lossy();
-    Name::parse(&*s).map(Box::new)
+    Name::parse(&s).map(Box::new)
 }
 
 #[no_mangle]
@@ -90,7 +90,7 @@ pub unsafe extern "C" fn human_name_matches_slug_or_localpart(
     input: *const libc::c_char,
 ) -> bool {
     let s = CStr::from_ptr(input).to_string_lossy();
-    name.matches_slug_or_localpart(&*s)
+    name.matches_slug_or_localpart(&s)
 }
 
 #[no_mangle]

@@ -64,7 +64,7 @@ impl<'a> Iterator for Segments<'a> {
         }
 
         // Now look for the next whitespace that remains
-        let next_whitespace = self.text.find(' ').unwrap_or_else(|| self.text.len());
+        let next_whitespace = self.text.find(' ').unwrap_or(self.text.len());
         let next_inner_period = self.text[0..next_whitespace].find('.');
         let next_boundary = match next_inner_period {
             Some(i) => i + 1,

@@ -1,9 +1,10 @@
 use super::nickname::have_matching_variants;
 use super::utils::*;
-use super::{Name, WordIndices, Words};
+use super::{Name, Words};
 use std::borrow::Cow;
-use std::iter::Enumerate;
+use std::iter;
 use std::ops::Range;
+use std::slice;
 use std::str::Chars;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -104,7 +105,7 @@ impl Name {
         GivenNamesOrInitials {
             initials: self.initials.chars().enumerate(),
             known_names: self.given_iter(),
-            known_name_indices: self.word_indices_in_initials.clone(),
+            known_name_indices: self.word_indices_in_initials.iter().peekable(),
         }
     }
 
@@ -275,7 +276,7 @@ impl Name {
 
         let mut prev = 0;
 
-        for Range { start, end } in self.word_indices_in_initials.clone() {
+        for &Range { start, end } in self.word_indices_in_initials.iter() {
             if start > prev {
                 return true;
             } else {
@@ -283,13 +284,13 @@ impl Name {
             }
         }
 
-        self.surname_index > prev
+        self.surname_index > prev.into()
     }
 
     fn surname_consistent(&self, other: &Name) -> bool {
         // Fast path
         if self.simple_surname() && other.simple_surname() {
-            return self.surname().eq_ignore_ascii_case(&*other.surname());
+            return self.surname().eq_ignore_ascii_case(other.surname());
         }
 
         let mut my_words = self.surname_iter().flat_map(|w| w.unicode_words()).rev();
@@ -488,14 +489,14 @@ impl<'a> NameWordOrInitial<'a> {
 }
 
 struct GivenNamesOrInitials<'a> {
-    initials: Enumerate<Chars<'a>>,
+    initials: iter::Enumerate<Chars<'a>>,
     known_names: Words<'a>,
-    known_name_indices: WordIndices,
+    known_name_indices: iter::Peekable<slice::Iter<'a, Range<u16>>>,
 }
 
 #[derive(Debug)]
 enum NameWordOrInitial<'a> {
-    Word(&'a str, usize),
+    Word(&'a str, u16),
     Initial(char),
 }
 
@@ -506,7 +507,7 @@ impl<'a> Iterator for GivenNamesOrInitials<'a> {
         self.initials
             .next()
             .map(|(i, initial)| match self.known_name_indices.peek() {
-                Some(Range { start, end }) if start == i => {
+                Some(&&Range { start, end }) if usize::from(start) == i => {
                     self.known_name_indices.next();
 
                     // Handle case of hyphenated name for which we have 2+ initials

@@ -411,7 +411,7 @@ fn might_be_title_part(word: &NamePart) -> bool {
     } else {
         match &word.category {
             Category::Name(ref namecased) => {
-                let namecased: &str = &*namecased;
+                let namecased: &str = namecased;
                 PREFIX_TITLE_PARTS.contains(namecased) || namecased.chars().any(char::is_numeric)
             }
             _ => true,
@@ -454,7 +454,7 @@ fn is_prefix_title(words: &[NamePart]) -> bool {
 fn is_postfix_title(word: &NamePart, might_be_initials: bool) -> bool {
     match word.category {
         Category::Name(ref namecased) => {
-            let namecased: &str = &*namecased;
+            let namecased: &str = namecased;
             POSTFIX_TITLES.contains(namecased) || namecased.chars().any(char::is_numeric)
         }
         Category::Initials => !might_be_initials && word.counts.alpha > 1,
@@ -491,7 +491,7 @@ pub fn find_postfix_index(words: &[NamePart], expect_initials: bool) -> usize {
     let first_abbr_index = words
         .iter()
         .position(|word| !word.is_namelike() && !word.is_initials())
-        .unwrap_or_else(|| words.len());
+        .unwrap_or(words.len());
 
     cmp::min(
         first_abbr_index,

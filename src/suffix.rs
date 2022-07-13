@@ -75,7 +75,7 @@ static SUFFIX_BY_GENERATION: [&str; 5] = ["Sr.", "Jr.", "III", "IV", "V"];
 pub fn generation_from_suffix(part: &NamePart, might_be_initials: bool) -> Option<u8> {
     match part.category {
         Category::Name(ref namecased) => {
-            let namecased: &str = &*namecased;
+            let namecased: &str = namecased;
             GENERATION_BY_SUFFIX.get(namecased).cloned()
         }
         Category::Abbreviation => {

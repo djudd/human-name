@@ -163,7 +163,7 @@ impl Name {
         let name = normalize_nfkd_whitespace(name);
         let name = nickname::strip_nickname(&name);
 
-        let (words, surname_index, generation_from_suffix) = parse::parse(&*name)?;
+        let (words, surname_index, generation_from_suffix) = parse::parse(&name)?;
 
         let mut name =
             Name::initialize_struct(&words, surname_index, generation_from_suffix, name.len());
@@ -228,9 +228,9 @@ impl Name {
         debug_assert!(!initials.is_empty(), "Initials are empty!");
 
         text.shrink_to_fit();
-        // word_indices_in_text.shrink_to_fit();
+        word_indices_in_text.shrink_to_fit();
         initials.shrink_to_fit();
-        // word_indices_in_initials.shrink_to_fit();
+        word_indices_in_initials.shrink_to_fit();
 
         Name {
             text,
@@ -278,7 +278,7 @@ impl Name {
     /// assert!(name.goes_by_middle_name());
     /// ```
     pub fn goes_by_middle_name(&self) -> bool {
-        if let Some(Range { start, .. }) = self.word_indices_in_initials.peek() {
+        if let Some(&Range { start, .. }) = self.word_indices_in_initials.get(0) {
             start > 0
         } else {
             false
@@ -369,12 +369,12 @@ impl Name {
     pub fn surname(&self) -> &str {
         let mut surname_indices = self
             .word_indices_in_text
-            .clone()
+            .iter()
             .skip(self.surname_index)
             .peekable();
         let start = surname_indices.peek().unwrap().start;
         let end = surname_indices.last().unwrap().end;
-        &self.text[start..end]
+        &self.text[start.into()..end.into()]
     }
 
     /// Generational suffix, if present
@@ -525,7 +525,7 @@ impl Name {
 
     #[inline]
     fn word_iter(&self, range: Range<usize>) -> Words {
-        Words::new(&self.text, &self.word_indices_in_text, range)
+        Words::new(&self.text, &self.word_indices_in_text[range])
     }
 }
 
@@ -540,7 +540,7 @@ mod tests {
     #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
     #[test]
     fn struct_size() {
-        assert_eq!(184, std::mem::size_of::<Name>());
+        assert_eq!(144, std::mem::size_of::<Name>());
     }
 
     #[test]
