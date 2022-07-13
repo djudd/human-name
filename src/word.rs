@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use std::collections::VecDeque;
 use std::convert::TryInto;
+use std::num::NonZeroU64;
 use std::ops::Range;
 
 pub struct Words<'a> {
@@ -86,12 +87,32 @@ impl WordIndices {
         }
     }
 
-    pub fn get(&self, i: usize) -> Option<Range<usize>> {
+    pub fn peek(&self) -> Option<Range<usize>> {
         match self {
-            WordIndices::Unbounded(data) => data.get(i).cloned(),
-            WordIndices::Short { .. } => self.clone().nth(i),
+            WordIndices::Unbounded(data) => data.front().cloned(),
+            WordIndices::Short { starts, ends } => {
+                none_if_empty(*starts, *ends).map(|(starts, ends)| {
+                    let start = starts.trailing_zeros();
+                    let end = ends.trailing_zeros();
+
+                    start.try_into().unwrap()..end.try_into().unwrap()
+                })
+            }
         }
     }
+}
+
+#[inline]
+fn none_if_empty(starts: u64, ends: u64) -> Option<(NonZeroU64, NonZeroU64)> {
+    debug_assert!(starts.count_ones() == ends.count_ones());
+
+    if let Some(starts) = NonZeroU64::new(starts) {
+        if let Some(ends) = NonZeroU64::new(ends) {
+            return Some((starts, ends));
+        }
+    }
+
+    None
 }
 
 impl Iterator for WordIndices {
@@ -101,18 +122,15 @@ impl Iterator for WordIndices {
         match self {
             WordIndices::Unbounded(data) => data.pop_front(),
             WordIndices::Short { starts, ends } => {
-                if *starts == 0 {
-                    return None;
-                }
-                assert!(*ends > 0);
+                none_if_empty(*starts, *ends).map(|(nonempty_starts, nonempty_ends)| {
+                    let start = nonempty_starts.trailing_zeros();
+                    let end = nonempty_ends.trailing_zeros();
 
-                let start = starts.trailing_zeros();
-                let end = ends.trailing_zeros();
+                    *starts ^= 1 << start;
+                    *ends ^= 1 << end;
 
-                *starts ^= 1 << start;
-                *ends ^= 1 << end;
-
-                Some(start.try_into().unwrap()..end.try_into().unwrap())
+                    start.try_into().unwrap()..end.try_into().unwrap()
+                })
             }
         }
     }
@@ -131,18 +149,15 @@ impl DoubleEndedIterator for WordIndices {
         match self {
             WordIndices::Unbounded(data) => data.pop_back(),
             WordIndices::Short { starts, ends } => {
-                if *starts == 0 {
-                    return None;
-                }
-                assert!(*ends > 0);
+                none_if_empty(*starts, *ends).map(|(nonempty_starts, nonempty_ends)| {
+                    let start = 63 - nonempty_starts.leading_zeros();
+                    let end = 63 - nonempty_ends.leading_zeros();
 
-                let start = 63 - starts.leading_zeros();
-                let end = 63 - ends.leading_zeros();
+                    *starts ^= 1 << start;
+                    *ends ^= 1 << end;
 
-                *starts ^= 1 << start;
-                *ends ^= 1 << end;
-
-                Some(start.try_into().unwrap()..end.try_into().unwrap())
+                    start.try_into().unwrap()..end.try_into().unwrap()
+                })
             }
         }
     }

@@ -278,7 +278,7 @@ impl Name {
     /// assert!(name.goes_by_middle_name());
     /// ```
     pub fn goes_by_middle_name(&self) -> bool {
-        if let Some(Range { start, .. }) = self.word_indices_in_initials.get(0) {
+        if let Some(Range { start, .. }) = self.word_indices_in_initials.peek() {
             start > 0
         } else {
             false
