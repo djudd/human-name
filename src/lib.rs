@@ -537,6 +537,12 @@ mod tests {
     #[cfg(feature = "bench")]
     use test::{black_box, Bencher};
 
+    #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+    #[test]
+    fn struct_size() {
+        assert_eq!(184, std::mem::size_of::<Name>());
+    }
+
     #[test]
     fn fast_path_parse_does_not_allocate() {
         deny_alloc(|| Name::parse("Jane Doe").unwrap());
