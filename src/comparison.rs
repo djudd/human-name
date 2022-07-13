@@ -1,10 +1,9 @@
 use super::nickname::have_matching_variants;
 use super::utils::*;
-use super::{Name, Words};
+use super::{Name, WordIndices, Words};
 use std::borrow::Cow;
 use std::iter::{Enumerate, Peekable};
 use std::ops::Range;
-use std::slice::Iter;
 use std::str::Chars;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -105,7 +104,7 @@ impl Name {
         GivenNamesOrInitials {
             initials: self.initials.chars().enumerate(),
             known_names: self.given_iter(),
-            known_name_indices: self.word_indices_in_initials.iter().peekable(),
+            known_name_indices: self.word_indices_in_initials.clone().peekable(),
         }
     }
 
@@ -276,7 +275,7 @@ impl Name {
 
         let mut prev = 0;
 
-        for &Range { start, end } in self.word_indices_in_initials.iter() {
+        for Range { start, end } in self.word_indices_in_initials.clone() {
             if start > prev {
                 return true;
             } else {
@@ -491,7 +490,7 @@ impl<'a> NameWordOrInitial<'a> {
 struct GivenNamesOrInitials<'a> {
     initials: Enumerate<Chars<'a>>,
     known_names: Words<'a>,
-    known_name_indices: Peekable<Iter<'a, Range<usize>>>,
+    known_name_indices: Peekable<WordIndices>,
 }
 
 #[derive(Debug)]
@@ -507,7 +506,7 @@ impl<'a> Iterator for GivenNamesOrInitials<'a> {
         self.initials
             .next()
             .map(|(i, initial)| match self.known_name_indices.peek() {
-                Some(&&Range { start, end }) if start == i => {
+                Some(&Range { start, end }) if start == i => {
                     self.known_name_indices.next();
 
                     // Handle case of hyphenated name for which we have 2+ initials

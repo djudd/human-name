@@ -445,9 +445,7 @@ fn is_prefix_title(words: &[NamePart]) -> bool {
     }
 
     if words.len() > 1 {
-        words[0..words.len() - 1]
-            .iter()
-            .all(might_be_title_part)
+        words[0..words.len() - 1].iter().all(might_be_title_part)
     } else {
         true
     }
