@@ -10,7 +10,7 @@ repository = "https://github.com/djudd/human-name"
 documentation = "https://docs.rs/human_name/"
 
 [dependencies]
-unicode-segmentation = "1.8"
+unicode-segmentation = "1.9"
 unicode-normalization = "0.1"
 unidecode = "0.3"
 phf = { features = ["macros"], version = "0.10" }
@@ -19,7 +19,7 @@ serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
 smallvec = { features = ["union"], version = "1.9" }
-smallstr = "0.2"
+smallstr = "0.3"
 
 [dev-dependencies]
 alloc_counter = "0.0"
