@@ -4,13 +4,14 @@ use super::surname;
 use super::title;
 use super::utils::is_mixed_case;
 use smallvec::SmallVec;
+use std::num::NonZeroU8;
 
 #[derive(Debug)]
 struct ParseOp<'a> {
     // Output
     words: SmallVec<[NamePart<'a>; 7]>,
     surname_index: usize,
-    generation_from_suffix: Option<u8>,
+    generation_from_suffix: Option<NonZeroU8>,
 
     // Working space
     possible_false_prefix: Option<NamePart<'a>>,
@@ -20,7 +21,7 @@ struct ParseOp<'a> {
 
 pub const MAX_WORDS: usize = u8::max_value() as usize;
 
-pub fn parse(name: &str) -> Option<(SmallVec<[NamePart; 7]>, usize, Option<u8>)> {
+pub fn parse(name: &str) -> Option<(SmallVec<[NamePart; 7]>, usize, Option<NonZeroU8>)> {
     let mut op = ParseOp {
         words: SmallVec::new(),
         surname_index: 0,
@@ -375,7 +376,7 @@ mod tests {
         assert_eq!("John", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
-        assert_eq!(Some(3), generation);
+        assert_eq!(NonZeroU8::new(3), generation);
     }
 
     #[test]
@@ -384,7 +385,7 @@ mod tests {
         assert_eq!("John", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
-        assert_eq!(Some(3), generation);
+        assert_eq!(NonZeroU8::new(3), generation);
     }
 
     #[test]
@@ -393,13 +394,13 @@ mod tests {
         assert_eq!("John", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
-        assert_eq!(Some(2), generation);
+        assert_eq!(NonZeroU8::new(2), generation);
 
         let (parts, surname_index, generation) = parse("Griffey, Jr., Ken").unwrap();
         assert_eq!("Ken", parts[0].word);
         assert_eq!("Griffey", parts[1].word);
         assert_eq!(1, surname_index);
-        assert_eq!(Some(2), generation);
+        assert_eq!(NonZeroU8::new(2), generation);
     }
 
     #[cfg(feature = "bench")]
