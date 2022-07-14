@@ -284,7 +284,7 @@ impl Name {
             }
         }
 
-        self.surname_index > prev.into()
+        self.surname_index > prev
     }
 
     fn surname_consistent(&self, other: &Name) -> bool {

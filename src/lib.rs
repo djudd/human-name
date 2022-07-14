@@ -51,6 +51,7 @@ use smallstr::SmallString;
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
+use std::convert::TryInto;
 use std::hash::{Hash, Hasher};
 use std::ops::Range;
 use utils::{lowercase_if_alpha, normalize_nfkd_whitespace, transliterate};
@@ -86,9 +87,9 @@ pub const MAX_SEGMENTS: usize = parse::MAX_WORDS;
 /// the same person (see docs on `consistent_with` for details).
 #[derive(Clone, Debug)]
 pub struct Name {
-    text: SmallString<[u8; 36]>,
+    text: SmallString<[u8; 32]>,
     word_indices_in_text: WordIndices,
-    surname_index: usize,
+    surname_index: u16, // u16 must be sufficient since it can represent MAX_NAME_LEN
     generation_from_suffix: Option<u8>,
     initials: SmallString<[u8; 8]>,
     word_indices_in_initials: WordIndices,
@@ -235,7 +236,7 @@ impl Name {
         Name {
             text,
             word_indices_in_text,
-            surname_index: surname_index_in_names,
+            surname_index: surname_index_in_names.try_into().unwrap(),
             generation_from_suffix,
             initials,
             word_indices_in_initials,
@@ -370,7 +371,7 @@ impl Name {
         let mut surname_indices = self
             .word_indices_in_text
             .iter()
-            .skip(self.surname_index)
+            .skip(self.surname_index.into())
             .peekable();
         let start = surname_indices.peek().unwrap().start;
         let end = surname_indices.last().unwrap().end;
@@ -501,18 +502,18 @@ impl Name {
 
     #[inline]
     fn surname_words(&self) -> usize {
-        self.word_indices_in_text.len() - self.surname_index
+        self.word_indices_in_text.len() - usize::from(self.surname_index)
     }
 
     #[inline]
     fn surname_iter(&self) -> Words {
-        self.word_iter(self.surname_index..self.word_indices_in_text.len())
+        self.word_iter(self.surname_index.into()..self.word_indices_in_text.len())
     }
 
     #[inline]
     fn middle_name_iter(&self) -> Option<Words> {
         if self.surname_index > 1 {
-            Some(self.word_iter(1..self.surname_index))
+            Some(self.word_iter(1..self.surname_index.into()))
         } else {
             None
         }
@@ -520,7 +521,7 @@ impl Name {
 
     #[inline]
     fn given_iter(&self) -> Words {
-        self.word_iter(0..self.surname_index)
+        self.word_iter(0..self.surname_index.into())
     }
 
     #[inline]
@@ -540,7 +541,7 @@ mod tests {
     #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
     #[test]
     fn struct_size() {
-        assert_eq!(144, std::mem::size_of::<Name>());
+        assert_eq!(128, std::mem::size_of::<Name>());
     }
 
     #[test]
