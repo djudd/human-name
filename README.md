@@ -133,14 +133,9 @@ Python bindings using the `ctypes` module are available at [github.com/djudd/hum
 
 # Performance
 
-As of version 0.8, the fast path (roughly, two space-separated, titlecase ASCII
-words), name parsing takes about a microsecond and does not heap-allocate.
-
-Pathological cases can take up to ten times as long.
-
-There are a few places where the code would be simpler with regexes, but in the
-hot path this seems to be slower, and doing without isn't too hard, so we avoid
-the dependency.
+As of version 1.0, the fast path (roughly, two space-separated, titlecase ASCII
+words) for name parsing takes ~250ns and does not heap-allocate. Pathological cases
+can take an order of magnitude longer.
 
 # Credit
 
