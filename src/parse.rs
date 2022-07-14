@@ -5,6 +5,56 @@ use super::title;
 use super::utils::is_mixed_case;
 use smallvec::SmallVec;
 use std::num::NonZeroU8;
+use Cow;
+
+pub struct Name<'a> {
+    parts: SmallVec<[NamePart<'a>; 7]>,
+    pub surname_index: usize,
+    pub generation: Option<NonZeroU8>,
+    reversed_prefixes: Vec<NamePart<'a>>,
+    honorific_suffixes: Vec<NamePart<'a>>,
+}
+
+impl<'a> Name<'a> {
+    pub fn words(&self) -> &[NamePart<'a>] {
+        self.parts.as_ref()
+    }
+
+    pub fn honorific_prefix(&self) -> Option<Cow<str>> {
+        match self.reversed_prefixes.len() {
+            0 => None,
+            1 => self
+                .reversed_prefixes
+                .get(0)
+                .map(title::canonicalize_prefix),
+            _ => Some(Cow::Owned(
+                self.reversed_prefixes
+                    .iter()
+                    .rev()
+                    .map(title::canonicalize_prefix)
+                    .collect::<SmallVec<[Cow<str>; 4]>>()
+                    .join(" "),
+            )),
+        }
+    }
+
+    pub fn honorific_suffix(&self) -> Option<Cow<str>> {
+        match self.honorific_suffixes.len() {
+            0 => None,
+            1 => self
+                .honorific_suffixes
+                .get(0)
+                .map(title::canonicalize_suffix),
+            _ => Some(Cow::Owned(
+                self.honorific_suffixes
+                    .iter()
+                    .map(title::canonicalize_suffix)
+                    .collect::<SmallVec<[Cow<str>; 4]>>()
+                    .join(" "),
+            )),
+        }
+    }
+}
 
 #[derive(Debug)]
 struct ParseOp<'a> {
@@ -12,27 +62,33 @@ struct ParseOp<'a> {
     words: SmallVec<[NamePart<'a>; 7]>,
     surname_index: usize,
     generation_from_suffix: Option<NonZeroU8>,
+    reversed_prefixes: Vec<NamePart<'a>>,
+    honorific_suffixes: Vec<NamePart<'a>>,
 
     // Working space
-    possible_false_prefix: Option<NamePart<'a>>,
-    possible_false_postfix: Option<NamePart<'a>>,
     use_capitalization: bool,
 }
 
 pub const MAX_WORDS: usize = u8::max_value() as usize;
 
-pub fn parse(name: &str) -> Option<(SmallVec<[NamePart; 7]>, usize, Option<NonZeroU8>)> {
+pub fn parse(name: &str) -> Option<Name> {
     let mut op = ParseOp {
         words: SmallVec::new(),
         surname_index: 0,
         generation_from_suffix: None,
-        possible_false_prefix: None,
-        possible_false_postfix: None,
+        reversed_prefixes: Vec::new(),
+        honorific_suffixes: Vec::new(),
         use_capitalization: is_mixed_case(name),
     };
 
     if op.run(name) {
-        Some((op.words, op.surname_index, op.generation_from_suffix))
+        Some(Name {
+            parts: op.words,
+            surname_index: op.surname_index,
+            generation: op.generation_from_suffix,
+            reversed_prefixes: op.reversed_prefixes,
+            honorific_suffixes: op.honorific_suffixes,
+        })
     } else {
         None
     }
@@ -80,10 +136,10 @@ impl<'a> ParseOp<'a> {
         // (not initials, which should only be at the end of the input
         // if they are comma-separated, and we already handled that case)
         if !self.valid() {
-            if let Some(ref postfix) = self.possible_false_postfix {
-                self.words.push(postfix.clone());
-            } else if let Some(ref prefix) = self.possible_false_prefix {
-                self.words.insert(0, prefix.clone());
+            if let Some(i) = self.possible_false_postfix() {
+                self.words.push(self.honorific_suffixes.remove(i));
+            } else if let Some(i) = self.possible_false_prefix() {
+                self.words.insert(0, self.reversed_prefixes.remove(i));
             }
         }
 
@@ -134,15 +190,23 @@ impl<'a> ParseOp<'a> {
         debug_assert!(
             self.words.is_empty()
                 && self.surname_index == 0
-                && self.possible_false_prefix.is_none()
-                && self.possible_false_postfix.is_none(),
+                && self.possible_false_prefix().is_none()
+                && self.possible_false_postfix().is_none(),
             "Invalid state for handle_no_comma!"
         );
 
-        self.words.extend(
-            NamePart::all_from_text(name, self.use_capitalization, Location::Start)
-                .skip_while(|word| !word.is_namelike() && !word.is_initials()),
-        );
+        let mut in_prefix = true;
+        for word in NamePart::all_from_text(name, self.use_capitalization, Location::Start) {
+            if in_prefix && (word.is_namelike() || word.is_initials()) {
+                in_prefix = false;
+            }
+
+            if in_prefix {
+                self.reversed_prefixes.insert(0, word);
+            } else {
+                self.words.push(word);
+            }
+        }
 
         if self.words.is_empty() {
             return;
@@ -159,7 +223,7 @@ impl<'a> ParseOp<'a> {
 
         // Strip non-comma-separated titles & suffixes (e.g. "John Smith Jr.")
         let first_postfix_index =
-            if self.words.len() + self.possible_false_prefix.iter().count() > 2 {
+            if self.words.len() + self.possible_false_prefix().iter().count() > 2 {
                 title::find_postfix_index(&self.words[1..], false) + 1
             } else {
                 self.words.len()
@@ -174,8 +238,8 @@ impl<'a> ParseOp<'a> {
         debug_assert!(
             self.words.is_empty()
                 && self.surname_index == 0
-                && self.possible_false_prefix.is_none()
-                && self.possible_false_postfix.is_none(),
+                && self.possible_false_prefix().is_none()
+                && self.possible_false_postfix().is_none(),
             "Invalid state for handle_before_comma!"
         );
 
@@ -259,71 +323,72 @@ impl<'a> ParseOp<'a> {
             "Invalid state for handle_after_surname!"
         );
 
-        if self.possible_false_postfix.is_some() && self.generation_from_suffix.is_some() {
-            return;
-        }
-
-        let mut postfix_words =
-            NamePart::all_from_text(part, self.use_capitalization, Location::End);
-        while self.possible_false_postfix.is_none() || self.generation_from_suffix.is_none() {
-            if let Some(word) = postfix_words.next() {
-                self.found_suffix_or_postfix(word, false);
-            } else {
-                break;
-            }
+        for word in NamePart::all_from_text(part, self.use_capitalization, Location::End) {
+            self.found_suffix_or_postfix(word, false);
         }
     }
 
     fn strip_prefix(&mut self, len: usize) {
         for i in (0..len).rev() {
             let word = self.words.remove(i);
-            self.found_prefix(word);
+            self.reversed_prefixes.push(word);
         }
     }
 
     fn strip_unsaved_prefix(&mut self, words: &mut SmallVec<[NamePart<'a>; 5]>, len: usize) {
         for i in (0..len).rev() {
-            self.found_prefix(words.remove(i));
+            self.reversed_prefixes.push(words.remove(i));
         }
     }
 
-    fn found_prefix(&mut self, prefix: NamePart<'a>) {
-        // We drop prefixes, but keep the last word that's namelike,
-        // just in case we make a mistake and it turns out by process of
-        // elimination that this must actually be a given name
-        if self.possible_false_prefix.is_none() && (prefix.is_namelike() || prefix.is_initials()) {
-            self.possible_false_prefix = Some(prefix);
-        }
+    // Find the last prefix that's namelike, just in case we made a mistake
+    // and it turns out by process of elimination that this must actually be
+    // a given name
+    fn possible_false_prefix(&self) -> Option<usize> {
+        self.reversed_prefixes
+            .iter()
+            .position(|p| p.is_namelike() || p.is_initials())
+    }
+
+    // Find the first suffix that's namelike, just in case we make a mistake
+    // and it turns out by process of elimination that this must actually be
+    // a surname
+    fn possible_false_postfix(&self) -> Option<usize> {
+        self.honorific_suffixes
+            .iter()
+            .position(|p| p.is_namelike() || p.is_initials())
     }
 
     fn strip_postfix(&mut self, index: usize) {
         if index < self.words.len() {
-            let postfix = self.words.swap_remove(index);
-            self.found_suffix_or_postfix(postfix, false);
+            let postfixes = self
+                .words
+                .drain(index..)
+                .collect::<SmallVec<[NamePart<'a>; 5]>>();
+            for postfix in postfixes {
+                self.found_suffix_or_postfix(postfix, false);
+            }
             self.words.truncate(index);
         }
     }
 
     fn strip_unsaved_postfix(&mut self, words: &mut SmallVec<[NamePart<'a>; 5]>, index: usize) {
         if index < words.len() {
-            let postfix = words.swap_remove(index);
-            self.found_suffix_or_postfix(postfix, false);
-            words.truncate(index);
+            for postfix in words.drain(index..) {
+                self.found_suffix_or_postfix(postfix, false);
+            }
         }
     }
 
     fn found_suffix_or_postfix(&mut self, postfix: NamePart<'a>, expect_initials: bool) {
         if self.generation_from_suffix.is_none() {
-            self.generation_from_suffix = suffix::generation_from_suffix(&postfix, expect_initials);
+            if let Some(gen) = suffix::generation_from_suffix(&postfix, expect_initials) {
+                self.generation_from_suffix = Some(gen);
+                return;
+            }
         }
 
-        // We throw away most postfix titles, but keep the first one that's namelike,
-        // just in case we make a mistake and it turns out by process of elimination
-        // that this must actually be a surname
-        if self.possible_false_postfix.is_none() && (postfix.is_namelike() || postfix.is_initials())
-        {
-            self.possible_false_postfix = Some(postfix);
-        }
+        self.honorific_suffixes.push(postfix);
     }
 }
 
@@ -336,7 +401,12 @@ mod tests {
 
     #[test]
     fn first_last() {
-        let (parts, surname_index, generation) = parse("John Doe").unwrap();
+        let Name {
+            parts,
+            surname_index,
+            generation,
+            ..
+        } = parse("John Doe").unwrap();
         assert_eq!("John", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
@@ -345,7 +415,12 @@ mod tests {
 
     #[test]
     fn initial_last() {
-        let (parts, surname_index, generation) = parse("J. Doe").unwrap();
+        let Name {
+            parts,
+            surname_index,
+            generation,
+            ..
+        } = parse("J. Doe").unwrap();
         assert_eq!("J.", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
@@ -354,7 +429,12 @@ mod tests {
 
     #[test]
     fn last_first() {
-        let (parts, surname_index, generation) = parse("Doe, John").unwrap();
+        let Name {
+            parts,
+            surname_index,
+            generation,
+            ..
+        } = parse("Doe, John").unwrap();
         assert_eq!("John", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
@@ -363,7 +443,12 @@ mod tests {
 
     #[test]
     fn last_initial() {
-        let (parts, surname_index, generation) = parse("Doe, J.").unwrap();
+        let Name {
+            parts,
+            surname_index,
+            generation,
+            ..
+        } = parse("Doe, J.").unwrap();
         assert_eq!("J.", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
@@ -372,7 +457,12 @@ mod tests {
 
     #[test]
     fn suffix() {
-        let (parts, surname_index, generation) = parse("John Doe III").unwrap();
+        let Name {
+            parts,
+            surname_index,
+            generation,
+            ..
+        } = parse("John Doe III").unwrap();
         assert_eq!("John", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
@@ -381,7 +471,12 @@ mod tests {
 
     #[test]
     fn suffix_comma() {
-        let (parts, surname_index, generation) = parse("Doe, John III").unwrap();
+        let Name {
+            parts,
+            surname_index,
+            generation,
+            ..
+        } = parse("Doe, John III").unwrap();
         assert_eq!("John", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
@@ -390,17 +485,62 @@ mod tests {
 
     #[test]
     fn intermediate_suffix() {
-        let (parts, surname_index, generation) = parse("Doe, II, John").unwrap();
+        let Name {
+            parts,
+            surname_index,
+            generation,
+            ..
+        } = parse("Doe, II, John").unwrap();
         assert_eq!("John", parts[0].word);
         assert_eq!("Doe", parts[1].word);
         assert_eq!(1, surname_index);
         assert_eq!(NonZeroU8::new(2), generation);
 
-        let (parts, surname_index, generation) = parse("Griffey, Jr., Ken").unwrap();
+        let Name {
+            parts,
+            surname_index,
+            generation,
+            ..
+        } = parse("Griffey, Jr., Ken").unwrap();
         assert_eq!("Ken", parts[0].word);
         assert_eq!("Griffey", parts[1].word);
         assert_eq!(1, surname_index);
         assert_eq!(NonZeroU8::new(2), generation);
+    }
+
+    #[test]
+    fn honorifics() {
+        let name = parse("Lt Col Sir John Doe, X, YY, ZZZ").unwrap();
+        assert_eq!("Lt. Col. Sir", name.honorific_prefix().unwrap());
+        assert_eq!("X. Y.Y. ZZZ", name.honorific_suffix().unwrap());
+
+        let name = parse("Doe, Lt Col Sir John, X, YY, ZZZ").unwrap();
+        assert_eq!("Lt. Col. Sir", name.honorific_prefix().unwrap());
+        assert_eq!("X. Y.Y. ZZZ", name.honorific_suffix().unwrap());
+
+        let name = parse("Air Chief Marshal Sir Stuart William Peach, GBE, KCB, ADC, DL").unwrap();
+        assert_eq!("Air Chief Marshal Sir", name.honorific_prefix().unwrap());
+        assert_eq!("GBE KCB ADC D.L.", name.honorific_suffix().unwrap());
+
+        let name = parse("Air Chief Marshal Sir Stuart William Peach GBE KCB ADC DL").unwrap();
+        assert_eq!("Air Chief Marshal Sir", name.honorific_prefix().unwrap());
+        assert_eq!("GBE KCB ADC D.L.", name.honorific_suffix().unwrap());
+
+        let name = parse("Peach, Air Chief Marshal Sir Stuart William, GBE KCB ADC DL").unwrap();
+        assert_eq!("Air Chief Marshal Sir", name.honorific_prefix().unwrap());
+        assert_eq!("GBE KCB ADC D.L.", name.honorific_suffix().unwrap());
+    }
+
+    // Treating this as an honorific suffix isn't really right, but it does produce
+    // the correct display output, and "et al" is unfortunately common in some data
+    // so we need to do something vaguely sane at least.
+    #[test]
+    fn et_al() {
+        let name = parse("Dr. Jane Doe, et al").unwrap();
+        assert_eq!("et al.", name.honorific_suffix().unwrap());
+
+        let name = parse("DR JANE DOE ET AL").unwrap();
+        assert_eq!("et al.", name.honorific_suffix().unwrap());
     }
 
     #[cfg(feature = "bench")]
