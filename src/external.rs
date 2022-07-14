@@ -110,6 +110,16 @@ pub unsafe extern "C" fn human_name_generational_suffix(name: &Name) -> *const c
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn human_name_honorific_prefix(name: &Name) -> *const c_char {
+    option_str_to_char_star!(name.honorific_prefix())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn human_name_honorific_suffix(name: &Name) -> *const c_char {
+    option_str_to_char_star!(name.honorific_suffix())
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn human_name_display_first_last(name: &Name) -> *const c_char {
     str_to_char_star!(name.display_first_last().into_owned())
 }
