@@ -56,7 +56,7 @@ assert!(!jane_doe.consistent_with(&john_doe));
 let oscar = Name::parse("MR OSCAR DE LA HOYA JR").unwrap();
 assert_eq!(Some("Oscar"), oscar.given_name());
 assert_eq!("de la Hoya", oscar.surname());
-assert_eq!(Some("Jr."), oscar.suffix());
+assert_eq!(Some("Jr."), oscar.generational_suffix());
 assert_eq!("Oscar de la Hoya, Jr.", oscar.display_full());
 
 assert!(Name::parse("foo@bar.com").is_none());
@@ -74,7 +74,7 @@ $ human_name parse "Jane Doe"
 {"first_initial":"J","given_name":"Jane","surname":"Doe"}
 
 $ human_name parse "MR OSCAR DE LA HOYA JR"
-{"first_initial":"O","given_name":"Oscar","suffix":"Jr.","surname":"de la Hoya"}
+{"first_initial":"O","given_name":"Oscar","generational_suffix":"Jr.","surname":"de la Hoya"}
 
 $ human_name eq "Jane Doe" "Jane M. Doe"
 y

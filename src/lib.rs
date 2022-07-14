@@ -117,7 +117,7 @@ impl Name {
     /// assert_eq!("Velasquez y Garcia", name.surname());
     /// assert_eq!(Some("Juan"), name.given_name());
     /// assert_eq!(Some("AT"), name.middle_initials());
-    /// assert_eq!(Some("III"), name.suffix());
+    /// assert_eq!(Some("III"), name.generational_suffix());
     /// ```
     ///
     /// # Supported formats
@@ -379,9 +379,15 @@ impl Name {
     }
 
     /// Generational suffix, if present
-    pub fn suffix(&self) -> Option<&str> {
+    pub fn generational_suffix(&self) -> Option<&str> {
         self.generation_from_suffix
             .map(suffix::display_generational_suffix)
+    }
+
+    /// Generational suffix, if present
+    #[deprecated(since = "1.1.0", note = "Use `generational_suffix` instead")]
+    pub fn suffix(&self) -> Option<&str> {
+        self.generational_suffix()
     }
 
     /// First initial (with period) and surname.

@@ -9,7 +9,7 @@ struct PrettyNameParts<'a> {
     given_name: Option<&'a str>,
     middle_initials: Option<&'a str>,
     middle_names: Option<Cow<'a, str>>,
-    suffix: Option<&'a str>,
+    generational_suffix: Option<&'a str>,
 }
 
 impl Name {
@@ -20,7 +20,7 @@ impl Name {
             given_name: self.given_name(),
             middle_initials: self.middle_initials(),
             middle_names: self.middle_name(),
-            suffix: self.suffix(),
+            generational_suffix: self.generational_suffix(),
         }
     }
 }
@@ -33,7 +33,7 @@ impl Serialize for Name {
     ///
     /// let name = Name::parse("JOHN ALLEN Q MACDONALD JR").unwrap();
     /// assert_eq!(
-    ///   r#"{"first_initial":"J","surname":"MacDonald","given_name":"John","middle_initials":"AQ","middle_names":"Allen","suffix":"Jr."}"#,
+    ///   r#"{"first_initial":"J","surname":"MacDonald","given_name":"John","middle_initials":"AQ","middle_names":"Allen","generational_suffix":"Jr."}"#,
     ///   serde_json::to_string(&name).unwrap()
     /// );
     /// ```
