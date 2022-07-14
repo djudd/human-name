@@ -57,6 +57,7 @@ let oscar = Name::parse("MR OSCAR DE LA HOYA JR").unwrap();
 assert_eq!(Some("Oscar"), oscar.given_name());
 assert_eq!("de la Hoya", oscar.surname());
 assert_eq!(Some("Jr."), oscar.generational_suffix());
+assert_eq!(Some("Mr."), oscar.honorific_prefix());
 assert_eq!("Oscar de la Hoya, Jr.", oscar.display_full());
 
 assert!(Name::parse("foo@bar.com").is_none());
@@ -146,14 +147,8 @@ Inspiration, heuristics, and test cases were taken from:
 * [`namae` (Ruby)](https://github.com/berkmancenter/namae)
 * [`Lingua::EN::NameParse` (Perl)](http://search.cpan.org/~kimryan/Lingua-EN-NameParse-1.33/lib/Lingua/EN/NameParse.pm) (probably the original for some of the other ports as well)
 * [`Lingua::EN::Nickname` (Perl)](http://search.cpan.org/~brianl/Lingua-EN-Nickname-1.16/Nickname.pm)
-
-In terms of name formats, `human_name` covers just about all the cases these libraries
-do, and more. However, at the moment, unlike most of them, it throws away titles and
-nicknames, rather than merely separating them.
-
-I wrote this mostly as a side project to learn Rust (so apologies for any
-unidiomatic code), but thanks also to Academia.edu for giving me real-world use
-cases.
+* [`parse-full-name` (JS)] (https://github.com/dschnelldavis/parse-full-name)
+* [`PHP-Name-Parser` (PHP)] (https://github.com/joshfraser/PHP-Name-Parser)
 
 # Contributing
 

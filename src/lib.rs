@@ -46,7 +46,6 @@ mod eq_hash;
 #[cfg(feature = "serialization")]
 mod serialization;
 
-use namepart::NamePart;
 use smallstr::SmallString;
 use smallvec::SmallVec;
 use std::borrow::Cow;
@@ -172,11 +171,9 @@ impl Name {
 
         let name = normalize_nfkd_whitespace(name);
         let name = nickname::strip_nickname(&name);
+        let parsed = parse::parse(&name)?;
 
-        let (words, surname_index, generation_from_suffix) = parse::parse(&name)?;
-
-        let mut name =
-            Name::initialize_struct(&words, surname_index, generation_from_suffix, name.len());
+        let mut name = Name::initialize_struct(&parsed, name.len());
 
         let mut s = DefaultHasher::new();
         name.surname_hash(&mut s);
@@ -185,13 +182,10 @@ impl Name {
         Some(name)
     }
 
-    fn initialize_struct(
-        words: &[NamePart],
-        surname_index: usize,
-        generation_from_suffix: Option<NonZeroU8>,
-        name_len: usize,
-    ) -> Name {
+    fn initialize_struct(parsed: &parse::Name, name_len: usize) -> Name {
+        let words = parsed.words();
         let last_word = words.len() - 1;
+        let surname_index = parsed.surname_index;
 
         let mut text = SmallString::with_capacity(name_len);
         let mut initials = SmallString::with_capacity(surname_index);
@@ -229,13 +223,24 @@ impl Name {
             }
         }
 
-        if let Some(suffix) = generation_from_suffix {
+        if let Some(generation) = parsed.generation {
             text.push_str(", ");
-            text.push_str(suffix::display_generational_suffix(suffix));
+            text.push_str(suffix::display_generational_suffix(generation));
         }
 
         debug_assert!(!text.is_empty(), "Names are empty!");
         debug_assert!(!initials.is_empty(), "Initials are empty!");
+
+        let honorifics = {
+            let prefix = parsed.honorific_prefix().map(Cow::into_owned);
+            let suffix = parsed.honorific_suffix().map(Cow::into_owned);
+
+            if prefix.is_some() || suffix.is_some() {
+                Some(Box::new(Honorifics { prefix, suffix }))
+            } else {
+                None
+            }
+        };
 
         text.shrink_to_fit();
         word_indices_in_text.shrink_to_fit();
@@ -246,10 +251,10 @@ impl Name {
             text,
             word_indices_in_text,
             surname_index: surname_index_in_names.try_into().unwrap(),
-            generation_from_suffix,
+            generation_from_suffix: parsed.generation,
             initials,
             word_indices_in_initials,
-            honorifics: None,
+            honorifics,
             hash: 0,
         }
     }
@@ -428,7 +433,7 @@ impl Name {
     /// use human_name::Name;
     ///
     /// let name = Name::parse("Stephen Strange, MD").unwrap();
-    /// assert_eq!(Some("MD"), name.honorific_suffix());
+    /// assert_eq!(Some("M.D."), name.honorific_suffix());
     /// ```
     pub fn honorific_suffix(&self) -> Option<&str> {
         self.honorifics
@@ -496,6 +501,8 @@ impl Name {
     /// Number of bytes in the full name as UTF-8 in NFKD normal form, including
     /// spaces and punctuation.
     ///
+    /// Does not include honorifics.
+    ///
     /// ```
     /// use human_name::Name;
     ///
@@ -507,16 +514,56 @@ impl Name {
     }
 
     /// The full name, or as much of it as was preserved from the input,
-    /// including given name, middle names, surname and suffix.
+    /// including given name, middle names, surname and generational suffix.
+    ///
+    /// Does not include honorifics.
     ///
     /// ```
     /// use human_name::Name;
     ///
-    /// let name = Name::parse("JOHN ALLEN Q DE LA MACDONALD JR").unwrap();
+    /// let name = Name::parse("DR JOHN ALLEN Q DE LA MACDONALD JR").unwrap();
     /// assert_eq!("John Allen Q. de la MacDonald, Jr.", name.display_full());
+    ///
+    /// let name = Name::parse("Air Chief Marshal Sir Harrieta ('Harry') Keōpūolani Nāhiʻenaʻena, GBE, KCB, ADC").unwrap();
+    /// assert_eq!("Harrieta Keōpūolani Nāhiʻenaʻena", name.display_full());
     /// ```
     pub fn display_full(&self) -> &str {
         &self.text
+    }
+
+    /// The full name, or as much of it as was preserved from the input,
+    /// including given name, middle names, surname, generational suffix,
+    /// and honorifics.
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let name = Name::parse("DR JOHN ALLEN Q DE LA MACDONALD JR").unwrap();
+    /// assert_eq!("Dr. John Allen Q. de la MacDonald, Jr.", name.display_full_with_honorifics());
+    ///
+    /// let name = Name::parse("Air Chief Marshal Sir Harrieta ('Harry') Keōpūolani Nāhiʻenaʻena, GBE, KCB, ADC").unwrap();
+    /// assert_eq!("Air Chief Marshal Sir Harrieta Keōpūolani Nāhiʻenaʻena GBE KCB ADC", name.display_full_with_honorifics());
+    /// ```
+    pub fn display_full_with_honorifics(&self) -> Cow<str> {
+        if let Some(honorifics) = self.honorifics.as_ref() {
+            let mut result = String::with_capacity(
+                honorifics.prefix.as_ref().map(|t| t.len() + 1).unwrap_or(0)
+                    + self.text.len()
+                    + honorifics.suffix.as_ref().map(|t| t.len() + 1).unwrap_or(0),
+            );
+            if let Some(prefix) = &honorifics.prefix {
+                result.push_str(prefix);
+                result.push(' ');
+            }
+            result.push_str(&self.text);
+            if let Some(suffix) = &honorifics.suffix {
+                result.push(' ');
+                result.push_str(suffix);
+            }
+            Cow::Owned(result)
+        } else {
+            Cow::Borrowed(&self.text)
+        }
     }
 
     /// Implements a hash for a name that is always identical for two names that
@@ -618,35 +665,23 @@ mod tests {
     #[bench]
     fn initialize_struct_initial_surname(b: &mut Bencher) {
         let name = "J. Doe";
-        let (words, surname_index, generation) = parse::parse(&*name).unwrap();
-        b.iter(|| {
-            black_box(
-                Name::initialize_struct(&words, surname_index, generation, name.len()).byte_len(),
-            )
-        })
+        let parsed = parse::parse(&*name).unwrap();
+        b.iter(|| black_box(Name::initialize_struct(&parsed, name.len()).byte_len()))
     }
 
     #[cfg(feature = "bench")]
     #[bench]
     fn initialize_struct_first_last(b: &mut Bencher) {
         let name = "John Doe";
-        let (words, surname_index, generation) = parse::parse(&*name).unwrap();
-        b.iter(|| {
-            black_box(
-                Name::initialize_struct(&words, surname_index, generation, name.len()).byte_len(),
-            )
-        })
+        let parsed = parse::parse(&*name).unwrap();
+        b.iter(|| black_box(Name::initialize_struct(&parsed, name.len()).byte_len()))
     }
 
     #[cfg(feature = "bench")]
     #[bench]
     fn initialize_struct_complex(b: &mut Bencher) {
         let name = "John Allen Q.R. de la MacDonald Jr.";
-        let (words, surname_index, generation) = parse::parse(&*name).unwrap();
-        b.iter(|| {
-            black_box(
-                Name::initialize_struct(&words, surname_index, generation, name.len()).byte_len(),
-            )
-        })
+        let parsed = parse::parse(&*name).unwrap();
+        b.iter(|| black_box(Name::initialize_struct(&parsed, name.len()).byte_len()))
     }
 }

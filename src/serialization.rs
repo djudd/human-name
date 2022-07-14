@@ -43,7 +43,7 @@ impl Serialize for Name {
     ///
     /// let name = Name::parse("DR JOHN ALLEN Q MACDONALD JR").unwrap();
     /// assert_eq!(
-    ///   r#"{"first_initial":"J","surname":"MacDonald","given_name":"John","middle_initials":"AQ","middle_names":"Allen","generational_suffix":"Jr.","honorific_prefix":"DR"}"#,
+    ///   r#"{"first_initial":"J","surname":"MacDonald","given_name":"John","middle_initials":"AQ","middle_names":"Allen","generational_suffix":"Jr.","honorific_prefix":"Dr."}"#,
     ///   serde_json::to_string(&name).unwrap()
     /// );
     /// ```
