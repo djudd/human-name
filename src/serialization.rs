@@ -6,10 +6,18 @@ use std::borrow::Cow;
 struct PrettyNameParts<'a> {
     first_initial: char,
     surname: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
     given_name: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     middle_initials: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     middle_names: Option<Cow<'a, str>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     generational_suffix: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    honorific_prefix: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    honorific_suffix: Option<&'a str>,
 }
 
 impl Name {
@@ -21,6 +29,8 @@ impl Name {
             middle_initials: self.middle_initials(),
             middle_names: self.middle_name(),
             generational_suffix: self.generational_suffix(),
+            honorific_prefix: self.honorific_prefix(),
+            honorific_suffix: self.honorific_suffix(),
         }
     }
 }
@@ -31,9 +41,9 @@ impl Serialize for Name {
     /// ```
     /// use human_name::Name;
     ///
-    /// let name = Name::parse("JOHN ALLEN Q MACDONALD JR").unwrap();
+    /// let name = Name::parse("DR JOHN ALLEN Q MACDONALD JR").unwrap();
     /// assert_eq!(
-    ///   r#"{"first_initial":"J","surname":"MacDonald","given_name":"John","middle_initials":"AQ","middle_names":"Allen","generational_suffix":"Jr."}"#,
+    ///   r#"{"first_initial":"J","surname":"MacDonald","given_name":"John","middle_initials":"AQ","middle_names":"Allen","generational_suffix":"Jr.","honorific_prefix":"DR"}"#,
     ///   serde_json::to_string(&name).unwrap()
     /// );
     /// ```

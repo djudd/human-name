@@ -94,7 +94,14 @@ pub struct Name {
     generation_from_suffix: Option<NonZeroU8>,
     initials: SmallString<[u8; 8]>,
     word_indices_in_initials: WordIndices,
+    honorifics: Option<Box<Honorifics>>,
     pub hash: u64,
+}
+
+#[derive(Clone, Debug)]
+struct Honorifics {
+    prefix: Option<String>,
+    suffix: Option<String>,
 }
 
 impl Name {
@@ -119,6 +126,7 @@ impl Name {
     /// assert_eq!(Some("Juan"), name.given_name());
     /// assert_eq!(Some("AT"), name.middle_initials());
     /// assert_eq!(Some("III"), name.generational_suffix());
+    /// assert_eq!(Some("Dr."), name.honorific_prefix());
     /// ```
     ///
     /// # Supported formats
@@ -241,6 +249,7 @@ impl Name {
             generation_from_suffix,
             initials,
             word_indices_in_initials,
+            honorifics: None,
             hash: 0,
         }
     }
@@ -380,6 +389,13 @@ impl Name {
     }
 
     /// Generational suffix, if present
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let name = Name::parse("Gary Payton II").unwrap();
+    /// assert_eq!(Some("Jr."), name.generational_suffix());
+    /// ```
     pub fn generational_suffix(&self) -> Option<&str> {
         self.generation_from_suffix
             .map(suffix::display_generational_suffix)
@@ -389,6 +405,36 @@ impl Name {
     #[deprecated(since = "1.1.0", note = "Use `generational_suffix` instead")]
     pub fn suffix(&self) -> Option<&str> {
         self.generational_suffix()
+    }
+
+    /// Honorific prefix(es), if present
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let name = Name::parse("Rev. Dr. Martin Luther King, Jr.").unwrap();
+    /// assert_eq!(Some("Rev. Dr."), name.honorific_prefix());
+    /// ```
+    pub fn honorific_prefix(&self) -> Option<&str> {
+        self.honorifics
+            .as_ref()
+            .and_then(|h| h.prefix.as_ref())
+            .map(|p| p.as_ref())
+    }
+
+    /// Honorific suffix(es), if present
+    ///
+    /// ```
+    /// use human_name::Name;
+    ///
+    /// let name = Name::parse("Stephen Strange, MD").unwrap();
+    /// assert_eq!(Some("MD"), name.honorific_suffix());
+    /// ```
+    pub fn honorific_suffix(&self) -> Option<&str> {
+        self.honorifics
+            .as_ref()
+            .and_then(|h| h.suffix.as_ref())
+            .map(|s| s.as_ref())
     }
 
     /// First initial (with period) and surname.
@@ -548,7 +594,7 @@ mod tests {
     #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
     #[test]
     fn struct_size() {
-        assert_eq!(128, std::mem::size_of::<Name>());
+        assert_eq!(136, std::mem::size_of::<Name>());
     }
 
     #[test]
