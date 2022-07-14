@@ -312,6 +312,10 @@ BRIAN O'CONNOR|O'Connor|Brian||B||
 La'tanya O'Connor|O'Connor|La'tanya||L||
 LA'TANYA O'CONNOR|O'Connor|La'Tanya||L||
 Mari' Aube'|Aube'|Mari'||M||
+Harrieta Keōpūolani Nāhiʻenaʻena|Nāhiʻenaʻena|Harrieta|Keōpūolani|H|K|
+Harietta Keopuolani Nahi'ena'ena|Nahi'ena'ena|Harietta|Keopuolani|H|K|
+Naomi Wambui Ng'ang'a|Ng'ang'a|Naomi|Wambui|N|W|
+Va'apu'u Vitale|Vitale|Va'apu'u||V||
 
 # suffixes with postfix titles
 Joe Franklin Jr|Franklin|Joe||J||Jr.
