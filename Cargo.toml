@@ -1,6 +1,6 @@
 [package]
 name = "human_name"
-version = "1.0.4"
+version = "1.0.5"
 authors = ["David Judd <david.a.judd@gmail.com>"]
 description = "A library for parsing and comparing human names"
 keywords = ["human", "name", "language", "nlp"]
