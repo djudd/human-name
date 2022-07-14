@@ -80,11 +80,11 @@ fn parsing() {
             name.middle_initials()
         );
         assert!(
-            name.suffix() == suffix,
+            name.generational_suffix() == suffix,
             "[{}] Expected suffix {:?}, got {:?}",
             input,
             suffix,
-            name.suffix()
+            name.generational_suffix()
         );
     }
 }

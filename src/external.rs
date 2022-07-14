@@ -99,8 +99,14 @@ pub unsafe extern "C" fn human_name_middle_names(name: &Name) -> *const c_char {
 }
 
 #[no_mangle]
+#[deprecated(since = "1.1.0", note = "Use `generational_suffix` instead")]
 pub unsafe extern "C" fn human_name_suffix(name: &Name) -> *const c_char {
-    option_str_to_char_star!(name.suffix())
+    option_str_to_char_star!(name.generational_suffix())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn human_name_generational_suffix(name: &Name) -> *const c_char {
+    option_str_to_char_star!(name.generational_suffix())
 }
 
 #[no_mangle]
