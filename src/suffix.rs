@@ -1,5 +1,6 @@
 use namepart::{Category, NamePart};
 use phf::phf_map;
+use std::num::NonZeroU8;
 
 static GENERATION_BY_SUFFIX: phf::Map<&'static str, u8> = phf_map! {
     // Namecased
@@ -72,7 +73,7 @@ static GENERATION_BY_SUFFIX: phf::Map<&'static str, u8> = phf_map! {
 
 static SUFFIX_BY_GENERATION: [&str; 5] = ["Sr.", "Jr.", "III", "IV", "V"];
 
-pub fn generation_from_suffix(part: &NamePart, might_be_initials: bool) -> Option<u8> {
+pub fn generation_from_suffix(part: &NamePart, might_be_initials: bool) -> Option<NonZeroU8> {
     match part.category {
         Category::Name(ref namecased) => {
             let namecased: &str = namecased;
@@ -87,10 +88,11 @@ pub fn generation_from_suffix(part: &NamePart, might_be_initials: bool) -> Optio
         }
         _ => None,
     }
+    .and_then(NonZeroU8::new)
 }
 
-pub fn display_generational_suffix(generation: u8) -> &'static str {
-    SUFFIX_BY_GENERATION[generation as usize - 1]
+pub fn display_generational_suffix(generation: NonZeroU8) -> &'static str {
+    SUFFIX_BY_GENERATION[usize::from(generation.get() - 1)]
 }
 
 #[cfg(test)]
@@ -107,25 +109,25 @@ mod tests {
     #[test]
     fn jr() {
         let part = NamePart::from_word("Jr", true, Location::Start);
-        assert_eq!(Some(2), generation_from_suffix(&part, true));
+        assert_eq!(NonZeroU8::new(2), generation_from_suffix(&part, true));
     }
 
     #[test]
     fn jr_dot() {
         let part = NamePart::from_word("Jr", true, Location::Start);
-        assert_eq!(Some(2), generation_from_suffix(&part, true));
+        assert_eq!(NonZeroU8::new(2), generation_from_suffix(&part, true));
     }
 
     #[test]
     fn iv() {
         let part = NamePart::from_word("IV", true, Location::Start);
-        assert_eq!(Some(4), generation_from_suffix(&part, true));
+        assert_eq!(NonZeroU8::new(4), generation_from_suffix(&part, true));
     }
 
     #[test]
     fn i() {
         let part = NamePart::from_word("I", true, Location::Start);
         assert_eq!(None, generation_from_suffix(&part, true));
-        assert_eq!(Some(1), generation_from_suffix(&part, false));
+        assert_eq!(NonZeroU8::new(1), generation_from_suffix(&part, false));
     }
 }

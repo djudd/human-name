@@ -53,6 +53,7 @@ use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
 use std::convert::TryInto;
 use std::hash::{Hash, Hasher};
+use std::num::NonZeroU8;
 use std::ops::Range;
 use utils::{lowercase_if_alpha, normalize_nfkd_whitespace, transliterate};
 use word::{WordIndices, Words};
@@ -90,7 +91,7 @@ pub struct Name {
     text: SmallString<[u8; 32]>,
     word_indices_in_text: WordIndices,
     surname_index: u16, // u16 must be sufficient since it can represent MAX_NAME_LEN
-    generation_from_suffix: Option<u8>,
+    generation_from_suffix: Option<NonZeroU8>,
     initials: SmallString<[u8; 8]>,
     word_indices_in_initials: WordIndices,
     pub hash: u64,
@@ -179,7 +180,7 @@ impl Name {
     fn initialize_struct(
         words: &[NamePart],
         surname_index: usize,
-        generation_from_suffix: Option<u8>,
+        generation_from_suffix: Option<NonZeroU8>,
         name_len: usize,
     ) -> Name {
         let last_word = words.len() - 1;
