@@ -1,7 +1,7 @@
 # human-name
 A library and command-line client for parsing and comparing human names.
 
-[![Build Status](https://travis-ci.org/djudd/human-name.svg?branch=master)](https://travis-ci.org/djudd/human-name)
+[![Build Status](https://github.com/djudd/human-name/actions/workflows/rust.yml/badge.svg)](https://github.com/djudd/human-name/actions/workflows/rust.yml)
 
 [`Documentation`](https://docs.rs/human_name)
 
