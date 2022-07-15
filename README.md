@@ -147,8 +147,8 @@ Inspiration, heuristics, and test cases were taken from:
 * [`namae` (Ruby)](https://github.com/berkmancenter/namae)
 * [`Lingua::EN::NameParse` (Perl)](http://search.cpan.org/~kimryan/Lingua-EN-NameParse-1.33/lib/Lingua/EN/NameParse.pm) (probably the original for some of the other ports as well)
 * [`Lingua::EN::Nickname` (Perl)](http://search.cpan.org/~brianl/Lingua-EN-Nickname-1.16/Nickname.pm)
-* [`parse-full-name` (JS)] (https://github.com/dschnelldavis/parse-full-name)
-* [`PHP-Name-Parser` (PHP)] (https://github.com/joshfraser/PHP-Name-Parser)
+* [`parse-full-name` (JS)](https://github.com/dschnelldavis/parse-full-name)
+* [`PHP-Name-Parser` (PHP)](https://github.com/joshfraser/PHP-Name-Parser)
 
 # Contributing
 
