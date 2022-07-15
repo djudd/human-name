@@ -27,7 +27,10 @@ impl Name {
     /// assert!(!name.matches_slug_or_localpart("johnd"));
     ///
     /// ```
-    #[deprecated(since = "1.1.1", note = "This functionality is incomplete and unsupported, and retained only for backwards compatibility")]
+    #[deprecated(
+        since = "1.1.1",
+        note = "This functionality is incomplete and unsupported, and retained only for backwards compatibility"
+    )]
     pub fn matches_slug_or_localpart(&self, string: &str) -> bool {
         if string.is_empty() {
             return false;

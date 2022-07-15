@@ -85,7 +85,10 @@ pub unsafe extern "C" fn human_name_goes_by_middle_name(name: &Name) -> bool {
 }
 
 #[no_mangle]
-#[deprecated(since = "1.1.1", note = "This functionality is incomplete and unsupported, and retained only for backwards compatibility")]
+#[deprecated(
+    since = "1.1.1",
+    note = "This functionality is incomplete and unsupported, and retained only for backwards compatibility"
+)]
 #[allow(deprecated)]
 pub unsafe extern "C" fn human_name_matches_slug_or_localpart(
     name: &Name,
