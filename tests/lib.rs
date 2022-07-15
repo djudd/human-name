@@ -171,6 +171,7 @@ fn equality() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn web_match() {
     let f = File::open("tests/web-matches.txt").ok().unwrap();
     let reader = BufReader::new(f);
@@ -196,6 +197,7 @@ fn web_match() {
 }
 
 #[test]
+#[allow(deprecated)]
 fn web_nonmatch() {
     let f = File::open("tests/web-nonmatches.txt").ok().unwrap();
     let reader = BufReader::new(f);
