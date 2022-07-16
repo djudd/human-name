@@ -168,12 +168,26 @@ impl<'a> NamePart<'a> {
             Category::Name(ref namecased) => namecased
                 .split('-')
                 .filter_map(|w| w.chars().find(|c| c.is_alphabetic()))
+                // It's unclear whether we would want to look at multiple characters
+                // if the lowercase character maps to multiple uppercase; we don't
+                // currently have any known real-life example data.
                 .filter_map(|c| c.to_uppercase().next())
                 .for_each(f),
             Category::Initials if self.counts.upper == self.counts.chars => {
                 self.word.chars().for_each(f)
             }
-            Category::Initials => self.word.chars().filter_map(uppercase_if_alpha).for_each(f),
+            Category::Initials => {
+                for c in self.word.chars() {
+                    if c.is_uppercase() {
+                        f(c)
+                    } else if c.is_alphabetic() {
+                        // It's unclear whether we would want to look at multiple characters
+                        // if the lowercase character maps to multiple uppercase; we don't
+                        // currently have any known real-life example data.
+                        f(c.to_uppercase().next().unwrap())
+                    }
+                }
+            }
             _ => panic!("Called extract_initials on {:?}", self),
         }
     }

@@ -63,17 +63,6 @@ pub fn lowercase_if_alpha(c: char) -> Option<char> {
 }
 
 #[inline]
-pub fn uppercase_if_alpha(c: char) -> Option<char> {
-    if c.is_lowercase() {
-        c.to_uppercase().next()
-    } else if c.is_alphabetic() {
-        Some(c)
-    } else {
-        None
-    }
-}
-
-#[inline]
 pub fn transliterate(c: char) -> Chars<'static> {
     unidecode_char(c).chars()
 }
@@ -84,8 +73,8 @@ pub fn to_ascii_letter(c: char) -> Option<char> {
     match c {
         'A'..='Z' => Some(c),
         _ => transliterate(c)
-            .next()
-            .and_then(|c| c.to_uppercase().next()),
+            .find(|c| c.is_ascii_alphabetic())
+            .map(|c| c.to_ascii_uppercase()),
     }
 }
 
@@ -134,26 +123,40 @@ pub fn capitalize_word(word: &str, simple: bool) -> String {
         result
     } else {
         let mut capitalize_next = true;
+        let mut result = String::with_capacity(word.len());
 
-        word.chars()
-            .map(|c| {
-                let result = if capitalize_next {
-                    c.to_uppercase().next()
-                } else {
-                    c.to_lowercase().next()
+        for c in word.chars() {
+            let (x, y, z) = if capitalize_next {
+                let [x, y, z] = unicode_case_mapping::to_titlecase(c);
+                (x, y, z)
+            } else {
+                let [x, y] = unicode_case_mapping::to_lowercase(c);
+                (x, y, 0)
+            };
+
+            if x > 0 {
+                // SAFETY: We're trusting that the unicode_case_mapping crate outputs
+                // only valid chars or zero
+                result.push(unsafe { char::from_u32_unchecked(x) });
+                if y > 0 {
+                    result.push(unsafe { char::from_u32_unchecked(y) });
+                    if z > 0 {
+                        result.push(unsafe { char::from_u32_unchecked(z) });
+                    }
                 }
-                .unwrap();
-
-                // If the character doesn't have both uppercase and lowercase versions,
-                // it'll be unchanged. That's a prerequisite for it being a separator.
-                capitalize_next = result == c && !c.is_alphanumeric() && !is_combining(c);
+                capitalize_next = false;
+            } else {
+                // No titlecase mapping, which is a prerequisite for being a separator
+                capitalize_next = !c.is_alphanumeric() && !is_combining(c);
                 if capitalize_next && NONASCII_HYPHENS.contains(c) {
-                    '-'
+                    result.push('-');
                 } else {
-                    result
+                    result.push(c);
                 }
-            })
-            .collect()
+            }
+        }
+
+        result
     }
 }
 
@@ -333,6 +336,9 @@ mod tests {
         assert_eq!("A", capitalize_word("a", true));
         assert_eq!("Aa", capitalize_word("aa", true));
         assert_eq!("Aa", capitalize_word("AA", true));
+        assert_eq!("Aa-Bb", capitalize_word("aa-bb", false));
+        assert_eq!("Aa-Bb", capitalize_word("AA-BB", false));
+        assert_eq!("Ss", capitalize_word("ß", false));
     }
 
     #[cfg(feature = "bench")]
