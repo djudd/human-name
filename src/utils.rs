@@ -167,17 +167,19 @@ fn already_normalized(string: &str) -> bool {
     normalized == IsNormalized::Yes && !banned_char
 }
 
+fn do_normalize(string: &str) -> String {
+    string
+        .chars()
+        .map(|c| if c.is_whitespace() { ' ' } else { c })
+        .nfkd()
+        .collect()
+}
+
 pub fn normalize_nfkd_whitespace(string: &str) -> Cow<str> {
     if already_normalized(string) {
         Cow::Borrowed(string)
     } else {
-        let string = string
-            .chars()
-            .map(|c| if c.is_whitespace() { ' ' } else { c })
-            .nfkd()
-            .collect();
-
-        Cow::Owned(string)
+        Cow::Owned(do_normalize(string))
     }
 }
 
