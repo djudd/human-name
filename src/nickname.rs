@@ -369,6 +369,22 @@ mod tests {
             black_box(strip_nickname("James T. 'Jimmy' Kirk").len());
         })
     }
+
+    #[cfg(feature = "bench")]
+    #[bench]
+    fn have_matching_variants_false(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(have_matching_variants("David", "Daniel"));
+        })
+    }
+
+    #[cfg(feature = "bench")]
+    #[bench]
+    fn have_matching_variants_true(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(have_matching_variants("David", "Dave"));
+        })
+    }
 }
 
 static NAMES_BY_NICK_PREFIX: phf::Map<&'static str, &'static [&'static str]> = phf_map! {
@@ -559,7 +575,6 @@ static NAMES_BY_NICK_PREFIX: phf::Map<&'static str, &'static [&'static str]> = p
     "Vann" => &[ "Vanessa" ],
     "Verg" => &[ "Virginia" ],
     "Vess" => &[ "Sylvester" ],
-    "Vic" => &[ "Lewvisa" ],
     "Vin" => &[ "Lavinia" ],
     "Vonn" => &[ "Veronica" ],
     "Wend" => &[ "Gwendolyn" ],
