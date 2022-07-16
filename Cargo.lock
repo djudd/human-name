@@ -52,6 +52,7 @@ dependencies = [
  "serde_json",
  "smallstr",
  "smallvec",
+ "unicode-case-mapping",
  "unicode-normalization",
  "unicode-segmentation",
  "unidecode",
@@ -259,6 +260,12 @@ name = "tinyvec_macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
+
+[[package]]
+name = "unicode-case-mapping"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb6741768ec3ce6e75053f5b860be4822cc198e3ea2d2be773943a2478fb5fcb"
 
 [[package]]
 name = "unicode-ident"
