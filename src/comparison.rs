@@ -272,7 +272,11 @@ impl Name {
     }
 
     fn missing_given_name(&self) -> bool {
-        self.given_name().is_none() || self.goes_by_middle_name()
+        if let Some(&Range { start, .. }) = self.word_indices_in_initials.get(0) {
+            start > 0
+        } else {
+            true
+        }
     }
 
     fn missing_any_name(&self) -> bool {
