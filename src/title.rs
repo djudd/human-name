@@ -569,7 +569,6 @@ static POSTFIX_HONORIFICS: phf::Map<&'static str, &'static str> = phf_map! {
     "Al" => "al.",
 };
 
-#[allow(clippy::if_same_then_else)]
 fn might_be_title_part(word: &NamePart) -> bool {
     if word.counts.chars < 3 {
         // Allow any word with 1 or 2 characters as part of a title (but see below)
@@ -577,7 +576,6 @@ fn might_be_title_part(word: &NamePart) -> bool {
     } else {
         match &word.category {
             Category::Name(ref namecased) => {
-                let namecased: &str = namecased;
                 PREFIX_HONORIFICS.contains_key(namecased) || namecased.chars().any(char::is_numeric)
             }
             _ => true,
