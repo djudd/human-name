@@ -77,24 +77,28 @@ impl Name {
         self.suffix_consistent(other)
     }
 
+    fn split_initials(&self) -> (char, usize) {
+        let mut initials = self.initials().chars();
+        let first = initials.next().unwrap();
+        let rest_count = initials.count();
+        (first, rest_count)
+    }
+
     fn given_and_middle_names_consistent(&self, other: &Name) -> bool {
+        let (my_first, my_middle_count) = self.split_initials();
+        let (their_first, their_middle_count) = other.split_initials();
+
         // Handle simple cases first, where we only have to worry about one name
         // and/or initial.
-        if self.middle_initials().is_none() && other.middle_initials().is_none() {
-            if self.given_name().is_none() || other.given_name().is_none() {
-                return to_ascii_letter(self.first_initial())
-                    == to_ascii_letter(other.first_initial());
-            } else {
-                return have_matching_variants(
-                    self.given_name().unwrap(),
-                    other.given_name().unwrap(),
-                );
+        if my_middle_count == 0 && their_middle_count == 0 {
+            match (self.given_name(), other.given_name()) {
+                (Some(my_name), Some(their_name)) => have_matching_variants(my_name, their_name),
+                _ => to_ascii_letter(my_first) == to_ascii_letter(their_first),
             }
         }
-
         // For the more complicated cases, we'll simplify things a bit by
         // letting ourselves assume `self` has the more complete name.
-        if self.initials().chars().count() >= other.initials().chars().count() {
+        else if my_middle_count >= their_middle_count {
             self.given_and_middle_names_consistent_with_less_complete(other)
         } else {
             other.given_and_middle_names_consistent_with_less_complete(self)
@@ -232,7 +236,9 @@ impl Name {
                 }
             } else {
                 // Normal case, given the absence of (true) given names
-                if my_initials.chars().next() != their_initials.chars().next() {
+                //
+                // Using byte offsets is ok because we already converted to ASCII
+                if my_initials[..1] != their_initials[..1] {
                     return false;
                 }
             }
