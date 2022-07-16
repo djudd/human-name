@@ -49,6 +49,7 @@ struct NickOpen {
     expect_closing_space: bool,
 }
 
+#[inline]
 fn find_nick_open(input: &str) -> Option<NickOpen> {
     let mut follows_space = false;
 
@@ -121,7 +122,6 @@ fn find_close_and_strip(input: &str, open: NickOpen) -> Cow<str> {
 
 // Optimized for the case where there is no nickname, and secondarily for the
 // case where there is only one. Two or more probably means bad input.
-#[allow(clippy::unnecessary_unwrap)]
 pub fn strip_nickname(input: &str) -> Cow<str> {
     if let Some(open) = find_nick_open(input) {
         find_close_and_strip(input, open)
