@@ -4,6 +4,7 @@ use std::borrow::Cow;
 use std::iter;
 
 // Returns tuple (close_char, must_precede_whitespace)
+#[inline]
 fn expected_close_char_if_opens_nickname(
     c: char,
     follows_whitespace: bool,
@@ -28,7 +29,7 @@ fn expected_close_char_if_opens_nickname(
     if follows_whitespace {
         // Treat, e.g., quote character as the start of a nickname
         // only if it occurs after whitespace; otherwise, it
-        // might be in-name puntuation
+        // might be in-name punctuation
         match c {
             '\'' => Some(('\'', true)),
             '"' => Some(('"', true)),
@@ -40,71 +41,93 @@ fn expected_close_char_if_opens_nickname(
     }
 }
 
-fn strip_from_index(nick_start_ix: usize, prev_char: char) -> usize {
-    if prev_char == ' ' {
-        nick_start_ix - prev_char.len_utf8()
+struct NickOpen {
+    start_index: usize,
+    open_char: char,
+    follows_space: bool,
+    expect_close_char: char,
+    expect_closing_space: bool,
+}
+
+#[inline]
+fn find_nick_open(input: &str) -> Option<NickOpen> {
+    let mut follows_space = false;
+
+    for (i, c) in input.char_indices() {
+        if let Some((expect_close_char, expect_closing_space)) =
+            expected_close_char_if_opens_nickname(c, follows_space)
+        {
+            return Some(NickOpen {
+                start_index: i,
+                open_char: c,
+                follows_space,
+                expect_close_char,
+                expect_closing_space,
+            });
+        }
+
+        follows_space = c == ' ';
+    }
+
+    None
+}
+
+#[cold]
+fn find_close_and_strip(input: &str, open: NickOpen) -> Cow<str> {
+    let NickOpen {
+        start_index,
+        open_char,
+        follows_space,
+        expect_close_char,
+        expect_closing_space,
+    } = open;
+
+    let search_from = start_index + open_char.len_utf8();
+    let strip_from = if follows_space {
+        start_index - 1
     } else {
-        nick_start_ix
+        start_index
+    };
+
+    if let Some(found_at) = input[search_from..].find(expect_close_char) {
+        let i = found_at + search_from;
+        let j = i + expect_close_char.len_utf8();
+
+        if j >= input.len() {
+            Cow::Borrowed(&input[0..start_index])
+        } else if !expect_closing_space || input[j..].starts_with(' ') {
+            Cow::Owned(input[0..strip_from].to_string() + &strip_nickname(&input[j..]))
+        } else {
+            Cow::Owned(input[0..i].to_string() + &strip_nickname(&input[i..]))
+        }
+    } else if !expect_closing_space {
+        // When there's, e.g., an opening parens, but no closing parens, strip the
+        // rest of the string
+        Cow::Borrowed(&input[0..strip_from])
+    } else {
+        // Otherwise, even if there's an unmatched opening quote, don't
+        // modify the string; assume an unmatched opening quote was just
+        // in-name punctuation
+        //
+        // However, in that case, we need to check the remainder of the
+        // string for actual nicknames, whose opening character we might
+        // have missed while looking for the first closing character
+        if search_from >= input.len() {
+            Cow::Borrowed(input)
+        } else {
+            Cow::Owned(input[0..search_from].to_string() + &strip_nickname(&input[search_from..]))
+        }
     }
 }
 
 // Optimized for the case where there is no nickname, and secondarily for the
 // case where there is only one. Two or more probably means bad input.
-#[allow(clippy::unnecessary_unwrap)]
 pub fn strip_nickname(input: &str) -> Cow<str> {
-    let mut nick_start_ix = None;
-    let mut nick_open_char = '\0';
-    let mut expected_close_char = '\0';
-    let mut must_precede_whitespace = false;
-    let mut prev_char = '\0';
-
-    for (i, c) in input.char_indices() {
-        if nick_start_ix.is_none() {
-            if let Some((close, w)) = expected_close_char_if_opens_nickname(c, prev_char == ' ') {
-                nick_start_ix = Some(i);
-                nick_open_char = c;
-                expected_close_char = close;
-                must_precede_whitespace = w;
-            } else {
-                prev_char = c;
-            }
-        } else if c == expected_close_char {
-            let j = i + c.len_utf8();
-            if j >= input.len() {
-                return Cow::Borrowed(&input[0..nick_start_ix.unwrap()]);
-            } else if !must_precede_whitespace || input[j..].starts_with(' ') {
-                let strip_from = strip_from_index(nick_start_ix.unwrap(), prev_char);
-                return Cow::Owned(input[0..strip_from].to_string() + &strip_nickname(&input[j..]));
-            } else {
-                return Cow::Owned(input[0..i].to_string() + &strip_nickname(&input[i..]));
-            }
-        }
+    if let Some(open) = find_nick_open(input) {
+        find_close_and_strip(input, open)
+    } else {
+        Cow::Borrowed(input)
     }
-
-    if let Some(i) = nick_start_ix {
-        if !must_precede_whitespace {
-            // When there's, e.g., an opening parens, but no closing parens, strip the
-            // rest of the string
-            let strip_from = strip_from_index(i, prev_char);
-            return Cow::Borrowed(&input[0..strip_from]);
-        } else {
-            let j = i + nick_open_char.len_utf8();
-            // Otherwise, even if there's an unmatched opening quote, don't
-            // modify the string; assume an unmatched opening quote was just
-            // in-name punctuation
-            //
-            // However, in that case, we need to check the remainder of the
-            // string for actual nicknames, whose opening character we might
-            // have missed while looking for the first closing character
-            if j >= input.len() {
-                return Cow::Borrowed(input);
-            } else {
-                return Cow::Owned(input[0..j].to_string() + &strip_nickname(&input[j..]));
-            }
-        }
-    }
-
-    Cow::Borrowed(input)
 }
 
 struct NameVariants<'a> {
