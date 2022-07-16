@@ -186,7 +186,7 @@ impl Name {
 
         if let Some(ref name) = given_names {
             // Allow just given name, or partial given name, as part
-            if name.len() >= part.len() && eq_or_starts_with!(part, name) {
+            if name.len() >= part.len() && eq_or_starts_with(part, name) {
                 return true;
             }
         } else if allow_unknowns {
@@ -199,7 +199,7 @@ impl Name {
 
         if self.middle_initials().is_some() {
             // Allow just initials, or partial initials, as part
-            if self.initials().len() >= part.len() && eq_or_starts_with!(part, self.initials()) {
+            if self.initials().len() >= part.len() && eq_or_starts_with(part, self.initials()) {
                 return true;
             }
         } else if allow_unknowns {
@@ -212,15 +212,14 @@ impl Name {
         }
 
         if let Some(ref name) = given_names {
-            if part.len() > name.len() && eq_or_starts_with!(part, name) {
+            if part.len() > name.len() && eq_or_starts_with(part, name) {
                 let remainder = &part[name.len()..];
 
                 // Allow given name *plus* middle initials as part (with heuristic
                 // when middle initials are unknown and surname matched exactly,
                 // assuming maximum likely number of middle initials is two)
                 if let Some(initials) = self.middle_initials() {
-                    if initials.len() >= remainder.len() && eq_or_starts_with!(remainder, initials)
-                    {
+                    if initials.len() >= remainder.len() && eq_or_starts_with(remainder, initials) {
                         return true;
                     }
                 } else if allow_unknowns && remainder.len() < 3 {
@@ -230,12 +229,12 @@ impl Name {
         }
 
         if let Some(initials) = self.middle_initials() {
-            if part.len() > initials.len() && eq_or_ends_with!(initials, part) {
+            if part.len() > initials.len() && eq_or_ends_with(initials, part) {
                 let remainder = &part[0..part.len() - initials.len()];
 
                 // Allow partial given name, plus known middle initials, as part
                 if let Some(name) = self.given_name() {
-                    if eq_or_starts_with!(remainder, name) {
+                    if eq_or_starts_with(remainder, name) {
                         return true;
                     }
                 }

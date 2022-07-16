@@ -183,67 +183,78 @@ pub fn have_matching_variants(original_a: &str, original_b: &str) -> bool {
     })
 }
 
+#[inline]
 fn variants_match(a: &str, b: &str) -> bool {
-    have_prefix_match(a, b)
-        || is_final_syllables_of(a, b)
-        || is_final_syllables_of(b, a)
+    let (longer, shorter) = if a.len() >= b.len() { (a, b) } else { (b, a) };
+
+    have_prefix_match(longer, shorter)
+        || is_final_syllables_of(shorter, longer)
         || matches_without_diminutive(a, b)
         || matches_without_diminutive(b, a)
 }
 
-#[allow(clippy::needless_bool)]
-#[allow(clippy::if_same_then_else)]
-fn have_prefix_match(a: &str, b: &str) -> bool {
-    if eq_or_starts_with!(a, b) {
-        // Exception: Case where one variant is a feminized version of the other
-        if a.len() == b.len() + 1 && a.ends_with('a') {
-            false
-        } else if b.len() == a.len() + 1 && b.ends_with('a') {
-            false
-        } else {
-            true
-        }
-    } else {
-        false
-    }
+#[inline]
+fn have_prefix_match(longer: &str, shorter: &str) -> bool {
+    eq_or_starts_with(longer, shorter) && !is_simple_feminization(longer, shorter)
 }
 
-#[allow(clippy::if_same_then_else)]
+#[inline]
+fn is_simple_feminization(longer: &str, shorter: &str) -> bool {
+    longer.len() == shorter.len() + 1 && longer.ends_with('a')
+}
+
+#[inline]
 fn matches_without_diminutive(a: &str, b: &str) -> bool {
-    if DIMINUTIVE_EXCEPTIONS.contains(a) {
-        false
-    } else if a.len() > 2
+    matches_without_y_or_e(a, b)
+        || matches_without_ie_or_ey(a, b)
+        || matches_without_ita_or_ina(a, b)
+        || matches_without_ito(a, b)
+}
+
+#[inline]
+fn matches_without_y_or_e(a: &str, b: &str) -> bool {
+    a.len() > 2
         && b.len() >= a.len() - 1
         && (a.ends_with('y') || a.ends_with('e'))
-        && eq_or_starts_with!(a[0..a.len() - 1], b)
-    {
-        true
-    } else if a.len() > 4
+        && matches_after_removing_diminutive(a, b, 1)
+}
+
+#[inline]
+fn matches_without_ie_or_ey(a: &str, b: &str) -> bool {
+    a.len() > 4
         && b.len() >= a.len() - 2
         && (a.ends_with("ie") || a.ends_with("ey"))
-        && eq_or_starts_with!(a[0..a.len() - 2], b)
-    {
-        true
-    } else if a.len() > 5
+        && matches_after_removing_diminutive(a, b, 2)
+}
+
+#[inline]
+fn matches_without_ita_or_ina(a: &str, b: &str) -> bool {
+    a.len() > 5
         && b.len() >= a.len() - 3
         && b.ends_with('a')
         && (a.ends_with("ita") || a.ends_with("ina"))
-        && eq_or_starts_with!(a[0..a.len() - 3], b)
-    {
-        true
-    } else {
-        a.len() > 5
-            && b.len() >= a.len() - 3
-            && b.ends_with('o')
-            && a.ends_with("ito")
-            && eq_or_starts_with!(a[0..a.len() - 3], b)
-    }
+        && matches_after_removing_diminutive(a, b, 3)
 }
 
+#[inline]
+fn matches_without_ito(a: &str, b: &str) -> bool {
+    a.len() > 5
+        && b.len() >= a.len() - 3
+        && b.ends_with('o')
+        && a.ends_with("ito")
+        && matches_after_removing_diminutive(a, b, 3)
+}
+
+#[inline]
+fn matches_after_removing_diminutive(a: &str, b: &str, diminutive_len: usize) -> bool {
+    eq_or_starts_with(&a[0..a.len() - diminutive_len], b) && !DIMINUTIVE_EXCEPTIONS.contains(a)
+}
+
+#[inline]
 fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
     if needle.len() == haystack.len() - 1
         && !starts_with_consonant(haystack)
-        && eq_or_ends_with!(needle, haystack)
+        && eq_or_ends_with(needle, haystack)
     {
         true
     } else if haystack.len() < 4 || needle.len() < 2 || needle.len() > haystack.len() - 2 {
@@ -252,7 +263,7 @@ fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
         || needle.starts_with("Ann")
         || haystack.starts_with("Mary")
     {
-        eq_or_ends_with!(needle, haystack) && !FINAL_SYLLABLES_EXCEPTIONS.contains(needle)
+        eq_or_ends_with(needle, haystack) && !FINAL_SYLLABLES_EXCEPTIONS.contains(needle)
     } else {
         false
     }
@@ -322,6 +333,22 @@ mod tests {
     }
 
     #[test]
+    fn variants() {
+        assert_eq!(
+            vec!["Ada", "Adelaide", "Adele", "Adelina", "Adeline"],
+            NameVariants::for_name("Ada")
+                .iter_with_original()
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            vec!["Adele"],
+            NameVariants::for_name("Adele")
+                .iter_with_original()
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
     fn strip_nothing() {
         assert_eq!("Robert Roberts", strip_nickname("Robert Roberts"));
     }
@@ -367,6 +394,22 @@ mod tests {
     fn strip_nick_with_nick(b: &mut Bencher) {
         b.iter(|| {
             black_box(strip_nickname("James T. 'Jimmy' Kirk").len());
+        })
+    }
+
+    #[cfg(feature = "bench")]
+    #[bench]
+    fn have_matching_variants_false(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(have_matching_variants("David", "Daniel"));
+        })
+    }
+
+    #[cfg(feature = "bench")]
+    #[bench]
+    fn have_matching_variants_true(b: &mut Bencher) {
+        b.iter(|| {
+            black_box(have_matching_variants("David", "Dave"));
         })
     }
 }
@@ -559,7 +602,6 @@ static NAMES_BY_NICK_PREFIX: phf::Map<&'static str, &'static [&'static str]> = p
     "Vann" => &[ "Vanessa" ],
     "Verg" => &[ "Virginia" ],
     "Vess" => &[ "Sylvester" ],
-    "Vic" => &[ "Lewvisa" ],
     "Vin" => &[ "Lavinia" ],
     "Vonn" => &[ "Veronica" ],
     "Wend" => &[ "Gwendolyn" ],
