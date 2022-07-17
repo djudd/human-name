@@ -192,7 +192,24 @@ impl<'a> Iterator for NameVariantIter<'a> {
 
         None
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let size = self.original.len()
+            + self
+                .direct_variants
+                .as_ref()
+                .map(|vs| vs.len())
+                .unwrap_or(0)
+            + self
+                .prefix_variants
+                .as_ref()
+                .map(|vs| vs.len())
+                .unwrap_or(0);
+        (size, Some(size))
+    }
 }
+
+impl<'a> ExactSizeIterator for NameVariantIter<'a> {}
 
 pub fn have_matching_variants(original_a: &str, original_b: &str) -> bool {
     let original_a = transliterate::to_ascii_titlecase(original_a);
