@@ -12,6 +12,7 @@ fn already_normalized(string: &str) -> bool {
     normalized == IsNormalized::Yes && !banned_char
 }
 
+#[inline(never)]
 fn do_normalize(string: &str) -> String {
     string
         .chars()
@@ -33,6 +34,7 @@ pub fn is_combining(c: char) -> bool {
     canonical_combining_class(c) > 0
 }
 
+#[inline]
 pub fn combining_chars(word: &str) -> usize {
     word.chars().filter(|c| is_combining(*c)).count()
 }

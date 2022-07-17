@@ -63,8 +63,6 @@ impl Name {
     /// reason to believe that a single individual's name appears twice, and we
     /// are trying to figure out exactly where, e.g. a particular author's index
     /// in the list of authors of a co-authored paper.
-    ///
-    #[rustfmt::skip]
     pub fn consistent_with(&self, other: &Name) -> bool {
         // Fast path
         if self.hash != other.hash {
@@ -73,11 +71,12 @@ impl Name {
 
         // Check given name(s) first because if we got this far, we know that
         // at least the last characters of the surnames are consistent
-        self.given_and_middle_names_consistent(other) &&
-        self.surname_consistent(other) &&
-        self.suffix_consistent(other)
+        self.given_and_middle_names_consistent(other)
+            && self.surname_consistent(other)
+            && self.suffix_consistent(other)
     }
 
+    #[inline]
     fn split_initials(&self) -> (char, usize) {
         let mut initials = self.initials().chars();
         let first = initials.next().unwrap();
@@ -85,6 +84,7 @@ impl Name {
         (first, rest_count)
     }
 
+    #[inline]
     fn given_and_middle_names_consistent(&self, other: &Name) -> bool {
         let (my_first, my_middle_count) = self.split_initials();
         let (their_first, their_middle_count) = other.split_initials();
@@ -109,6 +109,7 @@ impl Name {
         }
     }
 
+    #[inline]
     fn given_names_or_initials(&self) -> GivenNamesOrInitials {
         GivenNamesOrInitials {
             initials: self.initials.chars().enumerate(),
@@ -117,6 +118,7 @@ impl Name {
         }
     }
 
+    #[inline(never)]
     fn given_and_middle_names_consistent_with_less_complete(&self, other: &Name) -> bool {
         // Check initials first
         if !self.initials_consistent_with_less_complete(other) {
@@ -217,6 +219,7 @@ impl Name {
         their_part_if_any.is_none()
     }
 
+    #[inline]
     fn initials_consistent_with_less_complete(&self, other: &Name) -> bool {
         let my_initials = &*self.transliterated_initials();
         let their_initials = &*other.transliterated_initials();
@@ -301,14 +304,20 @@ impl Name {
         self.surname_index > prev
     }
 
+    #[inline]
     fn surname_consistent(&self, other: &Name) -> bool {
-        // Fast path
-        if self.simple_surname() && other.simple_surname() {
-            return self.surname().eq_ignore_ascii_case(other.surname());
+        if let Some(mine) = self.simple_surname() {
+            if let Some(theirs) = other.simple_surname() {
+                return mine.eq_ignore_ascii_case(theirs);
+            }
         }
 
-        let mut my_words = self.surname_iter().flat_map(|w| w.unicode_words()).rev();
+        self.surname_consistent_slow(other)
+    }
 
+    #[inline(never)]
+    fn surname_consistent_slow(&self, other: &Name) -> bool {
+        let mut my_words = self.surname_iter().flat_map(|w| w.unicode_words()).rev();
         let mut their_words = other.surname_iter().flat_map(|w| w.unicode_words()).rev();
 
         let mut my_word = my_words.next();
@@ -379,12 +388,19 @@ impl Name {
         }
     }
 
-    fn simple_surname(&self) -> bool {
-        self.surname_words() == 1
-            && self.surname().is_ascii()
-            && self.surname().bytes().all(|b| b.is_ascii_alphabetic())
+    #[inline]
+    fn simple_surname(&self) -> Option<&str> {
+        if self.surname_words() == 1 {
+            let surname = self.surname();
+            if surname.is_ascii() && surname.bytes().all(|b| b.is_ascii_alphabetic()) {
+                return Some(surname);
+            }
+        }
+
+        None
     }
 
+    #[inline]
     fn suffix_consistent(&self, other: &Name) -> bool {
         self.generation_from_suffix.is_none()
             || other.generation_from_suffix.is_none()
@@ -414,6 +430,7 @@ impl<'a> NameWordOrInitial<'a> {
         }
     }
 
+    #[inline]
     fn check_consistency(
         &self,
         other: &NameWordOrInitial,

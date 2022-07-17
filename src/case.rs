@@ -55,29 +55,29 @@ impl Iterator for CaseMapping {
     #[inline]
     fn next(&mut self) -> Option<char> {
         match *self {
-            CaseMapping::Triple(x, y, z) => {
-                let _ = std::mem::replace(self, CaseMapping::Double(y, z));
+            CaseMapping::Empty => None,
+            CaseMapping::Single(x) => {
+                let _ = std::mem::replace(self, CaseMapping::Empty);
                 Some(x)
             }
             CaseMapping::Double(x, y) => {
                 let _ = std::mem::replace(self, CaseMapping::Single(y));
                 Some(x)
             }
-            CaseMapping::Single(x) => {
-                let _ = std::mem::replace(self, CaseMapping::Empty);
+            CaseMapping::Triple(x, y, z) => {
+                let _ = std::mem::replace(self, CaseMapping::Double(y, z));
                 Some(x)
             }
-            CaseMapping::Empty => None,
         }
     }
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let size = match self {
-            CaseMapping::Triple(_, _, _) => 3,
-            CaseMapping::Double(_, _) => 2,
-            CaseMapping::Single(_) => 1,
             CaseMapping::Empty => 0,
+            CaseMapping::Single(_) => 1,
+            CaseMapping::Double(_, _) => 2,
+            CaseMapping::Triple(_, _, _) => 3,
         };
         (size, Some(size))
     }
@@ -87,26 +87,26 @@ impl DoubleEndedIterator for CaseMapping {
     #[inline]
     fn next_back(&mut self) -> Option<char> {
         match *self {
-            CaseMapping::Triple(x, y, z) => {
-                let _ = std::mem::replace(self, CaseMapping::Double(x, y));
-                Some(z)
+            CaseMapping::Empty => None,
+            CaseMapping::Single(x) => {
+                let _ = std::mem::replace(self, CaseMapping::Empty);
+                Some(x)
             }
             CaseMapping::Double(x, y) => {
                 let _ = std::mem::replace(self, CaseMapping::Single(x));
                 Some(y)
             }
-            CaseMapping::Single(x) => {
-                let _ = std::mem::replace(self, CaseMapping::Empty);
-                Some(x)
+            CaseMapping::Triple(x, y, z) => {
+                let _ = std::mem::replace(self, CaseMapping::Double(x, y));
+                Some(z)
             }
-            CaseMapping::Empty => None,
         }
     }
 }
 
 impl ExactSizeIterator for CaseMapping {}
 
-fn case_folded_alpha_chars(
+fn case_folded_alphas(
     text: &str,
 ) -> impl Iterator<Item = char> + std::iter::DoubleEndedIterator + '_ {
     // It would be more correct to use unicode case folding here,
@@ -126,46 +126,14 @@ fn case_folded_alpha_chars(
     })
 }
 
+#[inline]
 pub fn eq_or_starts_with(a: &str, b: &str) -> bool {
-    let mut chars_a = case_folded_alpha_chars(a);
-    let mut chars_b = case_folded_alpha_chars(b);
-    let result;
-
-    loop {
-        let a = chars_a.next();
-        let b = chars_b.next();
-
-        if a.is_none() || b.is_none() {
-            result = true;
-            break;
-        } else if a != b {
-            result = false;
-            break;
-        }
-    }
-
-    result
+    !std::iter::zip(case_folded_alphas(b), case_folded_alphas(a)).any(|(a, b)| a != b)
 }
 
-pub fn eq_or_ends_with(needle: &str, haystack: &str) -> bool {
-    let mut n_chars = case_folded_alpha_chars(needle).rev();
-    let mut h_chars = case_folded_alpha_chars(haystack).rev();
-    let result;
-
-    loop {
-        let n = n_chars.next();
-        let h = h_chars.next();
-
-        if n.is_none() {
-            result = true;
-            break;
-        } else if n != h {
-            result = false;
-            break;
-        }
-    }
-
-    result
+#[inline]
+pub fn eq_or_ends_with(a: &str, b: &str) -> bool {
+    !std::iter::zip(case_folded_alphas(a).rev(), case_folded_alphas(b).rev()).any(|(a, b)| a != b)
 }
 
 // Specialized for name-casing
