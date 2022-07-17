@@ -1,8 +1,8 @@
+use super::case::is_mixed_case;
 use super::namepart::{Location, NamePart};
 use super::suffix;
 use super::surname;
 use super::title;
-use super::utils::is_mixed_case;
 use smallvec::SmallVec;
 use std::num::NonZeroU8;
 use Cow;

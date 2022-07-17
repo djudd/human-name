@@ -1,6 +1,6 @@
+use super::case::capitalize_word;
 use super::namepart::{Category, NamePart};
 use super::suffix;
-use super::utils;
 use phf::phf_map;
 use std::cmp;
 use Cow;
@@ -684,7 +684,7 @@ pub fn canonicalize_suffix<'a>(title: &'a NamePart<'a>) -> Cow<'a, str> {
             // Otherwise, ignore case to check for a known canonical form (restricting
             // to ASCII just for simplicity since our list of honorifics is 100% ASCII).
             if title.counts.chars == title.counts.ascii_alpha {
-                let capitalized = utils::capitalize_word(title.word, true);
+                let capitalized = capitalize_word(title.word, true);
                 if let Some(canonical) = POSTFIX_HONORIFICS.get(&capitalized) {
                     return Cow::Borrowed(canonical);
                 }
@@ -734,7 +734,7 @@ pub fn canonicalize_prefix<'a>(title: &'a NamePart<'a>) -> Cow<'a, str> {
             // Otherwise, ignore case to check for a known canonical form (restricting
             // to ASCII just for simplicity since our list of honorifics is 100% ASCII).
             if title.counts.chars == title.counts.ascii_alpha {
-                let capitalized = utils::capitalize_word(title.word, true);
+                let capitalized = capitalize_word(title.word, true);
                 if let Some(canonical) = PREFIX_HONORIFICS.get(&capitalized) {
                     return Cow::Borrowed(canonical);
                 }

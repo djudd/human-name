@@ -1,4 +1,4 @@
-use super::utils::*;
+use super::case::*;
 use super::Name;
 use smallvec::SmallVec;
 use std::borrow::Cow;
