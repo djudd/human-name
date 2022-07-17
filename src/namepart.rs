@@ -52,6 +52,10 @@ impl<'a> Iterator for NameParts<'a> {
             NamePart::from_word_and_counts(word, counts, self.trust_capitalization, location)
         })
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.segments.size_hint()
+    }
 }
 
 impl<'a> NamePart<'a> {
