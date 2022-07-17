@@ -1,6 +1,5 @@
 use std::borrow::Cow;
 use std::convert::TryInto;
-use std::iter::Peekable;
 use std::ops::{Deref, Range};
 use std::slice;
 use SmallVec;
@@ -12,7 +11,7 @@ pub struct Words<'a> {
     //
     // We could compress a bit further (especially given that the common case is much shorter)
     // but it's not obviously worth the code complexity.
-    indices: Peekable<slice::Iter<'a, Range<u16>>>,
+    indices: slice::Iter<'a, Range<u16>>,
 }
 
 impl<'a> Words<'a> {
@@ -20,7 +19,7 @@ impl<'a> Words<'a> {
     pub fn new(text: &'a str, indices: &'a [Range<u16>]) -> Words<'a> {
         Words {
             text,
-            indices: indices.iter().peekable(),
+            indices: indices.iter(),
         }
     }
 
