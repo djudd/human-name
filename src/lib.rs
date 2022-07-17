@@ -24,9 +24,10 @@ extern crate serde_derive;
 #[cfg(test)]
 extern crate alloc_counter;
 
-#[macro_use]
-mod utils;
+mod case;
 mod comparison;
+mod decomposition;
+mod features;
 mod namecase;
 mod namepart;
 mod nickname;
@@ -47,6 +48,7 @@ mod eq_hash;
 #[cfg(feature = "serialization")]
 mod serialization;
 
+use decomposition::normalize_nfkd_whitespace;
 use smallstr::SmallString;
 use smallvec::SmallVec;
 use std::borrow::Cow;
@@ -55,7 +57,6 @@ use std::convert::TryInto;
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroU8;
 use std::ops::Range;
-use utils::normalize_nfkd_whitespace;
 use word::{WordIndices, Words};
 
 #[cfg(test)]

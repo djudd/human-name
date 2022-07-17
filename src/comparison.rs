@@ -1,6 +1,6 @@
+use super::case::*;
 use super::nickname::have_matching_variants;
 use super::transliterate;
-use super::utils::*;
 use super::{Name, Words};
 use std::borrow::Cow;
 use std::iter;

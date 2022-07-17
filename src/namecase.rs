@@ -1,4 +1,4 @@
-use super::utils::capitalize_word;
+use super::case::capitalize_word;
 use phf::phf_set;
 
 // Store capitalized versions because we check after doing the initial,
