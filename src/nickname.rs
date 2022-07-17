@@ -1,3 +1,4 @@
+use super::transliterate;
 use super::utils::*;
 use phf::{phf_map, phf_set};
 use std::borrow::Cow;
@@ -193,8 +194,8 @@ impl<'a> Iterator for NameVariantIter<'a> {
 }
 
 pub fn have_matching_variants(original_a: &str, original_b: &str) -> bool {
-    let original_a = to_ascii(original_a);
-    let original_b = to_ascii(original_b);
+    let original_a = transliterate::to_ascii_titlecase(original_a);
+    let original_b = transliterate::to_ascii_titlecase(original_b);
 
     let a_variants = NameVariants::for_name(&original_a);
     let b_variants = NameVariants::for_name(&original_b);

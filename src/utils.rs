@@ -1,8 +1,6 @@
 use std::borrow::Cow;
-use std::str::Chars;
 use unicode_normalization::char::canonical_combining_class;
 use unicode_normalization::{is_nfkd_quick, IsNormalized, UnicodeNormalization};
-use unidecode::unidecode_char;
 
 pub fn is_mixed_case(s: &str) -> bool {
     let mut has_lowercase = false;
@@ -39,81 +37,11 @@ pub fn is_combining(c: char) -> bool {
     canonical_combining_class(c) > 0
 }
 
-#[inline]
-pub fn is_ascii_alphabetic(c: char) -> bool {
-    matches!(c, 'a'..='z' | 'A'..='Z')
-}
-
-// Sadly necessary because string split gives "type of this value must be known"
-// compilation error when passed a closure in some contexts
-#[inline]
-pub fn is_nonalphanumeric(c: char) -> bool {
-    !c.is_alphanumeric()
-}
-
-#[inline]
-pub fn lowercase_if_alpha(c: char) -> Option<char> {
-    if c.is_uppercase() {
-        c.to_lowercase().next()
-    } else if c.is_alphabetic() {
-        Some(c)
-    } else {
-        None
-    }
-}
-
-#[inline]
-pub fn transliterate(c: char) -> Chars<'static> {
-    unidecode_char(c).chars()
-}
-
-#[inline]
-pub fn to_ascii_letter(c: char) -> Option<char> {
-    debug_assert!(c.is_uppercase(), "{}", c.to_string());
-    match c {
-        'A'..='Z' => Some(c),
-        _ => transliterate(c)
-            .find(|c| c.is_ascii_alphabetic())
-            .map(|c| c.to_ascii_uppercase()),
-    }
-}
-
-pub fn to_ascii(s: &str) -> Cow<str> {
-    if s.is_ascii() {
-        Cow::Borrowed(s)
-    } else {
-        let mut capitalized_any = false;
-
-        // When transliterating, allow the first character to be either
-        // capitalized or lowercase, but otherwise enforce lowercase.
-        // Also drop any non-alphabetic characters.
-        Cow::Owned(
-            s.chars()
-                .flat_map(transliterate)
-                .filter_map(|c| {
-                    if c.is_uppercase() {
-                        if !capitalized_any {
-                            capitalized_any = true;
-                            Some(c)
-                        } else {
-                            c.to_lowercase().next()
-                        }
-                    } else if c.is_alphabetic() {
-                        Some(c)
-                    } else {
-                        None
-                    }
-                })
-                .collect(),
-        )
-    }
-}
-
 // Specialized for name-casing
 pub fn capitalize_word(word: &str, simple: bool) -> String {
     const NONASCII_HYPHENS: &str = "\u{2010}‑‒–—―−－﹘﹣";
 
-    debug_assert!(simple == word.chars().all(is_ascii_alphabetic));
+    debug_assert!(simple == word.chars().all(|c| c.is_ascii_alphabetic()));
 
     if simple {
         let bytes = word.as_bytes();
@@ -126,24 +54,14 @@ pub fn capitalize_word(word: &str, simple: bool) -> String {
         let mut result = String::with_capacity(word.len());
 
         for c in word.chars() {
-            let (x, y, z) = if capitalize_next {
-                let [x, y, z] = unicode_case_mapping::to_titlecase(c);
-                (x, y, z)
+            let mapped = if capitalize_next {
+                CaseMapping::titlecase(c)
             } else {
-                let [x, y] = unicode_case_mapping::to_lowercase(c);
-                (x, y, 0)
+                CaseMapping::lowercase(c)
             };
 
-            if x > 0 {
-                // SAFETY: We're trusting that the unicode_case_mapping crate outputs
-                // only valid chars or zero
-                result.push(unsafe { char::from_u32_unchecked(x) });
-                if y > 0 {
-                    result.push(unsafe { char::from_u32_unchecked(y) });
-                    if z > 0 {
-                        result.push(unsafe { char::from_u32_unchecked(z) });
-                    }
-                }
+            if !matches!(mapped, CaseMapping::Empty) {
+                result.extend(mapped);
                 capitalize_next = false;
             } else {
                 // No titlecase mapping, which is a prerequisite for being a separator
@@ -243,7 +161,7 @@ pub fn has_no_vowels(word: &str) -> bool {
 pub fn starts_with_consonant(word: &str) -> bool {
     word.chars()
         .next()
-        .filter(|c| is_ascii_alphabetic(*c) && !"aeiouAEIOU".contains(*c))
+        .filter(|c| c.is_ascii_alphabetic() && !"aeiouAEIOU".contains(*c))
         .is_some()
 }
 
@@ -269,9 +187,135 @@ pub fn has_sequential_alphas(word: &str) -> bool {
     false
 }
 
+#[derive(Debug)]
+enum CaseMapping {
+    Empty,
+    Single(char),
+    Double(char, char),
+    Triple(char, char, char),
+}
+
+impl CaseMapping {
+    #[inline]
+    fn lowercase(c: char) -> CaseMapping {
+        let [x, y] = unicode_case_mapping::to_lowercase(c);
+        // SAFETY: We're trusting that the unicode_case_mapping crate outputs
+        // only valid chars or zero
+        unsafe { Self::chars_from_u32(x, y, 0) }
+    }
+
+    #[inline]
+    fn titlecase(c: char) -> CaseMapping {
+        let [x, y, z] = unicode_case_mapping::to_titlecase(c);
+        // SAFETY: We're trusting that the unicode_case_mapping crate outputs
+        // only valid chars or zero
+        unsafe { Self::chars_from_u32(x, y, z) }
+    }
+
+    // SAFETY: All arguments must be valid characters
+    #[inline]
+    unsafe fn chars_from_u32(x: u32, y: u32, z: u32) -> CaseMapping {
+        debug_assert!([x, y, z].iter().all(|c| char::from_u32(*c).is_some()));
+
+        if x > 0 {
+            let x = char::from_u32_unchecked(x);
+            if y > 0 {
+                let y = char::from_u32_unchecked(y);
+                if z > 0 {
+                    let z = char::from_u32_unchecked(z);
+                    CaseMapping::Triple(x, y, z)
+                } else {
+                    CaseMapping::Double(x, y)
+                }
+            } else {
+                CaseMapping::Single(x)
+            }
+        } else {
+            CaseMapping::Empty
+        }
+    }
+}
+
+impl Iterator for CaseMapping {
+    type Item = char;
+
+    #[inline]
+    fn next(&mut self) -> Option<char> {
+        match *self {
+            CaseMapping::Triple(x, y, z) => {
+                let _ = std::mem::replace(self, CaseMapping::Double(y, z));
+                Some(x)
+            }
+            CaseMapping::Double(x, y) => {
+                let _ = std::mem::replace(self, CaseMapping::Single(y));
+                Some(x)
+            }
+            CaseMapping::Single(x) => {
+                let _ = std::mem::replace(self, CaseMapping::Empty);
+                Some(x)
+            }
+            CaseMapping::Empty => None,
+        }
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let size = match self {
+            CaseMapping::Triple(_, _, _) => 3,
+            CaseMapping::Double(_, _) => 2,
+            CaseMapping::Single(_) => 1,
+            CaseMapping::Empty => 0,
+        };
+        (size, Some(size))
+    }
+}
+
+impl DoubleEndedIterator for CaseMapping {
+    #[inline]
+    fn next_back(&mut self) -> Option<char> {
+        match *self {
+            CaseMapping::Triple(x, y, z) => {
+                let _ = std::mem::replace(self, CaseMapping::Double(x, y));
+                Some(z)
+            }
+            CaseMapping::Double(x, y) => {
+                let _ = std::mem::replace(self, CaseMapping::Single(x));
+                Some(y)
+            }
+            CaseMapping::Single(x) => {
+                let _ = std::mem::replace(self, CaseMapping::Empty);
+                Some(x)
+            }
+            CaseMapping::Empty => None,
+        }
+    }
+}
+
+impl ExactSizeIterator for CaseMapping {}
+
+fn case_folded_alpha_chars(
+    text: &str,
+) -> impl Iterator<Item = char> + std::iter::DoubleEndedIterator + '_ {
+    // It would be more correct to use unicode case folding here,
+    // but the only crate I've found which doesn't allocate by default
+    // (operating on iterators rather than strings) is `caseless`,
+    // and it has the problems that (a) its iterator isn't double-ended
+    // and (b) it's slower.
+    text.chars().flat_map(|c| {
+        let mapped = CaseMapping::lowercase(c);
+        if !matches!(mapped, CaseMapping::Empty) {
+            mapped
+        } else if c.is_alphabetic() {
+            CaseMapping::Single(c)
+        } else {
+            CaseMapping::Empty
+        }
+    })
+}
+
 pub fn eq_or_starts_with(a: &str, b: &str) -> bool {
-    let mut chars_a = a.chars().filter_map(lowercase_if_alpha);
-    let mut chars_b = b.chars().filter_map(lowercase_if_alpha);
+    let mut chars_a = case_folded_alpha_chars(a);
+    let mut chars_b = case_folded_alpha_chars(b);
     let result;
 
     loop {
@@ -291,8 +335,8 @@ pub fn eq_or_starts_with(a: &str, b: &str) -> bool {
 }
 
 pub fn eq_or_ends_with(needle: &str, haystack: &str) -> bool {
-    let mut n_chars = needle.chars().rev().filter_map(lowercase_if_alpha);
-    let mut h_chars = haystack.chars().rev().filter_map(lowercase_if_alpha);
+    let mut n_chars = case_folded_alpha_chars(needle).rev();
+    let mut h_chars = case_folded_alpha_chars(haystack).rev();
     let result;
 
     loop {

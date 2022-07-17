@@ -1,4 +1,5 @@
 use super::nickname::have_matching_variants;
+use super::transliterate;
 use super::utils::*;
 use super::{Name, Words};
 use std::borrow::Cow;
@@ -93,7 +94,10 @@ impl Name {
         if my_middle_count == 0 && their_middle_count == 0 {
             match (self.given_name(), other.given_name()) {
                 (Some(my_name), Some(their_name)) => have_matching_variants(my_name, their_name),
-                _ => to_ascii_letter(my_first) == to_ascii_letter(their_first),
+                _ => {
+                    transliterate::to_ascii_initial(my_first)
+                        == transliterate::to_ascii_initial(their_first)
+                }
             }
         }
         // For the more complicated cases, we'll simplify things a bit by
@@ -265,7 +269,7 @@ impl Name {
             Cow::Owned(
                 self.initials()
                     .chars()
-                    .filter_map(to_ascii_letter)
+                    .filter_map(transliterate::to_ascii_initial)
                     .collect::<String>(),
             )
         }
@@ -322,19 +326,8 @@ impl Name {
                 return matching_chars >= MIN_SURNAME_CHAR_MATCH;
             }
 
-            macro_rules! reverse_lowercase_alpha_chars {
-                ($word:expr) => {
-                    $word
-                        .unwrap()
-                        .chars()
-                        .flat_map(transliterate)
-                        .rev()
-                        .filter_map(lowercase_if_alpha)
-                };
-            }
-
-            let mut my_chars = reverse_lowercase_alpha_chars!(my_word);
-            let mut their_chars = reverse_lowercase_alpha_chars!(their_word);
+            let mut my_chars = transliterate::to_ascii_casefolded_reversed(my_word.unwrap());
+            let mut their_chars = transliterate::to_ascii_casefolded_reversed(their_word.unwrap());
 
             let mut my_char = my_chars.next();
             let mut their_char = their_chars.next();
@@ -349,29 +342,29 @@ impl Name {
                     // My word is a suffix of their word, check my next word
                     // against the rest of their word
                     my_word = my_words.next();
-                    if my_word.is_none() {
+                    if let Some(word) = my_word {
+                        // Continue the inner loop but incrementing through my
+                        // next word
+                        my_chars = transliterate::to_ascii_casefolded_reversed(word);
+                        my_char = my_chars.next();
+                    } else {
                         // There is no next word, so this is a suffix-only match,
                         // and we don't allow those
                         return false;
-                    } else {
-                        // Continue the inner loop but incrementing through my
-                        // next word
-                        my_chars = reverse_lowercase_alpha_chars!(my_word);
-                        my_char = my_chars.next();
                     }
                 } else if their_char.is_none() {
                     // Their word is a suffix of my word, check their next word
                     // against the rest of my_words
                     their_word = their_words.next();
-                    if their_word.is_none() {
+                    if let Some(word) = their_word {
+                        // Continue the inner loop but incrementing through their
+                        // next word
+                        their_chars = transliterate::to_ascii_casefolded_reversed(word);
+                        their_char = their_chars.next();
+                    } else {
                         // There is no next word, so this is a suffix-only match,
                         // and we don't allow those
                         return false;
-                    } else {
-                        // Continue the inner loop but incrementing through their
-                        // next word
-                        their_chars = reverse_lowercase_alpha_chars!(their_word);
-                        their_char = their_chars.next();
                     }
                 } else if my_char != their_char {
                     // We found a conflict and can short-circuit
@@ -387,7 +380,9 @@ impl Name {
     }
 
     fn simple_surname(&self) -> bool {
-        self.surname_words() == 1 && self.surname().chars().all(is_ascii_alphabetic)
+        self.surname_words() == 1
+            && self.surname().is_ascii()
+            && self.surname().bytes().all(|b| b.is_ascii_alphabetic())
     }
 
     fn suffix_consistent(&self, other: &Name) -> bool {
@@ -411,8 +406,11 @@ enum ComparisonResult {
 impl<'a> NameWordOrInitial<'a> {
     fn initial(&self) -> Option<char> {
         match *self {
-            NameWordOrInitial::Word(word, _) => word.chars().next().and_then(to_ascii_letter),
-            NameWordOrInitial::Initial(initial) => to_ascii_letter(initial),
+            NameWordOrInitial::Word(word, _) => word
+                .chars()
+                .next()
+                .and_then(transliterate::to_ascii_initial),
+            NameWordOrInitial::Initial(initial) => transliterate::to_ascii_initial(initial),
         }
     }
 
@@ -429,16 +427,8 @@ impl<'a> NameWordOrInitial<'a> {
             return ComparisonResult::InitialsOnlyMatch;
         }
 
-        let mut my_chars = self
-            .word()
-            .chars()
-            .flat_map(transliterate)
-            .filter_map(lowercase_if_alpha);
-        let mut their_chars = other
-            .word()
-            .chars()
-            .flat_map(transliterate)
-            .filter_map(lowercase_if_alpha);
+        let mut my_chars = transliterate::to_ascii_casefolded(self.word());
+        let mut their_chars = transliterate::to_ascii_casefolded(other.word());
         let mut matched = 0;
 
         loop {
