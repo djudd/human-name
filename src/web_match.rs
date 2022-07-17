@@ -37,9 +37,9 @@ impl Name {
         }
 
         // Special case: Nice punctuation lets us actually parse a name directly
-        if string.chars().any(is_nonalphanumeric) {
+        if string.chars().any(Self::is_nonalphanumeric) {
             let subbed = string
-                .split(is_nonalphanumeric)
+                .split(Self::is_nonalphanumeric)
                 .filter(|p| !p.is_empty())
                 .collect::<SmallVec<[&str; 5]>>()
                 .join(" ");
@@ -60,7 +60,7 @@ impl Name {
             Cow::Owned(
                 string
                     .chars()
-                    .filter_map(lowercase_if_alpha)
+                    .filter_map(Self::lowercase_if_alpha)
                     .collect::<String>(),
             )
         };
@@ -149,7 +149,7 @@ impl Name {
     fn find_surname_in(&self, haystack: &str) -> Option<(usize, usize, bool)> {
         let lower_surname: String = self
             .surname_iter()
-            .flat_map(|n| n.chars().filter_map(lowercase_if_alpha))
+            .flat_map(|n| n.chars().filter_map(Self::lowercase_if_alpha))
             .collect();
         if lower_surname.len() < 2 {
             return None;
@@ -249,5 +249,21 @@ impl Name {
         }
 
         false
+    }
+
+    fn lowercase_if_alpha(c: char) -> Option<char> {
+        if c.is_uppercase() {
+            c.to_lowercase().next()
+        } else if c.is_alphabetic() {
+            Some(c)
+        } else {
+            None
+        }
+    }
+
+    // Sadly necessary because string split gives "type of this value must be known"
+    // compilation error when passed a closure in some contexts
+    fn is_nonalphanumeric(c: char) -> bool {
+        !c.is_alphanumeric()
     }
 }

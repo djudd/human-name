@@ -35,6 +35,7 @@ mod segment;
 mod suffix;
 mod surname;
 mod title;
+mod transliterate;
 mod web_match;
 mod word;
 
@@ -54,7 +55,7 @@ use std::convert::TryInto;
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroU8;
 use std::ops::Range;
-use utils::{lowercase_if_alpha, normalize_nfkd_whitespace, transliterate};
+use utils::normalize_nfkd_whitespace;
 use word::{WordIndices, Words};
 
 #[cfg(test)]
@@ -590,10 +591,8 @@ impl Name {
     pub fn surname_hash<H: Hasher>(&self, state: &mut H) {
         for c in self
             .surname_iter()
-            .flat_map(|w| w.chars())
-            .flat_map(transliterate)
             .rev()
-            .filter_map(lowercase_if_alpha)
+            .flat_map(transliterate::to_ascii_casefolded_reversed)
             .take(comparison::MIN_SURNAME_CHAR_MATCH)
         {
             c.hash(state);
