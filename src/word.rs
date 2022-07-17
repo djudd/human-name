@@ -43,6 +43,18 @@ impl<'a> Iterator for Words<'a> {
     }
 
     #[inline]
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        F: FnMut(B, Self::Item) -> B,
+    {
+        let Self { indices, text } = self;
+        indices.fold(init, |acc, &Range { start, end }| {
+            let item = &text[start.into()..end.into()];
+            f(acc, item)
+        })
+    }
+
+    #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.indices.size_hint()
     }
