@@ -138,7 +138,7 @@ impl Name {
 
         let missing_any_names = self.missing_any_name() || other.missing_any_name();
 
-        let mut their_parts = other.given_names_or_initials().peekable();
+        let mut their_parts = other.given_names_or_initials();
         let mut suffix_for_prior_prefix_match: Option<String> = None;
         let mut looked_up_nicknames = false;
 
@@ -207,11 +207,13 @@ impl Name {
                 return true;
             }
 
-            let mut advance_by = my_part.initials_count() as isize;
-            while advance_by > 0 && their_part_if_any.is_some() {
+            let mut advance_by = my_part.initials_count();
+            while advance_by > 0 {
                 their_part_if_any = their_parts.next();
                 if let Some(ref their_part) = their_part_if_any {
-                    advance_by -= their_part.initials_count() as isize;
+                    advance_by -= their_part.initials_count();
+                } else {
+                    break;
                 }
             }
         }
@@ -497,9 +499,10 @@ impl<'a> NameWordOrInitial<'a> {
         }
     }
 
-    fn initials_count(&self) -> u8 {
+    #[inline]
+    fn initials_count(&self) -> i32 {
         match *self {
-            NameWordOrInitial::Word(_, count) => count as u8,
+            NameWordOrInitial::Word(_, count) => count.into(),
             NameWordOrInitial::Initial(_) => 1,
         }
     }
