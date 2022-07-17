@@ -385,13 +385,9 @@ impl Name {
     /// assert_eq!("de la MacDonald", name.surname());
     /// ```
     pub fn surname(&self) -> &str {
-        let mut surname_indices = self
-            .word_indices_in_text
-            .iter()
-            .skip(self.surname_index.into())
-            .peekable();
-        let start = surname_indices.peek().unwrap().start;
-        let end = surname_indices.last().unwrap().end;
+        let surname_indices = &self.word_indices_in_text[self.surname_index.into()..];
+        let start = surname_indices[0].start;
+        let end = surname_indices[surname_indices.len() - 1].end;
         &self.text[start.into()..end.into()]
     }
 
