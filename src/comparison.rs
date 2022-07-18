@@ -422,33 +422,39 @@ enum ComparisonResult {
 }
 
 impl<'a> NameWordOrInitial<'a> {
-    fn initial(&self) -> Option<char> {
-        match *self {
-            NameWordOrInitial::Word(word, _) => word
-                .chars()
-                .next()
-                .and_then(transliterate::to_ascii_initial),
-            NameWordOrInitial::Initial(initial) => transliterate::to_ascii_initial(initial),
-        }
-    }
-
     #[inline]
     fn check_consistency(
         &self,
         other: &NameWordOrInitial,
         allow_nicknames: bool,
     ) -> ComparisonResult {
-        if self.initial().is_none() || self.initial() != other.initial() {
+        #[inline]
+        fn fold_initial(c: char) -> char {
+            transliterate::to_ascii_initial(c).unwrap_or(c)
+        }
+
+        #[inline]
+        fn fold_rest(c: char, word: &str) -> impl Iterator<Item = char> + '_ {
+            transliterate::to_ascii_casefolded(&word[c.len_utf8()..])
+        }
+
+        let (my_initial, their_initial) = (self.initial(), other.initial());
+        if fold_initial(my_initial) != fold_initial(their_initial) {
             return ComparisonResult::DifferentInitials;
         }
 
-        if !self.has_word() || !other.has_word() {
+        let (my_word, their_word) = (self.word(), other.word());
+        if my_word.is_none() || their_word.is_none() {
             return ComparisonResult::InitialsOnlyMatch;
         }
+        let (my_word, their_word) = (my_word.unwrap(), their_word.unwrap());
 
-        let mut my_chars = transliterate::to_ascii_casefolded(self.word());
-        let mut their_chars = transliterate::to_ascii_casefolded(other.word());
-        let mut matched = 0;
+        // We just checked the initial matches, so skip ahead
+        let mut matched = 1;
+        let (mut my_chars, mut their_chars) = (
+            fold_rest(my_initial, my_word),
+            fold_rest(their_initial, their_word),
+        );
 
         loop {
             let my_char = my_chars.next();
@@ -474,7 +480,7 @@ impl<'a> NameWordOrInitial<'a> {
                 }
             } else if my_char != their_char {
                 // Failed match; abort, but first, maybe try nickname db
-                if allow_nicknames && have_matching_variants(self.word(), other.word()) {
+                if allow_nicknames && have_matching_variants(my_word, their_word) {
                     return ComparisonResult::NicknameMatch;
                 } else {
                     return ComparisonResult::Inconsistent;
@@ -485,17 +491,19 @@ impl<'a> NameWordOrInitial<'a> {
         }
     }
 
-    fn word(&self) -> &str {
+    #[inline]
+    fn initial(&self) -> char {
         match *self {
-            NameWordOrInitial::Word(word, _) => word,
-            NameWordOrInitial::Initial(_) => unreachable!(),
+            NameWordOrInitial::Word(word, _) => word.chars().next().unwrap(),
+            NameWordOrInitial::Initial(initial) => initial,
         }
     }
 
-    fn has_word(&self) -> bool {
+    #[inline]
+    fn word(&self) -> Option<&str> {
         match *self {
-            NameWordOrInitial::Word(_, _) => true,
-            NameWordOrInitial::Initial(_) => false,
+            NameWordOrInitial::Word(word, _) => Some(word),
+            NameWordOrInitial::Initial(_) => None,
         }
     }
 
