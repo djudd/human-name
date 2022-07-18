@@ -106,7 +106,7 @@ impl DoubleEndedIterator for CaseMapping {
 
 impl ExactSizeIterator for CaseMapping {}
 
-fn case_folded_alphas(
+fn casefolded_alphas(
     text: &str,
 ) -> impl Iterator<Item = char> + std::iter::DoubleEndedIterator + '_ {
     // It would be more correct to use unicode case folding here,
@@ -127,13 +127,13 @@ fn case_folded_alphas(
 }
 
 #[inline]
-pub fn eq_or_starts_with(a: &str, b: &str) -> bool {
-    !std::iter::zip(case_folded_alphas(b), case_folded_alphas(a)).any(|(a, b)| a != b)
+pub fn eq_casefolded_alpha_prefix(a: &str, b: &str) -> bool {
+    !std::iter::zip(casefolded_alphas(a), casefolded_alphas(b)).any(|(a, b)| a != b)
 }
 
 #[inline]
-pub fn eq_or_ends_with(a: &str, b: &str) -> bool {
-    !std::iter::zip(case_folded_alphas(a).rev(), case_folded_alphas(b).rev()).any(|(a, b)| a != b)
+pub fn eq_casefolded_alpha_suffix(a: &str, b: &str) -> bool {
+    !std::iter::zip(casefolded_alphas(a).rev(), casefolded_alphas(b).rev()).any(|(a, b)| a != b)
 }
 
 // Specialized for name-casing
