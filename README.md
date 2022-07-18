@@ -132,11 +132,28 @@ Ruby bindings using the `ffi` gem are available at [github.com/djudd/human-name-
 
 Python bindings using the `ctypes` module are available at [github.com/djudd/human-name-py](https://github.com/djudd/human-name-py)
 
+# Versioning
+
+This library follows [semver](https://semver.org/) with respect to its programmatic API.
+Changes to the parsing and consistency-checking heuristics are not considered breaking
+and will typically come with a minor version bump.
+
 # Performance
 
 As of version 1.0, the fast path (roughly, two space-separated, titlecase ASCII
-words) for name parsing takes ~250ns and does not heap-allocate. Pathological cases
-can take an order of magnitude longer.
+words) for name parsing takes ~250ns and does not heap-allocate. Comparing two
+simple names for consistency takes ~100ns if the surname hash matches, and ~1ns
+otherwise. Pathological cases for either can take an order of magnitude longer.
+
+# Contributing
+
+Contributions, feature requests and bug reports are welcome. Please open a GitHub issue
+or pull request, include as much helpful context as you can, and we'll figure it out from there.
+As this is a small personal project, you might not get an immediate response, but I'll follow up
+as soon as I'm able.
+
+Conversations related to this project must follow the [Contributor Covenent's Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md).
+Please report any related concerns to the contact email in [Cargo.toml](https://github.com/djudd/human-name/blob/master/Cargo.toml).
 
 # Credit
 
@@ -149,12 +166,6 @@ Inspiration, heuristics, and test cases were taken from:
 * [`Lingua::EN::Nickname` (Perl)](http://search.cpan.org/~brianl/Lingua-EN-Nickname-1.16/Nickname.pm)
 * [`parse-full-name` (JS)](https://github.com/dschnelldavis/parse-full-name)
 * [`PHP-Name-Parser` (PHP)](https://github.com/joshfraser/PHP-Name-Parser)
-
-# Contributing
-
-Please do! I'm not going to set up a CONTRIBUTING.md until there's evidence
-anyone is actually interested, but feel free either to just submit a pull request
-or to email me (see Cargo.toml) if you have any questions.
 
 # License
 
