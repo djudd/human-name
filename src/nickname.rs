@@ -237,7 +237,7 @@ fn variants_match(a: &str, b: &str) -> bool {
 
 #[inline]
 fn have_prefix_match(longer: &str, shorter: &str) -> bool {
-    eq_or_starts_with(longer, shorter) && !is_simple_feminization(longer, shorter)
+    eq_casefolded_alpha_prefix(longer, shorter) && !is_simple_feminization(longer, shorter)
 }
 
 #[inline]
@@ -289,14 +289,15 @@ fn matches_without_ito(a: &str, b: &str) -> bool {
 
 #[inline]
 fn matches_after_removing_diminutive(a: &str, b: &str, diminutive_len: usize) -> bool {
-    eq_or_starts_with(&a[0..a.len() - diminutive_len], b) && !DIMINUTIVE_EXCEPTIONS.contains(a)
+    eq_casefolded_alpha_prefix(&a[0..a.len() - diminutive_len], b)
+        && !DIMINUTIVE_EXCEPTIONS.contains(a)
 }
 
 #[inline]
 fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
     if needle.len() == haystack.len() - 1
         && !starts_with_consonant(haystack)
-        && eq_or_ends_with(needle, haystack)
+        && eq_casefolded_alpha_suffix(needle, haystack)
     {
         true
     } else if haystack.len() < 4 || needle.len() < 2 || needle.len() > haystack.len() - 2 {
@@ -305,7 +306,7 @@ fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
         || needle.starts_with("Ann")
         || haystack.starts_with("Mary")
     {
-        eq_or_ends_with(needle, haystack) && !FINAL_SYLLABLES_EXCEPTIONS.contains(needle)
+        eq_casefolded_alpha_suffix(needle, haystack) && !FINAL_SYLLABLES_EXCEPTIONS.contains(needle)
     } else {
         false
     }

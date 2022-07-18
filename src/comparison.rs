@@ -198,7 +198,7 @@ impl Name {
                 // without corresponding names, because the logic would have to
                 // be even more complicated.
                 if let NameWordOrInitial::Word(word, _) = my_part {
-                    return eq_or_starts_with(&suffix, word);
+                    return eq_casefolded_alpha_prefix(&suffix, word);
                 } else {
                     return true;
                 }
