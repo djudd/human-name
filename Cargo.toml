@@ -8,7 +8,7 @@ categories = ["parsing", "text-processing", "command-line-utilities",]
 license = "Apache-2.0"
 repository = "https://github.com/djudd/human-name"
 documentation = "https://docs.rs/human_name/"
-rust-version = "1.49"
+rust-version = "1.52"
 
 [dependencies]
 unicode-segmentation = "1.9"
