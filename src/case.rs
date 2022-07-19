@@ -128,12 +128,17 @@ fn casefolded_alphas(
 
 #[inline]
 pub fn eq_casefolded_alpha_prefix(a: &str, b: &str) -> bool {
-    !casefolded_alphas(a).zip(casefolded_alphas(b)).any(|(a, b)| a != b)
+    !casefolded_alphas(a)
+        .zip(casefolded_alphas(b))
+        .any(|(a, b)| a != b)
 }
 
 #[inline]
 pub fn eq_casefolded_alpha_suffix(a: &str, b: &str) -> bool {
-    !casefolded_alphas(a).rev().zip(casefolded_alphas(b).rev()).any(|(a, b)| a != b)
+    !casefolded_alphas(a)
+        .rev()
+        .zip(casefolded_alphas(b).rev())
+        .any(|(a, b)| a != b)
 }
 
 // Specialized for name-casing
