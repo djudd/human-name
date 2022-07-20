@@ -38,8 +38,6 @@ fn ascii_to_upper_if_alpha(c: char) -> Option<char> {
 
 #[inline]
 pub fn to_ascii_initial(c: char) -> Option<char> {
-    debug_assert!(c.is_uppercase(), "{}", c.to_string());
-
     match c {
         'A'..='Z' => Some(c),
         _ => transliterate(c).find_map(ascii_to_upper_if_alpha),

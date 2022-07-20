@@ -741,7 +741,7 @@ pub fn canonicalize_prefix<'a>(title: &'a NamePart<'a>) -> Cow<'a, str> {
             }
 
             // For unrecognized honorifics, canonicalize as an abbreviation (e.g. "Dr.").
-            let mut result = String::with_capacity((title.counts.alpha + 1).into());
+            let mut result = String::with_capacity(usize::from(title.counts.alpha) + 1);
             title.with_initials(|c| {
                 if result.is_empty() {
                     result.push(c);

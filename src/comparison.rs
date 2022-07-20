@@ -247,7 +247,9 @@ impl Name {
                 // Normal case, given the absence of (true) given names
                 //
                 // Using byte offsets is ok because we already converted to ASCII
-                if my_initials[..1] != their_initials[..1] {
+                if my_initials.is_empty() || their_initials.is_empty() {
+                    return true;
+                } else if my_initials[..1] != their_initials[..1] {
                     return false;
                 }
             }

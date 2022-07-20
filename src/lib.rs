@@ -658,9 +658,32 @@ mod tests {
     }
 
     #[test]
-    fn invalid() {
+    fn parse_high_proportion_of_combining_chars() {
         let name = Name::parse(".ΰ\u{330}\u{610}`");
         assert!(name.is_none());
+    }
+
+    #[test]
+    fn parse_very_long_honorific_prefix() {
+        // It would probably also be fine to fail to parse this, but we shouldn't panic
+        let name = Name::parse("%%%%%hLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLe pl Puc");
+        assert_eq!("H. Lllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll. E. P. L. Puc", name.unwrap().display_full_with_honorifics());
+    }
+
+    #[test]
+    fn eq_non_alphanumeric_initials() {
+        // It would probably also be fine to fail to parse one of these, but we shouldn't panic
+        let a = Name::parse("\u{3}\n\u{4}\u{19}Joo\n'lA").unwrap();
+        let b = Name::parse("H8\n'lA/").unwrap();
+        assert!(!a.consistent_with(&b));
+    }
+
+    #[test]
+    fn eq_empty_transliterated_initials() {
+        // It would probably also be fine to fail to parse `b`, but we shouldn't panic
+        let a = Name::parse("Ng\nmac").unwrap();
+        let b = Name::parse("\u{65c}\nmac\n").unwrap();
+        assert!(a.consistent_with(&b));
     }
 
     #[cfg(feature = "bench")]
