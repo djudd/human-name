@@ -3,7 +3,7 @@ use super::namepart::{Category, NamePart};
 use super::suffix;
 use phf::phf_map;
 use std::cmp;
-use Cow;
+use crate::Cow;
 
 static TWO_CHAR_TITLES: [&str; 4] = ["mr", "ms", "sr", "dr"];
 

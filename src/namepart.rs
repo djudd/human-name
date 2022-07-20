@@ -2,7 +2,7 @@ use super::features::*;
 use super::namecase;
 use super::segment::{Segment, Segments};
 use super::surname;
-use decomposition::combining_chars;
+use crate::decomposition::combining_chars;
 use phf::phf_set;
 use std::borrow::Cow;
 use std::iter::Peekable;

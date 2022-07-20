@@ -5,7 +5,7 @@ use super::surname;
 use super::title;
 use smallvec::SmallVec;
 use std::num::NonZeroU8;
-use Cow;
+use crate::Cow;
 
 pub struct Name<'a> {
     parts: SmallVec<[NamePart<'a>; 7]>,

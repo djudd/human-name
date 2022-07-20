@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::convert::TryInto;
 use std::ops::{Deref, Range};
 use std::slice;
-use SmallVec;
+use crate::SmallVec;
 
 pub struct Words<'a> {
     text: &'a str,

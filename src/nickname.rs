@@ -1,6 +1,6 @@
 use super::transliterate;
-use case::*;
-use features::starts_with_consonant;
+use crate::case::*;
+use crate::features::starts_with_consonant;
 use phf::{phf_map, phf_set};
 use std::borrow::Cow;
 use std::iter;
