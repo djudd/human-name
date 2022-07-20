@@ -542,34 +542,30 @@ mod tests {
         let name = parse("DR JANE DOE ET AL").unwrap();
         assert_eq!("et al.", name.honorific_suffix().unwrap());
     }
+}
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn parse_simple(b: &mut Bencher) {
-        b.iter(|| black_box(parse("John Doe").is_some()))
+#[cfg(feature = "bench")]
+mod bench {
+    use super::*;
+    use criterion::{black_box, criterion_group, Bencher, Criterion};
+
+    fn parsing(c: &mut Criterion) {
+        c.bench_function("first last", |b| {
+            b.iter(|| black_box(parse("John Doe").is_some()))
+        });
+
+        c.bench_function("non-ascii", |b| {
+            b.iter(|| black_box(parse("이용희").is_some()))
+        });
+
+        c.bench_function("last, first", |b| {
+            b.iter(|| black_box(parse("Doe, John").is_some()))
+        });
+
+        c.bench_function("complex", |b| {
+            b.iter(|| black_box(parse("James S. Brown MD, FRCS, FDSRCS").is_some()))
+        });
     }
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn parse_nonascii(b: &mut Bencher) {
-        b.iter(|| black_box(parse("이용희").is_some()))
-    }
-
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn parse_comma(b: &mut Bencher) {
-        b.iter(|| black_box(parse("Doe, John").is_some()))
-    }
-
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn parse_all_caps(b: &mut Bencher) {
-        b.iter(|| black_box(parse("JOHN DOE").is_some()))
-    }
-
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn parse_complex(b: &mut Bencher) {
-        b.iter(|| black_box(parse("James S. Brown MD, FRCS, FDSRCS").is_some()))
-    }
+    criterion_group!(parse, parsing);
 }

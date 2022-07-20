@@ -216,9 +216,6 @@ pub fn is_mixed_case(s: &str) -> bool {
 mod tests {
     use super::*;
 
-    #[cfg(feature = "bench")]
-    use test::{black_box, Bencher};
-
     #[test]
     fn capitalization() {
         assert_eq!("A", capitalize_word("a", true));
@@ -228,28 +225,32 @@ mod tests {
         assert_eq!("Aa-Bb", capitalize_word("AA-BB", false));
         assert_eq!("Ss", capitalize_word("ß", false));
     }
+}
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn is_mixed_case_false(b: &mut Bencher) {
-        b.iter(|| black_box(is_mixed_case("JOHN MACDONALD")))
+#[cfg(feature = "bench")]
+mod bench {
+    use super::*;
+    use criterion::{black_box, criterion_group, Bencher, Criterion};
+
+    fn mixed_case(c: &mut Criterion) {
+        c.bench_function("not mixed", |b| {
+            b.iter(|| black_box(is_mixed_case("JOHN MACDONALD")))
+        });
+
+        c.bench_function("mixed", |b| {
+            b.iter(|| black_box(is_mixed_case("J. MacDonald")))
+        });
     }
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn is_mixed_case_true(b: &mut Bencher) {
-        b.iter(|| black_box(is_mixed_case("J. MacDonald")))
+    fn capitalize(c: &mut Criterion) {
+        c.bench_function("uppercase ascii", |b| {
+            b.iter(|| black_box(capitalize_word("JONATHAN", true)))
+        });
+
+        c.bench_function("complex", |b| {
+            b.iter(|| black_box(capitalize_word("föö-bar", false)))
+        });
     }
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn capitalize_uppercase_word(b: &mut Bencher) {
-        b.iter(|| black_box(capitalize_word("JONATHAN", true)))
-    }
-
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn capitalize_complex_word(b: &mut Bencher) {
-        b.iter(|| black_box(capitalize_word("föö-bar", false)))
-    }
+    criterion_group!(case, capitalize, mixed_case);
 }

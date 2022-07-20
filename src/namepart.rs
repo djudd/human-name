@@ -240,9 +240,6 @@ impl<'a> NamePart<'a> {
 mod tests {
     use super::*;
 
-    #[cfg(feature = "bench")]
-    use test::{black_box, Bencher};
-
     #[test]
     fn one_word() {
         assert_eq!(
@@ -265,30 +262,6 @@ mod tests {
             0,
             NamePart::all_from_text(" ... 23 ", true, Location::Start).count()
         );
-    }
-
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn all_from_text_simple(b: &mut Bencher) {
-        b.iter(|| black_box(NamePart::all_from_text("John Doe", true, Location::Start).count()))
-    }
-
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn all_from_text_initials(b: &mut Bencher) {
-        b.iter(|| black_box(NamePart::all_from_text("J. Doe", true, Location::Start).count()))
-    }
-
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn all_from_text_nonascii(b: &mut Bencher) {
-        b.iter(|| black_box(NamePart::all_from_text("이용희", false, Location::Start).count()))
-    }
-
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn all_from_text_all_caps(b: &mut Bencher) {
-        b.iter(|| black_box(NamePart::all_from_text("JOHN DOE", false, Location::Start).count()))
     }
 
     #[test]
@@ -368,64 +341,29 @@ mod tests {
         assert!(NamePart::from_word("AT", true, Location::Start).is_initials());
         assert!(NamePart::from_word("AT", false, Location::Start).is_initials());
     }
+}
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn from_word_simple(b: &mut Bencher) {
-        let name = "Jonathan";
-        let counts = categorize_chars(name);
-        b.iter(|| {
-            black_box(NamePart::from_word_and_counts(
-                name,
-                counts.clone(),
-                true,
-                Location::Start,
-            ))
-        })
+#[cfg(feature = "bench")]
+mod bench {
+    use super::*;
+    use criterion::{black_box, criterion_group, Bencher, Criterion};
+
+    fn all_from_text(c: &mut Criterion) {
+        c.bench_function("first last", |b| {
+            b.iter(|| black_box(NamePart::all_from_text("John Doe", true, Location::Start).count()))
+        });
+        c.bench_function("initial surname", |b| {
+            b.iter(|| black_box(NamePart::all_from_text("J. Doe", true, Location::Start).count()))
+        });
+        c.bench_function("nonascii", |b| {
+            b.iter(|| black_box(NamePart::all_from_text("이용희", false, Location::Start).count()))
+        });
+        c.bench_function("all caps", |b| {
+            b.iter(|| {
+                black_box(NamePart::all_from_text("JOHN DOE", false, Location::Start).count())
+            })
+        });
     }
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn from_word_initials(b: &mut Bencher) {
-        let name = "J.";
-        let counts = categorize_chars(name);
-        b.iter(|| {
-            black_box(NamePart::from_word_and_counts(
-                name,
-                counts.clone(),
-                true,
-                Location::Start,
-            ))
-        })
-    }
-
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn from_word_nonascii(b: &mut Bencher) {
-        let name = "희";
-        let counts = categorize_chars(name);
-        b.iter(|| {
-            black_box(NamePart::from_word_and_counts(
-                name,
-                counts.clone(),
-                false,
-                Location::Start,
-            ))
-        })
-    }
-
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn from_word_all_caps(b: &mut Bencher) {
-        let name = "JONATHAN";
-        let counts = categorize_chars(name);
-        b.iter(|| {
-            black_box(NamePart::from_word_and_counts(
-                name,
-                counts.clone(),
-                false,
-                Location::Start,
-            ))
-        })
-    }
+    criterion_group!(name_part, all_from_text);
 }

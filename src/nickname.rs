@@ -338,9 +338,6 @@ fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
 mod tests {
     use super::*;
 
-    #[cfg(feature = "bench")]
-    use test::{black_box, Bencher};
-
     #[test]
     fn nick_and_name() {
         assert!(have_matching_variants("Dave", "David"));
@@ -445,36 +442,40 @@ mod tests {
     fn unspaced_quotes() {
         assert_eq!("Ro'bert R'oberts", strip_nickname("Ro'bert R'oberts"));
     }
+}
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn strip_nick_no_nick(b: &mut Bencher) {
-        b.iter(|| {
-            black_box(strip_nickname("James T. Kirk").len());
-        })
+#[cfg(feature = "bench")]
+mod bench {
+    use super::*;
+    use criterion::{black_box, criterion_group, Bencher, Criterion};
+
+    fn strip_nicknames(c: &mut Criterion) {
+        c.bench_function("no nickname", |b| {
+            b.iter(|| {
+                black_box(strip_nickname("James T. Kirk").len());
+            })
+        });
+
+        c.bench_function("nickname", |b| {
+            b.iter(|| {
+                black_box(strip_nickname("James T. 'Jimmy' Kirk").len());
+            })
+        });
     }
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn strip_nick_with_nick(b: &mut Bencher) {
-        b.iter(|| {
-            black_box(strip_nickname("James T. 'Jimmy' Kirk").len());
-        })
+    fn have_matching_variants(c: &mut Criterion) {
+        c.bench_function("no match", |b| {
+            b.iter(|| {
+                black_box(have_matching_variants("David", "Daniel"));
+            })
+        });
+
+        c.bench_function("match", |b| {
+            b.iter(|| {
+                black_box(have_matching_variants("David", "Dave"));
+            })
+        });
     }
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn have_matching_variants_false(b: &mut Bencher) {
-        b.iter(|| {
-            black_box(have_matching_variants("David", "Daniel"));
-        })
-    }
-
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn have_matching_variants_true(b: &mut Bencher) {
-        b.iter(|| {
-            black_box(have_matching_variants("David", "Dave"));
-        })
-    }
+    criterion_group!(nick, strip_nicknames, have_matching_variants);
 }

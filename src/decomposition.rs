@@ -39,29 +39,24 @@ pub fn combining_chars(word: &str) -> usize {
     word.chars().filter(|c| is_combining(*c)).count()
 }
 
-#[cfg(test)]
+#[cfg(feature = "bench")]
 mod tests {
-    #[cfg(feature = "bench")]
     use super::*;
+    use criterion::{black_box, criterion_group, Bencher, Criterion};
 
-    #[cfg(feature = "bench")]
-    use test::{black_box, Bencher};
+    fn normalization() {
+        c.bench_function("ascii", |b| {
+            b.iter(|| black_box(normalize_nfkd_whitespace("James 'J' S. Brown MD").len()))
+        });
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn normalize_ascii(b: &mut Bencher) {
-        b.iter(|| black_box(normalize_nfkd_whitespace("James 'J' S. Brown MD").len()))
+        c.bench_function("nfkd non-ascii", |b| {
+            b.iter(|| black_box(normalize_nfkd_whitespace("James «J» S. Brown MD").len()))
+        });
+
+        c.bench_function("non-nfkd non-ascii", |b| {
+            b.iter(|| black_box(normalize_nfkd_whitespace("James 'J' S. Bröwn MD").len()))
+        });
     }
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn normalize_nfkd_stable(b: &mut Bencher) {
-        b.iter(|| black_box(normalize_nfkd_whitespace("James «J» S. Brown MD").len()))
-    }
-
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn normalize_needs_fix(b: &mut Bencher) {
-        b.iter(|| black_box(normalize_nfkd_whitespace("James 'J' S. Bröwn MD").len()))
-    }
+    criterion_group!(decomposition, normalization);
 }

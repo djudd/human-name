@@ -3,17 +3,12 @@
 //! See the documentation of the `Name` struct for details.
 
 #![doc(html_root_url = "https://djudd.github.io/human-name/")]
-#![cfg_attr(feature = "bench", feature(test))]
 
 extern crate smallstr;
 extern crate smallvec;
 extern crate unicode_normalization;
 extern crate unicode_segmentation;
 extern crate unidecode;
-
-#[cfg(test)]
-#[cfg(feature = "bench")]
-extern crate test;
 
 #[cfg(feature = "serialization")]
 extern crate serde;
@@ -667,9 +662,6 @@ mod tests {
     use super::*;
     use alloc_counter::deny_alloc;
 
-    #[cfg(feature = "bench")]
-    use test::{black_box, Bencher};
-
     #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
     #[test]
     fn struct_size() {
@@ -722,46 +714,42 @@ mod tests {
         let b = Name::parse("\u{65c}\nmac\n").unwrap();
         assert!(a.consistent_with(&b));
     }
+}
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn initialize_struct_initial_surname(b: &mut Bencher) {
+#[cfg(feature = "bench")]
+mod bench {
+    use super::*;
+    use criterion::{black_box, criterion_group, Bencher, Criterion};
+
+    fn initialize_struct_initial_surname(c: &mut Criterion) {
         let name = "J. Doe";
         let parsed = parse::parse(&*name).unwrap();
-        b.iter(|| {
-            black_box(
-                Name::initialize_struct(&parsed, name.len())
-                    .unwrap()
-                    .byte_len(),
-            )
-        })
+
+        c.bench_function("initial surname", |b| {
+            b.iter(|| black_box(Name::initialize_struct(&parsed, name.len()).byte_len()))
+        });
     }
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn initialize_struct_first_last(b: &mut Bencher) {
+    fn initialize_struct_first_last(c: &mut Criterion) {
         let name = "John Doe";
         let parsed = parse::parse(&*name).unwrap();
-        b.iter(|| {
-            black_box(
-                Name::initialize_struct(&parsed, name.len())
-                    .unwrap()
-                    .byte_len(),
-            )
-        })
+        c.bench_function("first last", |b| {
+            b.iter(|| black_box(Name::initialize_struct(&parsed, name.len()).byte_len()))
+        });
     }
 
-    #[cfg(feature = "bench")]
-    #[bench]
-    fn initialize_struct_complex(b: &mut Bencher) {
+    fn initialize_struct_complex(c: &mut Criterion) {
         let name = "John Allen Q.R. de la MacDonald Jr.";
         let parsed = parse::parse(&*name).unwrap();
-        b.iter(|| {
-            black_box(
-                Name::initialize_struct(&parsed, name.len())
-                    .unwrap()
-                    .byte_len(),
-            )
-        })
+        c.bench_function("complex", |b| {
+            b.iter(|| black_box(Name::initialize_struct(&parsed, name.len()).byte_len()))
+        });
     }
+
+    criterion_group!(
+        Name,
+        initialize_struct_initial_surname,
+        initialize_struct_first_last,
+        initialize_struct_complex
+    );
 }
