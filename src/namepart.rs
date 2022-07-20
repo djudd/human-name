@@ -123,7 +123,9 @@ impl<'a> NamePart<'a> {
             } else {
                 Category::Initials
             }
-        } else if usize::from(chars - alpha).saturating_sub(combining_chars(word)) > 2 {
+        } else if chars - alpha > 2
+            && usize::from(chars - alpha).saturating_sub(combining_chars(word)) > 2
+        {
             Category::Other
         } else if trust_capitalization && alpha == upper {
             if chars <= 5 || (ascii_alpha > 0 && has_no_vowels(word)) {
