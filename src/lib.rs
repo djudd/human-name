@@ -49,6 +49,7 @@ mod eq_hash;
 mod serialization;
 
 use crate::decomposition::normalize_nfkd_whitespace;
+use crate::word::{WordIndices, Words};
 use smallstr::SmallString;
 use smallvec::SmallVec;
 use std::borrow::Cow;
@@ -57,7 +58,6 @@ use std::convert::TryInto;
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroU8;
 use std::ops::Range;
-use crate::word::{WordIndices, Words};
 
 #[cfg(test)]
 use alloc_counter::AllocCounterSystem;

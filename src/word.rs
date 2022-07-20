@@ -1,8 +1,8 @@
+use crate::SmallVec;
 use std::borrow::Cow;
 use std::convert::TryInto;
 use std::ops::{Deref, Range};
 use std::slice;
-use crate::SmallVec;
 
 pub struct Words<'a> {
     text: &'a str,
