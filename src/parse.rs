@@ -3,9 +3,9 @@ use super::namepart::{Location, NamePart};
 use super::suffix;
 use super::surname;
 use super::title;
+use crate::Cow;
 use smallvec::SmallVec;
 use std::num::NonZeroU8;
-use Cow;
 
 pub struct Name<'a> {
     parts: SmallVec<[NamePart<'a>; 7]>,

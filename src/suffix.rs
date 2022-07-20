@@ -1,4 +1,4 @@
-use namepart::{Category, NamePart};
+use crate::namepart::{Category, NamePart};
 use phf::phf_map;
 use std::num::NonZeroU8;
 

@@ -1,9 +1,9 @@
 use super::case::capitalize_word;
 use super::namepart::{Category, NamePart};
 use super::suffix;
+use crate::Cow;
 use phf::phf_map;
 use std::cmp;
-use Cow;
 
 static TWO_CHAR_TITLES: [&str; 4] = ["mr", "ms", "sr", "dr"];
 

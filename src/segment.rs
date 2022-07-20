@@ -1,5 +1,5 @@
-use features::categorize_chars;
-use features::CharacterCounts;
+use crate::features::categorize_chars;
+use crate::features::CharacterCounts;
 use unicode_segmentation::UnicodeSegmentation;
 
 pub const MAX_LEN: usize = u8::max_value() as usize;

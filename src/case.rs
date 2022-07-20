@@ -1,4 +1,4 @@
-use decomposition::is_combining;
+use crate::decomposition::is_combining;
 
 #[derive(Debug)]
 enum CaseMapping {
