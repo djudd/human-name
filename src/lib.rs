@@ -657,6 +657,12 @@ mod tests {
         });
     }
 
+    #[test]
+    fn invalid() {
+        let name = Name::parse(".ΰ\u{330}\u{610}`");
+        assert!(name.is_none());
+    }
+
     #[cfg(feature = "bench")]
     #[bench]
     fn initialize_struct_initial_surname(b: &mut Bencher) {
