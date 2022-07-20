@@ -23,3 +23,9 @@ name = "parse"
 path = "fuzz_targets/parse.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "consistent_with"
+path = "fuzz_targets/consistent_with.rs"
+test = false
+doc = false
