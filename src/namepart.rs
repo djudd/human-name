@@ -89,7 +89,10 @@ impl<'a> NamePart<'a> {
             ascii_alpha,
         } = counts;
 
-        debug_assert!(alpha > 0 || word == "&");
+        debug_assert!(alpha > 0 || word == "&", "{} {:?}", word, counts);
+        debug_assert!(chars >= alpha, "{} {:?}", word, counts);
+        debug_assert!(alpha >= upper, "{} {:?}", word, counts);
+        debug_assert!(alpha >= ascii_alpha, "{} {:?}", word, counts);
 
         let namecased = || {
             if trust_capitalization && starts_with_uppercase(word) {
@@ -120,7 +123,9 @@ impl<'a> NamePart<'a> {
             } else {
                 Category::Initials
             }
-        } else if chars - alpha > 2 && chars - alpha - combining_chars(word) as u8 > 2 {
+        } else if chars - alpha > 2
+            && usize::from(chars - alpha).saturating_sub(combining_chars(word)) > 2
+        {
             Category::Other
         } else if trust_capitalization && alpha == upper {
             if chars <= 5 || (ascii_alpha > 0 && has_no_vowels(word)) {
