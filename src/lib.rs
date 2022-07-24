@@ -54,7 +54,6 @@ use smallstr::SmallString;
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
-use std::convert::TryInto;
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroU8;
 use std::ops::Range;
@@ -91,7 +90,6 @@ pub const MAX_SEGMENTS: usize = parse::MAX_WORDS;
 pub struct Name {
     text: SmallString<[u8; 32]>,
     word_indices_in_text: WordIndices,
-    surname_index: u16, // u16 must be sufficient since it can represent MAX_NAME_LEN
     generation_from_suffix: Option<NonZeroU8>,
     initials: SmallString<[u8; 8]>,
     word_indices_in_initials: WordIndices,
@@ -192,7 +190,6 @@ impl Name {
         let mut text = SmallString::with_capacity(name_len);
         let mut initials = SmallString::with_capacity(surname_index);
 
-        let mut surname_index_in_names = surname_index;
         let mut word_indices_in_initials = WordIndices::new();
         let mut word_indices_in_text = WordIndices::new();
 
@@ -204,8 +201,6 @@ impl Name {
 
                     initials.push(c);
                 });
-
-                surname_index_in_names -= 1;
             } else {
                 let prior_len = text.len();
                 word.with_namecased(|s| text.push_str(s));
@@ -252,7 +247,6 @@ impl Name {
         Name {
             text,
             word_indices_in_text,
-            surname_index: surname_index_in_names.try_into().unwrap(),
             generation_from_suffix: parsed.generation,
             initials,
             word_indices_in_initials,
@@ -385,7 +379,7 @@ impl Name {
     /// assert_eq!("de la MacDonald", name.surname());
     /// ```
     pub fn surname(&self) -> &str {
-        let surname_indices = &self.word_indices_in_text[self.surname_index.into()..];
+        let surname_indices = &self.word_indices_in_text[self.surname_index_in_words()..];
         let start = surname_indices[0].start;
         let end = surname_indices[surname_indices.len() - 1].end;
         &self.text[start.into()..end.into()]
@@ -455,7 +449,7 @@ impl Name {
     /// assert_eq!("J. de la MacDonald", name.display_initial_surname());
     /// ```
     pub fn display_initial_surname(&self) -> Cow<str> {
-        if self.surname_index == 0
+        if self.surname_index_in_words() == 0
             && self.initials.len() == 1
             && self.generation_from_suffix.is_none()
         {
@@ -484,7 +478,7 @@ impl Name {
     /// assert_eq!("John de la MacDonald", name.display_first_last());
     /// ```
     pub fn display_first_last(&self) -> Cow<str> {
-        if self.surname_index <= 1
+        if self.surname_index_in_words() <= 1
             && self.initials.len() == 1
             && self.generation_from_suffix.is_none()
         {
@@ -597,19 +591,24 @@ impl Name {
     }
 
     #[inline]
+    fn surname_index_in_words(&self) -> usize {
+        self.word_indices_in_initials.len()
+    }
+
+    #[inline]
     fn surname_words(&self) -> usize {
-        self.word_indices_in_text.len() - usize::from(self.surname_index)
+        self.word_indices_in_text.len() - self.surname_index_in_words()
     }
 
     #[inline]
     fn surname_iter(&self) -> Words {
-        self.word_iter(self.surname_index.into()..self.word_indices_in_text.len())
+        self.word_iter(self.surname_index_in_words()..self.word_indices_in_text.len())
     }
 
     #[inline]
     fn middle_name_iter(&self) -> Option<Words> {
-        if self.surname_index > 1 {
-            Some(self.word_iter(1..self.surname_index.into()))
+        if self.surname_index_in_words() > 1 {
+            Some(self.word_iter(1..self.surname_index_in_words()))
         } else {
             None
         }
@@ -617,7 +616,7 @@ impl Name {
 
     #[inline]
     fn given_iter(&self) -> Words {
-        self.word_iter(0..self.surname_index.into())
+        self.word_iter(0..self.surname_index_in_words())
     }
 
     #[inline]

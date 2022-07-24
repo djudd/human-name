@@ -126,7 +126,7 @@ impl Name {
         }
 
         // Unless both versions of the name have given or middle names, we're done
-        if self.surname_index == 0 || other.surname_index == 0 {
+        if self.surname_index_in_words() == 0 || other.surname_index_in_words() == 0 {
             return true;
         }
 
@@ -291,7 +291,7 @@ impl Name {
     }
 
     fn missing_any_name(&self) -> bool {
-        if self.surname_index == 0 {
+        if self.surname_index_in_words() == 0 {
             return true;
         }
 
@@ -305,7 +305,7 @@ impl Name {
             }
         }
 
-        self.surname_index > prev
+        self.surname_index_in_words() > prev.into()
     }
 
     #[inline]

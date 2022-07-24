@@ -176,9 +176,9 @@ impl Name {
 
     fn matches_remaining_name_parts(&self, part: &str, allow_unknowns: bool) -> bool {
         let lower_first_initial = self.first_initial().to_lowercase().next().unwrap();
-        let given_names: Option<Cow<str>> = if self.surname_index == 1 {
+        let given_names: Option<Cow<str>> = if self.surname_index_in_words() == 1 {
             self.given_name().map(Cow::Borrowed)
-        } else if self.surname_index > 0 {
+        } else if self.surname_index_in_words() > 0 {
             Some(self.given_iter().join())
         } else {
             None
