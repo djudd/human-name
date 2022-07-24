@@ -76,7 +76,9 @@ impl Name {
             && self.suffix_consistent(other)
     }
 
-    #[inline]
+    // Not clear why we have to `always` here but the performance difference is detectable
+    // and there's only one caller (though we call this twice)
+    #[inline(always)]
     fn split_initials(&self) -> (char, usize) {
         let mut initials = self.initials().chars();
         let first = initials.next().unwrap();
@@ -112,7 +114,7 @@ impl Name {
     #[inline]
     fn given_names_or_initials(&self) -> GivenNamesOrInitials {
         GivenNamesOrInitials {
-            initials: self.initials.chars().enumerate(),
+            initials: self.initials().chars().enumerate(),
             known_names: self.given_iter(),
             known_name_indices: self.word_indices_in_initials.iter().peekable(),
         }
@@ -406,9 +408,10 @@ impl Name {
 
     #[inline]
     fn suffix_consistent(&self, other: &Name) -> bool {
-        self.generation_from_suffix.is_none()
-            || other.generation_from_suffix.is_none()
-            || self.generation_from_suffix == other.generation_from_suffix
+        match (self.generational_suffix(), other.generational_suffix()) {
+            (Some(mine), Some(theirs)) => mine == theirs,
+            _ => true,
+        }
     }
 }
 

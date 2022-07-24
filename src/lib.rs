@@ -54,8 +54,8 @@ use smallstr::SmallString;
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
+use std::convert::TryInto;
 use std::hash::{Hash, Hasher};
-use std::num::NonZeroU8;
 use std::ops::Range;
 
 #[cfg(test)]
@@ -90,8 +90,7 @@ pub const MAX_SEGMENTS: usize = parse::MAX_WORDS;
 pub struct Name {
     text: SmallString<[u8; 32]>,
     word_indices_in_text: WordIndices,
-    generation_from_suffix: Option<NonZeroU8>,
-    initials: SmallString<[u8; 8]>,
+    text_len_before_initials: u16, // u16 must be sufficient since it can represent MAX_NAME_LEN
     word_indices_in_initials: WordIndices,
     honorifics: Option<Box<Honorifics>>,
     pub hash: u64,
@@ -187,8 +186,8 @@ impl Name {
         let last_word = words.len() - 1;
         let surname_index = parsed.surname_index;
 
-        let mut text = SmallString::with_capacity(name_len);
-        let mut initials = SmallString::with_capacity(surname_index);
+        let mut text = SmallString::with_capacity(name_len + surname_index);
+        let mut initials: SmallString<[u8; 16]> = SmallString::with_capacity(surname_index);
 
         let mut word_indices_in_initials = WordIndices::new();
         let mut word_indices_in_text = WordIndices::new();
@@ -239,16 +238,14 @@ impl Name {
             }
         };
 
+        let text_len_before_initials: u16 = text.len().try_into().unwrap();
+        text.push_str(&initials);
         text.shrink_to_fit();
-        word_indices_in_text.shrink_to_fit();
-        initials.shrink_to_fit();
-        word_indices_in_initials.shrink_to_fit();
 
         Name {
             text,
             word_indices_in_text,
-            generation_from_suffix: parsed.generation,
-            initials,
+            text_len_before_initials,
             word_indices_in_initials,
             honorifics,
             hash: 0,
@@ -257,7 +254,7 @@ impl Name {
 
     /// First initial (always present)
     pub fn first_initial(&self) -> char {
-        self.initials.chars().next().unwrap()
+        self.initials().chars().next().unwrap()
     }
 
     /// Given name as a string, if present
@@ -308,8 +305,9 @@ impl Name {
     /// let name = Name::parse("James T. Kirk").unwrap();
     /// assert_eq!("JT", name.initials());
     /// ```
+    #[inline]
     pub fn initials(&self) -> &str {
-        &self.initials
+        &self.text[self.byte_len()..]
     }
 
     /// Middle names as an array of words, if present
@@ -359,7 +357,7 @@ impl Name {
         self.initials()
             .char_indices()
             .nth(1)
-            .map(|(i, _)| &self.initials[i..])
+            .map(|(i, _)| &self.text[self.byte_len() + i..])
     }
 
     /// Surname as a slice of words (always present)
@@ -394,8 +392,11 @@ impl Name {
     /// assert_eq!(Some("Jr."), name.generational_suffix());
     /// ```
     pub fn generational_suffix(&self) -> Option<&str> {
-        self.generation_from_suffix
-            .map(suffix::display_generational_suffix)
+        if self.byte_len() > self.surname_end_in_text() {
+            Some(&self.text[self.surname_end_in_text() + ", ".len()..self.byte_len()])
+        } else {
+            None
+        }
     }
 
     /// Generational suffix, if present
@@ -449,11 +450,8 @@ impl Name {
     /// assert_eq!("J. de la MacDonald", name.display_initial_surname());
     /// ```
     pub fn display_initial_surname(&self) -> Cow<str> {
-        if self.surname_index_in_words() == 0
-            && self.initials.len() == 1
-            && self.generation_from_suffix.is_none()
-        {
-            Cow::Borrowed(&self.text)
+        if self.surname_index_in_words() == 0 && self.initials().len() == 1 {
+            Cow::Borrowed(&self.text[..self.surname_end_in_text()])
         } else {
             Cow::Owned(format!("{}. {}", self.first_initial(), self.surname()))
         }
@@ -478,11 +476,8 @@ impl Name {
     /// assert_eq!("John de la MacDonald", name.display_first_last());
     /// ```
     pub fn display_first_last(&self) -> Cow<str> {
-        if self.surname_index_in_words() <= 1
-            && self.initials.len() == 1
-            && self.generation_from_suffix.is_none()
-        {
-            Cow::Borrowed(&self.text)
+        if self.surname_index_in_words() <= 1 && self.initials().len() == 1 {
+            Cow::Borrowed(&self.text[..self.surname_end_in_text()])
         } else if let Some(ref name) = self.given_name() {
             Cow::Owned(format!("{} {}", name, self.surname()))
         } else {
@@ -493,7 +488,7 @@ impl Name {
     /// Number of bytes in the full name as UTF-8 in NFKD normal form, including
     /// spaces and punctuation.
     ///
-    /// Does not include honorifics.
+    /// Includes generational suffix, but does not include honorifics.
     ///
     /// ```
     /// use human_name::Name;
@@ -501,14 +496,15 @@ impl Name {
     /// let name = Name::parse("JOHN ALLEN Q DE LA MACDÖNALD JR").unwrap();
     /// assert_eq!("John Allen Q. de la MacDönald, Jr.".len(), name.byte_len());
     /// ```
+    #[inline]
     pub fn byte_len(&self) -> usize {
-        self.text.len()
+        self.text_len_before_initials.into()
     }
 
     /// The full name, or as much of it as was preserved from the input,
     /// including given name, middle names, surname and generational suffix.
     ///
-    /// Does not include honorifics.
+    /// Includes generational suffix, but does not include honorifics.
     ///
     /// ```
     /// use human_name::Name;
@@ -519,8 +515,9 @@ impl Name {
     /// let name = Name::parse("Air Chief Marshal Sir Harrieta ('Harry') Keōpūolani Nāhiʻenaʻena, GBE, KCB, ADC").unwrap();
     /// assert_eq!("Harrieta Keōpūolani Nāhiʻenaʻena", name.display_full());
     /// ```
+    #[inline]
     pub fn display_full(&self) -> &str {
-        &self.text
+        &self.text[..self.byte_len()]
     }
 
     /// The full name, or as much of it as was preserved from the input,
@@ -540,21 +537,21 @@ impl Name {
         if let Some(honorifics) = self.honorifics.as_ref() {
             let mut result = String::with_capacity(
                 honorifics.prefix.as_ref().map(|t| t.len() + 1).unwrap_or(0)
-                    + self.text.len()
+                    + self.byte_len()
                     + honorifics.suffix.as_ref().map(|t| t.len() + 1).unwrap_or(0),
             );
             if let Some(prefix) = &honorifics.prefix {
                 result.push_str(prefix);
                 result.push(' ');
             }
-            result.push_str(&self.text);
+            result.push_str(self.display_full());
             if let Some(suffix) = &honorifics.suffix {
                 result.push(' ');
                 result.push_str(suffix);
             }
             Cow::Owned(result)
         } else {
-            Cow::Borrowed(&self.text)
+            Cow::Borrowed(self.display_full())
         }
     }
 
@@ -588,6 +585,11 @@ impl Name {
         {
             c.hash(state);
         }
+    }
+
+    #[inline]
+    fn surname_end_in_text(&self) -> usize {
+        self.word_indices_in_text.last().unwrap().end.into()
     }
 
     #[inline]
@@ -636,7 +638,7 @@ mod tests {
     #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
     #[test]
     fn struct_size() {
-        assert_eq!(136, std::mem::size_of::<Name>());
+        assert_eq!(112, std::mem::size_of::<Name>());
     }
 
     #[test]
