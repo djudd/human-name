@@ -116,7 +116,7 @@ impl Name {
         GivenNamesOrInitials {
             initials: self.initials().chars().enumerate(),
             known_names: self.given_iter(),
-            known_name_indices: self.word_indices_in_initials().iter().peekable(),
+            known_name_indices: self.locations_in_initials().iter().peekable(),
         }
     }
 
@@ -285,7 +285,7 @@ impl Name {
     }
 
     fn missing_given_name(&self) -> bool {
-        if let Some(&Range { start, .. }) = self.word_indices_in_initials().get(0) {
+        if let Some(&Range { start, .. }) = self.locations_in_initials().get(0) {
             start > 0
         } else {
             true
@@ -299,7 +299,7 @@ impl Name {
 
         let mut prev = 0;
 
-        for &Range { start, end } in self.word_indices_in_initials() {
+        for &Range { start, end } in self.locations_in_initials() {
             if start > prev {
                 return true;
             } else {

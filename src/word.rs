@@ -6,20 +6,15 @@ use std::slice;
 
 pub struct Words<'a> {
     text: &'a str,
-
-    // Storing as u16 is sufficient because MAX_NAME_LEN is 1024.
-    //
-    // We could compress a bit further (especially given that the common case is much shorter)
-    // but it's not obviously worth the code complexity.
-    indices: slice::Iter<'a, Range<u16>>,
+    loc: slice::Iter<'a, Range<u16>>,
 }
 
 impl<'a> Words<'a> {
     #[inline]
-    pub fn new(text: &'a str, indices: &'a [Range<u16>]) -> Words<'a> {
+    pub fn new(text: &'a str, loc: &'a [Range<u16>]) -> Words<'a> {
         Words {
             text,
-            indices: indices.iter(),
+            loc: loc.iter(),
         }
     }
 
@@ -37,7 +32,7 @@ impl<'a> Iterator for Words<'a> {
 
     #[inline]
     fn next(&mut self) -> Option<&'a str> {
-        self.indices
+        self.loc
             .next()
             .map(|&Range { start, end }| &self.text[start.into()..end.into()])
     }
@@ -47,8 +42,8 @@ impl<'a> Iterator for Words<'a> {
     where
         F: FnMut(B, Self::Item) -> B,
     {
-        let Self { indices, text } = self;
-        indices.fold(init, |acc, &Range { start, end }| {
+        let Self { loc, text } = self;
+        loc.fold(init, |acc, &Range { start, end }| {
             let item = &text[start.into()..end.into()];
             f(acc, item)
         })
@@ -56,14 +51,14 @@ impl<'a> Iterator for Words<'a> {
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        self.indices.size_hint()
+        self.loc.size_hint()
     }
 }
 
 impl<'a> DoubleEndedIterator for Words<'a> {
     #[inline]
     fn next_back(&mut self) -> Option<&'a str> {
-        self.indices
+        self.loc
             .next_back()
             .map(|&Range { start, end }| &self.text[start.into()..end.into()])
     }
@@ -71,19 +66,23 @@ impl<'a> DoubleEndedIterator for Words<'a> {
 
 impl<'a> ExactSizeIterator for Words<'a> {}
 
+// Storing as u16 is sufficient because MAX_NAME_LEN is 1024.
+//
+// We could compress a bit further (especially given that the common case is much shorter)
+// but it's not obviously worth the code complexity.
 #[derive(Clone, Debug)]
-pub struct WordIndices(SmallVec<[Range<u16>; 4]>);
+pub struct Locations(SmallVec<[Range<u16>; 4]>);
 
-impl WordIndices {
+impl Locations {
     #[inline]
-    pub fn push(&mut self, indices: Range<usize>) {
+    pub fn push(&mut self, loc: Range<usize>) {
         self.0
-            .push(indices.start.try_into().unwrap()..indices.end.try_into().unwrap())
+            .push(loc.start.try_into().unwrap()..loc.end.try_into().unwrap())
     }
 
     #[inline]
-    pub fn with_capacity(size: usize) -> WordIndices {
-        WordIndices(SmallVec::with_capacity(size))
+    pub fn with_capacity(size: usize) -> Locations {
+        Locations(SmallVec::with_capacity(size))
     }
 
     #[inline]
@@ -92,7 +91,7 @@ impl WordIndices {
     }
 }
 
-impl Deref for WordIndices {
+impl Deref for Locations {
     type Target = [Range<u16>];
 
     #[inline]

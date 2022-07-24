@@ -49,7 +49,7 @@ mod eq_hash;
 mod serialization;
 
 use crate::decomposition::normalize_nfkd_whitespace;
-use crate::word::{WordIndices, Words};
+use crate::word::{Locations, Words};
 use smallstr::SmallString;
 use smallvec::SmallVec;
 use std::borrow::Cow;
@@ -88,12 +88,12 @@ pub const MAX_SEGMENTS: usize = parse::MAX_WORDS;
 /// the same person (see docs on `consistent_with` for details).
 #[derive(Clone, Debug)]
 pub struct Name {
-    text: SmallString<[u8; 32]>,
-    words: u16, // u16 must be sufficient since it can represent MAX_NAME_LEN
-    word_indices: WordIndices,
+    text: SmallString<[u8; 32]>, // stores concatenation of display_full() and initials()
     text_len_before_initials: u16, // u16 must be sufficient since it can represent MAX_NAME_LEN
+    words: u16,                  // u16 must be sufficient since it can represent MAX_NAME_LEN
+    locations: Locations, // stores concatenation of word locations in text, and word locations in initials
     honorifics: Option<Box<Honorifics>>,
-    pub hash: u64,
+    pub hash: u64, // surname hash
 }
 
 #[derive(Clone, Debug)]
@@ -189,8 +189,8 @@ impl Name {
         let mut text = SmallString::with_capacity(name_len + surname_index);
         let mut initials: SmallString<[u8; 16]> = SmallString::with_capacity(surname_index);
 
-        let mut word_indices = WordIndices::with_capacity(words.len());
-        let mut word_indices_in_initials: SmallVec<[Range<usize>; 4]> =
+        let mut locations = Locations::with_capacity(words.len());
+        let mut locations_in_initials: SmallVec<[Range<usize>; 4]> =
             SmallVec::with_capacity(words.len() - 1);
 
         for (i, word) in words.into_iter().enumerate() {
@@ -204,7 +204,7 @@ impl Name {
             } else {
                 let prior_len = text.len();
                 word.with_namecased(|s| text.push_str(s));
-                word_indices.push(prior_len..text.len());
+                locations.push(prior_len..text.len());
 
                 if i < last_word {
                     text.push(' ');
@@ -214,7 +214,7 @@ impl Name {
 
                         let prior_len = initials.len();
                         word.with_initials(|c| initials.push(c));
-                        word_indices_in_initials.push(prior_len..initials.len());
+                        locations_in_initials.push(prior_len..initials.len());
                     }
                 }
             }
@@ -243,16 +243,16 @@ impl Name {
         text.push_str(&initials);
         text.shrink_to_fit();
 
-        let words: u16 = word_indices.len().try_into().unwrap();
-        for indices in word_indices_in_initials.into_iter() {
-            word_indices.push(indices);
+        let words: u16 = locations.len().try_into().unwrap();
+        for loc in locations_in_initials.into_iter() {
+            locations.push(loc);
         }
-        word_indices.shrink_to_fit();
+        locations.shrink_to_fit();
 
         Name {
             text,
             words,
-            word_indices,
+            locations,
             text_len_before_initials,
             honorifics,
             hash: 0,
@@ -294,7 +294,7 @@ impl Name {
     /// assert!(name.goes_by_middle_name());
     /// ```
     pub fn goes_by_middle_name(&self) -> bool {
-        if let Some(&Range { start, .. }) = self.word_indices_in_initials().get(0) {
+        if let Some(&Range { start, .. }) = self.locations_in_initials().get(0) {
             start > 0
         } else {
             false
@@ -384,10 +384,9 @@ impl Name {
     /// assert_eq!("de la MacDonald", name.surname());
     /// ```
     pub fn surname(&self) -> &str {
-        let surname_indices =
-            &self.word_indices[self.surname_index_in_words()..usize::from(self.words)];
-        let start = surname_indices[0].start;
-        let end = surname_indices[surname_indices.len() - 1].end;
+        let surname_locs = &self.locations[self.surname_index_in_words()..usize::from(self.words)];
+        let start = surname_locs[0].start;
+        let end = surname_locs[surname_locs.len() - 1].end;
         &self.text[start.into()..end.into()]
     }
 
@@ -597,17 +596,17 @@ impl Name {
 
     #[inline]
     fn surname_end_in_text(&self) -> usize {
-        self.word_indices[usize::from(self.words) - 1].end.into()
+        self.locations[usize::from(self.words) - 1].end.into()
     }
 
     #[inline]
     fn surname_index_in_words(&self) -> usize {
-        self.word_indices.len() - usize::from(self.words)
+        self.locations.len() - usize::from(self.words)
     }
 
     #[inline]
-    fn word_indices_in_initials(&self) -> &[Range<u16>] {
-        &self.word_indices[usize::from(self.words)..]
+    fn locations_in_initials(&self) -> &[Range<u16>] {
+        &self.locations[usize::from(self.words)..]
     }
 
     #[inline]
@@ -636,7 +635,7 @@ impl Name {
 
     #[inline]
     fn word_iter(&self, range: Range<usize>) -> Words {
-        Words::new(&self.text, &self.word_indices[range])
+        Words::new(&self.text, &self.locations[range])
     }
 }
 
