@@ -98,8 +98,8 @@ pub struct Name {
 
 #[derive(Clone, Debug)]
 struct Honorifics {
-    prefix: Option<String>,
-    suffix: Option<String>,
+    prefix: Option<Box<str>>,
+    suffix: Option<Box<str>>,
 }
 
 impl Name {
@@ -229,8 +229,12 @@ impl Name {
         debug_assert!(!initials.is_empty(), "Initials are empty!");
 
         let honorifics = {
-            let prefix = parsed.honorific_prefix().map(Cow::into_owned);
-            let suffix = parsed.honorific_suffix().map(Cow::into_owned);
+            let prefix = parsed
+                .honorific_prefix()
+                .map(|s| s.into_owned().into_boxed_str());
+            let suffix = parsed
+                .honorific_suffix()
+                .map(|s| s.into_owned().into_boxed_str());
 
             if prefix.is_some() || suffix.is_some() {
                 Some(Box::new(Honorifics { prefix, suffix }))
@@ -651,6 +655,7 @@ mod tests {
     #[test]
     fn struct_size() {
         assert_eq!(88, std::mem::size_of::<Name>());
+        assert_eq!(32, std::mem::size_of::<Honorifics>());
     }
 
     #[test]
