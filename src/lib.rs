@@ -89,9 +89,9 @@ pub const MAX_SEGMENTS: usize = parse::MAX_WORDS;
 #[derive(Clone, Debug)]
 pub struct Name {
     text: SmallString<[u8; 32]>,
-    word_indices_in_text: WordIndices,
+    words: u16, // u16 must be sufficient since it can represent MAX_NAME_LEN
+    word_indices: WordIndices,
     text_len_before_initials: u16, // u16 must be sufficient since it can represent MAX_NAME_LEN
-    word_indices_in_initials: WordIndices,
     honorifics: Option<Box<Honorifics>>,
     pub hash: u64,
 }
@@ -189,10 +189,11 @@ impl Name {
         let mut text = SmallString::with_capacity(name_len + surname_index);
         let mut initials: SmallString<[u8; 16]> = SmallString::with_capacity(surname_index);
 
-        let mut word_indices_in_initials = WordIndices::new();
-        let mut word_indices_in_text = WordIndices::new();
+        let mut word_indices = WordIndices::with_capacity(words.len());
+        let mut word_indices_in_initials: SmallVec<[Range<usize>; 4]> =
+            SmallVec::with_capacity(words.len() - 1);
 
-        for (i, word) in words.iter().enumerate() {
+        for (i, word) in words.into_iter().enumerate() {
             if word.is_initials() && i < surname_index {
                 word.with_initials(|c| {
                     text.push(c);
@@ -203,7 +204,7 @@ impl Name {
             } else {
                 let prior_len = text.len();
                 word.with_namecased(|s| text.push_str(s));
-                word_indices_in_text.push(prior_len..text.len());
+                word_indices.push(prior_len..text.len());
 
                 if i < last_word {
                     text.push(' ');
@@ -242,11 +243,17 @@ impl Name {
         text.push_str(&initials);
         text.shrink_to_fit();
 
+        let words: u16 = word_indices.len().try_into().unwrap();
+        for indices in word_indices_in_initials.into_iter() {
+            word_indices.push(indices);
+        }
+        word_indices.shrink_to_fit();
+
         Name {
             text,
-            word_indices_in_text,
+            words,
+            word_indices,
             text_len_before_initials,
-            word_indices_in_initials,
             honorifics,
             hash: 0,
         }
@@ -287,7 +294,7 @@ impl Name {
     /// assert!(name.goes_by_middle_name());
     /// ```
     pub fn goes_by_middle_name(&self) -> bool {
-        if let Some(&Range { start, .. }) = self.word_indices_in_initials.get(0) {
+        if let Some(&Range { start, .. }) = self.word_indices_in_initials().get(0) {
             start > 0
         } else {
             false
@@ -377,7 +384,8 @@ impl Name {
     /// assert_eq!("de la MacDonald", name.surname());
     /// ```
     pub fn surname(&self) -> &str {
-        let surname_indices = &self.word_indices_in_text[self.surname_index_in_words()..];
+        let surname_indices =
+            &self.word_indices[self.surname_index_in_words()..usize::from(self.words)];
         let start = surname_indices[0].start;
         let end = surname_indices[surname_indices.len() - 1].end;
         &self.text[start.into()..end.into()]
@@ -589,22 +597,27 @@ impl Name {
 
     #[inline]
     fn surname_end_in_text(&self) -> usize {
-        self.word_indices_in_text.last().unwrap().end.into()
+        self.word_indices[usize::from(self.words) - 1].end.into()
     }
 
     #[inline]
     fn surname_index_in_words(&self) -> usize {
-        self.word_indices_in_initials.len()
+        self.word_indices.len() - usize::from(self.words)
+    }
+
+    #[inline]
+    fn word_indices_in_initials(&self) -> &[Range<u16>] {
+        &self.word_indices[usize::from(self.words)..]
     }
 
     #[inline]
     fn surname_words(&self) -> usize {
-        self.word_indices_in_text.len() - self.surname_index_in_words()
+        usize::from(self.words) - self.surname_index_in_words()
     }
 
     #[inline]
     fn surname_iter(&self) -> Words {
-        self.word_iter(self.surname_index_in_words()..self.word_indices_in_text.len())
+        self.word_iter(self.surname_index_in_words()..usize::from(self.words))
     }
 
     #[inline]
@@ -623,7 +636,7 @@ impl Name {
 
     #[inline]
     fn word_iter(&self, range: Range<usize>) -> Words {
-        Words::new(&self.text, &self.word_indices_in_text[range])
+        Words::new(&self.text, &self.word_indices[range])
     }
 }
 
@@ -638,7 +651,7 @@ mod tests {
     #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
     #[test]
     fn struct_size() {
-        assert_eq!(112, std::mem::size_of::<Name>());
+        assert_eq!(88, std::mem::size_of::<Name>());
     }
 
     #[test]

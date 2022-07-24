@@ -76,14 +76,14 @@ pub struct WordIndices(SmallVec<[Range<u16>; 4]>);
 
 impl WordIndices {
     #[inline]
-    pub fn new() -> Self {
-        WordIndices(SmallVec::new())
-    }
-
-    #[inline]
     pub fn push(&mut self, indices: Range<usize>) {
         self.0
             .push(indices.start.try_into().unwrap()..indices.end.try_into().unwrap())
+    }
+
+    #[inline]
+    pub fn with_capacity(size: usize) -> WordIndices {
+        WordIndices(SmallVec::with_capacity(size))
     }
 
     #[inline]
