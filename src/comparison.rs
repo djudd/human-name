@@ -115,15 +115,12 @@ impl Name {
         &self,
     ) -> GivenNamesOrInitials<
         impl Iterator<Item = (usize, char)> + '_,
-        impl Iterator<Item = (Location, Location)> + '_,
+        impl Iterator<Item = (&str, Location)> + '_,
     > {
         GivenNamesOrInitials {
             initials: self.initials().chars().enumerate(),
-            text: &self.text,
-            name_locations: self
-                .given_name_locations()
-                .iter()
-                .copied()
+            names_and_locations: self
+                .given_iter()
                 .zip(self.given_names_in_initials().iter().copied())
                 .peekable(),
         }
@@ -339,7 +336,6 @@ impl Name {
         }
     }
 
-    #[inline(never)]
     fn surname_consistent_slow<'a, I>(mut my_words: I, mut their_words: I) -> bool
     where
         I: Iterator<Item = &'a str>,
@@ -530,11 +526,10 @@ impl<'a> NameWordOrInitial<'a> {
 struct GivenNamesOrInitials<'a, I, L>
 where
     I: Iterator<Item = (usize, char)>,
-    L: Iterator<Item = (Location, Location)>,
+    L: Iterator<Item = (&'a str, Location)>,
 {
     initials: I,
-    text: &'a str,
-    name_locations: iter::Peekable<L>,
+    names_and_locations: iter::Peekable<L>,
 }
 
 #[derive(Debug)]
@@ -546,27 +541,25 @@ enum NameWordOrInitial<'a> {
 impl<'a, I, L> Iterator for GivenNamesOrInitials<'a, I, L>
 where
     I: Iterator<Item = (usize, char)>,
-    L: Iterator<Item = (Location, Location)>,
+    L: Iterator<Item = (&'a str, Location)>,
 {
     type Item = NameWordOrInitial<'a>;
 
     fn next(&mut self) -> Option<NameWordOrInitial<'a>> {
         self.initials.next().map(|(i, initial)| {
-            match self
-                .name_locations
-                .peek()
-                .map(|(_, in_initials)| in_initials.range())
-            {
+            match self.names_and_locations.peek().map(|(_, loc)| loc.range()) {
                 Some(Range { start, end }) if start == i => {
-                    let (in_text, _) = self.name_locations.next().unwrap();
+                    let (word, _) = self.names_and_locations.next().unwrap();
 
                     // Handle case of hyphenated name for which we have 2+ initials
+                    //
+                    // When stabilized use `advance_by`: https://github.com/rust-lang/rust/issues/77404
                     let initials_for_word = end - start;
                     for _ in 1..initials_for_word {
                         self.initials.next();
                     }
 
-                    NameWordOrInitial::Word(&self.text[in_text.range()], initials_for_word)
+                    NameWordOrInitial::Word(word, initials_for_word)
                 }
                 _ => NameWordOrInitial::Initial(initial),
             }
