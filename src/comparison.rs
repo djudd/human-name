@@ -1,13 +1,11 @@
 use super::case::*;
 use super::nickname::have_matching_variants;
 use super::transliterate;
-use super::{GivenNameLocs, Name};
+use super::{Location, Name};
 use std::borrow::Cow;
 use std::convert::TryInto;
 use std::iter;
 use std::ops::Range;
-use std::slice;
-use std::str::Chars;
 use unicode_segmentation::UnicodeSegmentation;
 
 pub const MIN_SURNAME_CHAR_MATCH: usize = 4;
@@ -113,11 +111,21 @@ impl Name {
     }
 
     #[inline]
-    fn given_names_or_initials(&self) -> GivenNamesOrInitials {
+    fn given_names_or_initials(
+        &self,
+    ) -> GivenNamesOrInitials<
+        impl Iterator<Item = (usize, char)> + '_,
+        impl Iterator<Item = (Location, Location)> + '_,
+    > {
         GivenNamesOrInitials {
             initials: self.initials().chars().enumerate(),
             text: &self.text,
-            name_locations: self.given_name_locations.iter().peekable(),
+            name_locations: self
+                .given_name_locations()
+                .iter()
+                .copied()
+                .zip(self.given_names_in_initials().iter().copied())
+                .peekable(),
         }
     }
 
@@ -129,7 +137,7 @@ impl Name {
         }
 
         // Unless both versions of the name have given or middle names, we're done
-        if self.given_name_locations.is_empty() || other.given_name_locations.is_empty() {
+        if self.given_name_words == 0 || other.given_name_words == 0 {
             return true;
         }
 
@@ -286,20 +294,16 @@ impl Name {
     }
 
     fn missing_given_name(&self) -> bool {
-        self.given_name_locations
+        self.given_names_in_initials()
             .get(0)
-            .map(|loc| loc.middle_name())
+            .map(|loc| loc.range().start > 0)
             .unwrap_or(true)
     }
 
     fn missing_any_name(&self) -> bool {
         let mut prev = 0;
 
-        for Range { start, end } in self
-            .given_name_locations
-            .iter()
-            .map(|loc| loc.in_initials.range())
-        {
+        for Range { start, end } in self.given_names_in_initials().iter().map(|loc| loc.range()) {
             if start > prev {
                 return true;
             } else {
@@ -310,25 +314,35 @@ impl Name {
         // TODO: This is incorrect and should be `self.initials().len() > prev`
         // but fixing this actually breaks a test. Related to our failure to handle
         // PrefixOfSelf below?
-        self.given_name_locations.len() > prev
+        usize::from(self.given_name_words) > prev
     }
 
     #[inline]
     fn surname_consistent(&self, other: &Name) -> bool {
-        if let Some(mine) = self.simple_surname() {
-            if let Some(theirs) = other.simple_surname() {
+        let mine = self.surname();
+        let theirs = other.surname();
+
+        if mine.is_ascii() && theirs.is_ascii() {
+            if self.surname_words == 1
+                && other.surname_words == 1
+                && mine.bytes().all(|b| b.is_ascii_alphabetic())
+                && theirs.bytes().all(|b| b.is_ascii_alphabetic())
+            {
                 return mine.eq_ignore_ascii_case(theirs);
             }
-        }
 
-        self.surname_consistent_slow(other)
+            let filter = { |c: char| c.is_ascii_alphanumeric() };
+            Self::surname_consistent_slow(mine.rmatches(filter), theirs.rmatches(filter))
+        } else {
+            Self::surname_consistent_slow(mine.unicode_words().rev(), theirs.unicode_words().rev())
+        }
     }
 
     #[inline(never)]
-    fn surname_consistent_slow(&self, other: &Name) -> bool {
-        let mut my_words = self.surname_iter().flat_map(|w| w.unicode_words()).rev();
-        let mut their_words = other.surname_iter().flat_map(|w| w.unicode_words()).rev();
-
+    fn surname_consistent_slow<'a, I>(mut my_words: I, mut their_words: I) -> bool
+    where
+        I: Iterator<Item = &'a str>,
+    {
         let mut my_word = my_words.next();
         let mut their_word = their_words.next();
         let mut matching_chars = 0;
@@ -395,18 +409,6 @@ impl Name {
                 }
             }
         }
-    }
-
-    #[inline]
-    fn simple_surname(&self) -> Option<&str> {
-        if self.surname_words() == 1 {
-            let surname = self.surname();
-            if surname.is_ascii() && surname.bytes().all(|b| b.is_ascii_alphabetic()) {
-                return Some(surname);
-            }
-        }
-
-        None
     }
 
     #[inline]
@@ -524,10 +526,14 @@ impl<'a> NameWordOrInitial<'a> {
     }
 }
 
-struct GivenNamesOrInitials<'a> {
-    initials: iter::Enumerate<Chars<'a>>,
+struct GivenNamesOrInitials<'a, I, L>
+where
+    I: Iterator<Item = (usize, char)>,
+    L: Iterator<Item = (Location, Location)>,
+{
+    initials: I,
     text: &'a str,
-    name_locations: iter::Peekable<slice::Iter<'a, GivenNameLocs>>,
+    name_locations: iter::Peekable<L>,
 }
 
 #[derive(Debug)]
@@ -536,7 +542,11 @@ enum NameWordOrInitial<'a> {
     Initial(char),
 }
 
-impl<'a> Iterator for GivenNamesOrInitials<'a> {
+impl<'a, I, L> Iterator for GivenNamesOrInitials<'a, I, L>
+where
+    I: Iterator<Item = (usize, char)>,
+    L: Iterator<Item = (Location, Location)>,
+{
     type Item = NameWordOrInitial<'a>;
 
     fn next(&mut self) -> Option<NameWordOrInitial<'a>> {
@@ -544,10 +554,10 @@ impl<'a> Iterator for GivenNamesOrInitials<'a> {
             match self
                 .name_locations
                 .peek()
-                .map(|loc| loc.in_initials.range())
+                .map(|(_, in_initials)| in_initials.range())
             {
                 Some(Range { start, end }) if start == i => {
-                    let loc = self.name_locations.next().unwrap();
+                    let (in_text, _) = self.name_locations.next().unwrap();
 
                     // Handle case of hyphenated name for which we have 2+ initials
                     let initials_for_word = end - start;
@@ -555,7 +565,7 @@ impl<'a> Iterator for GivenNamesOrInitials<'a> {
                         self.initials.next();
                     }
 
-                    NameWordOrInitial::Word(&self.text[loc.in_text.range()], initials_for_word)
+                    NameWordOrInitial::Word(&self.text[in_text.range()], initials_for_word)
                 }
                 _ => NameWordOrInitial::Initial(initial),
             }

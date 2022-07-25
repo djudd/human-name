@@ -88,24 +88,12 @@ pub const MAX_SEGMENTS: usize = parse::MAX_WORDS;
 #[derive(Clone, Debug)]
 pub struct Name {
     text: SmallString<[u8; 32]>, // stores concatenation of display_full() and initials()
-    text_len_before_initials: u16, // u16 must be sufficient since it can represent MAX_NAME_LEN
-    given_name_locations: SmallVec<[GivenNameLocs; 2]>,
-    surname_locations: SmallVec<[Location; 2]>,
+    locations: SmallVec<[Location; 6]>, // stores concatenation of word locations in full text and given name locations in initials
+    given_name_words: u8,               // support no more than 256
+    surname_words: u8,                  // support no more than 256
+    initials_len: u8,                   // support no more than 256
     honorifics: Option<Box<Honorifics>>,
     pub hash: u64, // surname hash
-}
-
-#[derive(Clone, Debug)]
-struct GivenNameLocs {
-    in_text: Location,
-    in_initials: Location,
-}
-
-impl GivenNameLocs {
-    #[inline]
-    pub fn middle_name(&self) -> bool {
-        self.in_initials.range().start > 0
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -200,8 +188,11 @@ impl Name {
         let mut text = SmallString::with_capacity(name_len + surname_index);
         let mut initials: SmallString<[u8; 16]> = SmallString::with_capacity(surname_index);
 
-        let mut given_name_locations = SmallVec::new();
-        let mut surname_locations = SmallVec::new();
+        let mut locations = SmallVec::with_capacity(words.len() + surname_index);
+        let mut locations_in_initials: SmallVec<[Location; 4]> =
+            SmallVec::with_capacity(surname_index);
+
+        let mut given_name_words = 0;
 
         for word in &words[..surname_index] {
             if word.is_initials() {
@@ -214,16 +205,13 @@ impl Name {
             } else {
                 let prior_len = text.len();
                 word.with_namecased(|s| text.push_str(s));
-                let in_text = Location::new(prior_len..text.len())?;
+                locations.push(Location::new(prior_len..text.len())?);
 
                 let prior_len = initials.len();
                 word.with_initials(|c| initials.push(c));
-                let in_initials = Location::new(prior_len..initials.len())?;
+                locations_in_initials.push(Location::new(prior_len..initials.len())?);
 
-                given_name_locations.push(GivenNameLocs {
-                    in_text,
-                    in_initials,
-                });
+                given_name_words += 1;
                 text.push(' ');
             }
         }
@@ -232,7 +220,7 @@ impl Name {
         for (i, word) in surname_words.iter().enumerate() {
             let prior_len = text.len();
             word.with_namecased(|s| text.push_str(s));
-            surname_locations.push(Location::new(prior_len..text.len())?);
+            locations.push(Location::new(prior_len..text.len())?);
 
             if i < surname_words.len() - 1 {
                 text.push(' ');
@@ -262,15 +250,22 @@ impl Name {
             }
         };
 
-        let text_len_before_initials: u16 = text.len().try_into().unwrap();
+        let surname_words = (locations.len() - given_name_words).try_into().ok()?;
+        let given_name_words = given_name_words.try_into().ok()?;
+        let initials_len = initials.len().try_into().ok()?;
+
         text.push_str(&initials);
         text.shrink_to_fit();
 
+        locations.extend_from_slice(&locations_in_initials);
+        locations.shrink_to_fit();
+
         Some(Name {
             text,
-            text_len_before_initials,
-            given_name_locations,
-            surname_locations,
+            locations,
+            given_name_words,
+            surname_words,
+            initials_len,
             honorifics,
             hash: 0,
         })
@@ -293,7 +288,9 @@ impl Name {
     /// assert_eq!(None, name.given_name());
     /// ```
     pub fn given_name(&self) -> Option<&str> {
-        self.given_iter().next()
+        self.given_name_locations()
+            .get(0)
+            .map(|l| &self.text[l.range()])
     }
 
     /// Does this person use a middle name in place of their given name?
@@ -311,9 +308,9 @@ impl Name {
     /// assert!(name.goes_by_middle_name());
     /// ```
     pub fn goes_by_middle_name(&self) -> bool {
-        self.given_name_locations
+        self.given_name_locations()
             .get(0)
-            .map(|loc| loc.middle_name())
+            .map(|loc| loc.range().start > 0)
             .unwrap_or(false)
     }
 
@@ -400,7 +397,7 @@ impl Name {
     /// assert_eq!("de la MacDonald", name.surname());
     /// ```
     pub fn surname(&self) -> &str {
-        let start = self.surname_locations[0].range().start;
+        let start = self.surname_locations()[0].range().start;
         let end = self.surname_end_in_text();
         &self.text[start..end]
     }
@@ -472,7 +469,7 @@ impl Name {
     /// assert_eq!("J. de la MacDonald", name.display_initial_surname());
     /// ```
     pub fn display_initial_surname(&self) -> Cow<str> {
-        if self.given_name_locations.is_empty() && self.initials().len() == 1 {
+        if self.given_name_words == 0 && self.initials_len == 1 {
             Cow::Borrowed(&self.text[..self.surname_end_in_text()])
         } else {
             Cow::Owned(format!("{}. {}", self.first_initial(), self.surname()))
@@ -498,7 +495,7 @@ impl Name {
     /// assert_eq!("John de la MacDonald", name.display_first_last());
     /// ```
     pub fn display_first_last(&self) -> Cow<str> {
-        if self.given_name_locations.len() <= 1 && self.initials().len() == 1 {
+        if self.given_name_words <= 1 && self.initials_len == 1 {
             Cow::Borrowed(&self.text[..self.surname_end_in_text()])
         } else if let Some(ref name) = self.given_name() {
             Cow::Owned(format!("{} {}", name, self.surname()))
@@ -520,7 +517,7 @@ impl Name {
     /// ```
     #[inline]
     pub fn byte_len(&self) -> usize {
-        self.text_len_before_initials.into()
+        self.text.len() - usize::from(self.initials_len)
     }
 
     /// The full name, or as much of it as was preserved from the input,
@@ -611,21 +608,16 @@ impl Name {
 
     #[inline]
     fn surname_end_in_text(&self) -> usize {
-        self.surname_locations[self.surname_locations.len() - 1]
+        self.surname_locations()[usize::from(self.surname_words) - 1]
             .range()
             .end
-    }
-
-    #[inline]
-    fn surname_words(&self) -> usize {
-        self.surname_locations.len()
     }
 
     #[inline]
     fn surname_iter(
         &self,
     ) -> Words<impl Iterator<Item = Location> + DoubleEndedIterator + ExactSizeIterator + '_> {
-        self.word_iter(self.surname_locations.iter().copied())
+        self.word_iter(self.surname_locations())
     }
 
     #[inline]
@@ -633,8 +625,8 @@ impl Name {
         &self,
     ) -> Option<Words<impl Iterator<Item = Location> + DoubleEndedIterator + ExactSizeIterator + '_>>
     {
-        if self.given_name_locations.len() > 1 {
-            Some(self.word_iter(self.given_name_locations[1..].iter().map(|loc| loc.in_text)))
+        if self.given_name_words > 1 {
+            Some(self.word_iter(&self.given_name_locations()[1..]))
         } else {
             None
         }
@@ -644,15 +636,32 @@ impl Name {
     fn given_iter(
         &self,
     ) -> Words<impl Iterator<Item = Location> + DoubleEndedIterator + ExactSizeIterator + '_> {
-        self.word_iter(self.given_name_locations.iter().map(|loc| loc.in_text))
+        self.word_iter(self.given_name_locations())
     }
 
     #[inline]
-    fn word_iter<I>(&self, locations: I) -> Words<'_, I>
-    where
-        I: Iterator<Item = Location> + DoubleEndedIterator + ExactSizeIterator,
+    fn word_iter<'a>(
+        &'a self,
+        locations: &'a [Location],
+    ) -> Words<'_, impl Iterator<Item = Location> + DoubleEndedIterator + ExactSizeIterator + '_>
     {
-        Words::new(&self.text, locations)
+        Words::new(&self.text, locations.iter().copied())
+    }
+
+    #[inline]
+    fn given_name_locations(&self) -> &[Location] {
+        &self.locations[..self.given_name_words.into()]
+    }
+
+    #[inline]
+    fn surname_locations(&self) -> &[Location] {
+        &self.locations
+            [self.given_name_words.into()..(self.given_name_words + self.surname_words).into()]
+    }
+
+    #[inline]
+    fn given_names_in_initials(&self) -> &[Location] {
+        &self.locations[(self.given_name_words + self.surname_words).into()..]
     }
 }
 
@@ -667,7 +676,7 @@ mod tests {
     #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
     #[test]
     fn struct_size() {
-        assert_eq!(112, std::mem::size_of::<Name>());
+        assert_eq!(96, std::mem::size_of::<Name>());
         assert_eq!(32, std::mem::size_of::<Honorifics>());
     }
 

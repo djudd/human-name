@@ -70,7 +70,7 @@ impl Name {
         }
 
         // Special case: Full initials
-        let full_initials_len = self.initials().len() + self.surname_words();
+        let full_initials_len = usize::from(self.initials_len + self.surname_words);
         if full_initials_len > 2 && normed.len() == full_initials_len {
             let mut initials = String::with_capacity(full_initials_len);
             initials.extend(self.initials().chars().flat_map(char::to_lowercase));
@@ -87,7 +87,7 @@ impl Name {
 
         // Special case: Given name plus surname initial
         if let Some(name) = self.given_name() {
-            let name_and_initial_len = name.len() + self.surname_words();
+            let name_and_initial_len = name.len() + usize::from(self.surname_words);
             if normed.len() == name_and_initial_len {
                 let mut name_and_initial = String::with_capacity(name_and_initial_len);
                 name_and_initial.extend(name.chars().flat_map(char::to_lowercase));
@@ -176,9 +176,9 @@ impl Name {
 
     fn matches_remaining_name_parts(&self, part: &str, allow_unknowns: bool) -> bool {
         let lower_first_initial = self.first_initial().to_lowercase().next().unwrap();
-        let given_names: Option<Cow<str>> = if self.given_name_locations.len() == 1 {
+        let given_names: Option<Cow<str>> = if self.given_name_words == 1 {
             self.given_name().map(Cow::Borrowed)
-        } else if !self.given_name_locations.is_empty() {
+        } else if self.given_name_words > 0 {
             Some(self.given_iter().join())
         } else {
             None
