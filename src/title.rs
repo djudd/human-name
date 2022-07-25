@@ -1052,7 +1052,7 @@ mod tests {
             "Jane Doe",
             parts[prefix..]
                 .iter()
-                .fold("".to_string(), |s, ref p| s + " " + p.word)
+                .fold("".to_string(), |s, p| s + " " + p.word)
                 .trim()
         );
     }
@@ -1066,7 +1066,7 @@ mod tests {
             "Jane Doe",
             parts[prefix..]
                 .iter()
-                .fold("".to_string(), |s, ref p| s + " " + p.word)
+                .fold("".to_string(), |s, p| s + " " + p.word)
                 .trim()
         );
     }
@@ -1080,7 +1080,7 @@ mod tests {
             "Jane Doe",
             parts[prefix..]
                 .iter()
-                .fold("".to_string(), |s, ref p| s + " " + p.word)
+                .fold("".to_string(), |s, p| s + " " + p.word)
                 .trim()
         );
     }
@@ -1094,7 +1094,7 @@ mod tests {
             "Jane Doe",
             parts[prefix..]
                 .iter()
-                .fold("".to_string(), |s, ref p| s + " " + p.word)
+                .fold("".to_string(), |s, p| s + " " + p.word)
                 .trim()
         );
     }
@@ -1108,7 +1108,7 @@ mod tests {
             "Jane Doe",
             parts[prefix..]
                 .iter()
-                .fold("".to_string(), |s, ref p| s + " " + p.word)
+                .fold("".to_string(), |s, p| s + " " + p.word)
                 .trim()
         );
     }
@@ -1121,7 +1121,7 @@ mod tests {
             "Doe",
             parts[prefix..]
                 .iter()
-                .fold("".to_string(), |s, ref p| s + " " + p.word)
+                .fold("".to_string(), |s, p| s + " " + p.word)
                 .trim()
         );
     }

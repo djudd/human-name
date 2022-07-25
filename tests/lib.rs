@@ -22,26 +22,26 @@ fn parsing() {
     for line in reader.lines() {
         let line: String = line.ok().unwrap().nfkd().collect();
 
-        if line.starts_with("#") || !line.contains("|") {
+        if line.starts_with('#') || !line.contains('|') {
             continue;
         }
 
-        let parts: Vec<&str> = line.split("|").collect();
+        let parts: Vec<&str> = line.split('|').collect();
         let input = parts[0];
         let surname = parts[1];
         let given_name = parts[2];
         let middle_names = parts[3];
-        let first_initial = parts[4].chars().nth(0).unwrap();
+        let first_initial = parts[4].chars().next().unwrap();
         let middle_initials = parts[5];
         let suffix = parts[6];
 
         let name = human_name::Name::parse(input);
-        assert!(!name.is_none(), "[{}] Could not parse!", input);
+        assert!(name.is_some(), "[{}] Could not parse!", input);
 
-        let given_name = none_if_empty(&given_name);
-        let middle_names = none_if_empty(&middle_names);
-        let middle_initials = none_if_empty(&middle_initials);
-        let suffix = none_if_empty(&suffix);
+        let given_name = none_if_empty(given_name);
+        let middle_names = none_if_empty(middle_names);
+        let middle_initials = none_if_empty(middle_initials);
+        let suffix = none_if_empty(suffix);
 
         let name = name.unwrap();
         assert!(
@@ -97,7 +97,7 @@ fn unparseable() {
     for line in reader.lines() {
         let line = line.ok().unwrap();
 
-        if line.starts_with("#") {
+        if line.starts_with('#') {
             continue;
         }
 
@@ -119,7 +119,7 @@ fn equality() {
     for line in reader.lines() {
         let line = line.ok().unwrap();
 
-        if line.starts_with("#") {
+        if line.starts_with('#') {
             continue;
         }
 
@@ -128,8 +128,8 @@ fn equality() {
         let b = parts[1];
         let expect = parts[2];
 
-        let parsed_a = human_name::Name::parse(&a);
-        let parsed_b = human_name::Name::parse(&b);
+        let parsed_a = human_name::Name::parse(a);
+        let parsed_b = human_name::Name::parse(b);
 
         assert!(parsed_a.is_some(), "{} was not parsed", a);
         assert!(parsed_b.is_some(), "{} was not parsed", b);
@@ -179,7 +179,7 @@ fn web_match() {
     for line in reader.lines() {
         let line = line.ok().unwrap();
 
-        if line.starts_with("#") {
+        if line.starts_with('#') {
             continue;
         }
 
@@ -205,7 +205,7 @@ fn web_nonmatch() {
     for line in reader.lines() {
         let line = line.ok().unwrap();
 
-        if line.starts_with("#") {
+        if line.starts_with('#') {
             continue;
         }
 

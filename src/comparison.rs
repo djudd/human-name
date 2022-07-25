@@ -1,8 +1,9 @@
 use super::case::*;
 use super::nickname::have_matching_variants;
 use super::transliterate;
-use super::{Name, Words};
+use super::{GivenNameLocs, Name};
 use std::borrow::Cow;
+use std::convert::TryInto;
 use std::iter;
 use std::ops::Range;
 use std::slice;
@@ -115,8 +116,8 @@ impl Name {
     fn given_names_or_initials(&self) -> GivenNamesOrInitials {
         GivenNamesOrInitials {
             initials: self.initials().chars().enumerate(),
-            known_names: self.given_iter(),
-            known_name_indices: self.locations_in_initials().iter().peekable(),
+            text: &self.text,
+            name_locations: self.given_name_locations.iter().peekable(),
         }
     }
 
@@ -128,7 +129,7 @@ impl Name {
         }
 
         // Unless both versions of the name have given or middle names, we're done
-        if self.surname_index_in_words() == 0 || other.surname_index_in_words() == 0 {
+        if self.given_name_locations.is_empty() || other.given_name_locations.is_empty() {
             return true;
         }
 
@@ -285,21 +286,20 @@ impl Name {
     }
 
     fn missing_given_name(&self) -> bool {
-        if let Some(&Range { start, .. }) = self.locations_in_initials().get(0) {
-            start > 0
-        } else {
-            true
-        }
+        self.given_name_locations
+            .get(0)
+            .map(|loc| loc.middle_name())
+            .unwrap_or(true)
     }
 
     fn missing_any_name(&self) -> bool {
-        if self.surname_index_in_words() == 0 {
-            return true;
-        }
-
         let mut prev = 0;
 
-        for &Range { start, end } in self.locations_in_initials() {
+        for Range { start, end } in self
+            .given_name_locations
+            .iter()
+            .map(|loc| loc.in_initials.range())
+        {
             if start > prev {
                 return true;
             } else {
@@ -307,7 +307,10 @@ impl Name {
             }
         }
 
-        self.surname_index_in_words() > prev.into()
+        // TODO: This is incorrect and should be `self.initials().len() > prev`
+        // but fixing this actually breaks a test. Related to our failure to handle
+        // PrefixOfSelf below?
+        self.given_name_locations.len() > prev
     }
 
     #[inline]
@@ -515,7 +518,7 @@ impl<'a> NameWordOrInitial<'a> {
     #[inline]
     fn initials_count(&self) -> i32 {
         match *self {
-            NameWordOrInitial::Word(_, count) => count.into(),
+            NameWordOrInitial::Word(_, count) => count.try_into().unwrap(),
             NameWordOrInitial::Initial(_) => 1,
         }
     }
@@ -523,13 +526,13 @@ impl<'a> NameWordOrInitial<'a> {
 
 struct GivenNamesOrInitials<'a> {
     initials: iter::Enumerate<Chars<'a>>,
-    known_names: Words<'a>,
-    known_name_indices: iter::Peekable<slice::Iter<'a, Range<u16>>>,
+    text: &'a str,
+    name_locations: iter::Peekable<slice::Iter<'a, GivenNameLocs>>,
 }
 
 #[derive(Debug)]
 enum NameWordOrInitial<'a> {
-    Word(&'a str, u16),
+    Word(&'a str, usize),
     Initial(char),
 }
 
@@ -537,11 +540,14 @@ impl<'a> Iterator for GivenNamesOrInitials<'a> {
     type Item = NameWordOrInitial<'a>;
 
     fn next(&mut self) -> Option<NameWordOrInitial<'a>> {
-        self.initials
-            .next()
-            .map(|(i, initial)| match self.known_name_indices.peek() {
-                Some(&&Range { start, end }) if usize::from(start) == i => {
-                    self.known_name_indices.next();
+        self.initials.next().map(|(i, initial)| {
+            match self
+                .name_locations
+                .peek()
+                .map(|loc| loc.in_initials.range())
+            {
+                Some(Range { start, end }) if start == i => {
+                    let loc = self.name_locations.next().unwrap();
 
                     // Handle case of hyphenated name for which we have 2+ initials
                     let initials_for_word = end - start;
@@ -549,10 +555,11 @@ impl<'a> Iterator for GivenNamesOrInitials<'a> {
                         self.initials.next();
                     }
 
-                    NameWordOrInitial::Word(self.known_names.next().unwrap(), initials_for_word)
+                    NameWordOrInitial::Word(&self.text[loc.in_text.range()], initials_for_word)
                 }
                 _ => NameWordOrInitial::Initial(initial),
-            })
+            }
+        })
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
