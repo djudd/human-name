@@ -294,10 +294,11 @@ impl Name {
     }
 
     fn missing_given_name(&self) -> bool {
-        self.given_names_in_initials()
-            .get(0)
-            .map(|loc| loc.range().start > 0)
-            .unwrap_or(true)
+        if let Some(loc) = self.given_names_in_initials().get(0) {
+            loc.range().start > 0
+        } else {
+            true
+        }
     }
 
     fn missing_any_name(&self) -> bool {

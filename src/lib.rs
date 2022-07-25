@@ -192,8 +192,6 @@ impl Name {
         let mut locations_in_initials: SmallVec<[Location; 4]> =
             SmallVec::with_capacity(surname_index);
 
-        let mut given_name_words = 0;
-
         for word in &words[..surname_index] {
             if word.is_initials() {
                 word.with_initials(|c| {
@@ -211,7 +209,6 @@ impl Name {
                 word.with_initials(|c| initials.push(c));
                 locations_in_initials.push(Location::new(prior_len..initials.len())?);
 
-                given_name_words += 1;
                 text.push(' ');
             }
         }
@@ -250,8 +247,10 @@ impl Name {
             }
         };
 
-        let surname_words = (locations.len() - given_name_words).try_into().ok()?;
-        let given_name_words = given_name_words.try_into().ok()?;
+        let surname_words = (locations.len() - locations_in_initials.len())
+            .try_into()
+            .ok()?;
+        let given_name_words = locations_in_initials.len().try_into().ok()?;
         let initials_len = initials.len().try_into().ok()?;
 
         text.push_str(&initials);
@@ -288,9 +287,7 @@ impl Name {
     /// assert_eq!(None, name.given_name());
     /// ```
     pub fn given_name(&self) -> Option<&str> {
-        self.given_name_locations()
-            .get(0)
-            .map(|l| &self.text[l.range()])
+        self.given_iter().next()
     }
 
     /// Does this person use a middle name in place of their given name?
@@ -308,10 +305,11 @@ impl Name {
     /// assert!(name.goes_by_middle_name());
     /// ```
     pub fn goes_by_middle_name(&self) -> bool {
-        self.given_name_locations()
-            .get(0)
-            .map(|loc| loc.range().start > 0)
-            .unwrap_or(false)
+        if let Some(loc) = self.given_names_in_initials().get(0) {
+            loc.range().start > 0
+        } else {
+            false
+        }
     }
 
     /// First and middle initials as a string (always present)

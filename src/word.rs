@@ -18,6 +18,7 @@ impl Location {
         }
     }
 
+    #[inline]
     pub fn new(range: Range<usize>) -> Option<Self> {
         let start = range.start.try_into().ok()?;
         let end = range.end.try_into().ok()?;
