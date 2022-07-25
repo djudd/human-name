@@ -49,15 +49,13 @@ mod eq_hash;
 mod serialization;
 
 use crate::decomposition::normalize_nfkd_whitespace;
-use crate::word::{WordIndices, Words};
+use crate::word::{Location, Words};
 use smallstr::SmallString;
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
 use std::convert::TryInto;
 use std::hash::{Hash, Hasher};
-use std::num::NonZeroU8;
-use std::ops::Range;
 
 #[cfg(test)]
 use alloc_counter::AllocCounterSystem;
@@ -89,20 +87,19 @@ pub const MAX_SEGMENTS: usize = parse::MAX_WORDS;
 /// the same person (see docs on `consistent_with` for details).
 #[derive(Clone, Debug)]
 pub struct Name {
-    text: SmallString<[u8; 32]>,
-    word_indices_in_text: WordIndices,
-    surname_index: u16, // u16 must be sufficient since it can represent MAX_NAME_LEN
-    generation_from_suffix: Option<NonZeroU8>,
-    initials: SmallString<[u8; 8]>,
-    word_indices_in_initials: WordIndices,
+    text: SmallString<[u8; 32]>, // stores concatenation of display_full() and initials()
+    locations: SmallVec<[Location; 6]>, // stores concatenation of word locations in full text and given name locations in initials
+    given_name_words: u8,               // support no more than 256
+    surname_words: u8,                  // support no more than 256
+    initials_len: u8,                   // support no more than 256
     honorifics: Option<Box<Honorifics>>,
-    pub hash: u64,
+    pub hash: u64, // surname hash
 }
 
 #[derive(Clone, Debug)]
 struct Honorifics {
-    prefix: Option<String>,
-    suffix: Option<String>,
+    prefix: Option<Box<str>>,
+    suffix: Option<Box<str>>,
 }
 
 impl Name {
@@ -175,7 +172,7 @@ impl Name {
         let name = nickname::strip_nickname(&name);
         let parsed = parse::parse(&name)?;
 
-        let mut name = Name::initialize_struct(&parsed, name.len());
+        let mut name = Name::initialize_struct(&parsed, name.len())?;
 
         let mut s = DefaultHasher::new();
         name.surname_hash(&mut s);
@@ -184,44 +181,46 @@ impl Name {
         Some(name)
     }
 
-    fn initialize_struct(parsed: &parse::Name, name_len: usize) -> Name {
+    fn initialize_struct(parsed: &parse::Name, name_len: usize) -> Option<Name> {
         let words = parsed.words();
-        let last_word = words.len() - 1;
         let surname_index = parsed.surname_index;
 
-        let mut text = SmallString::with_capacity(name_len);
-        let mut initials = SmallString::with_capacity(surname_index);
+        let mut text = SmallString::with_capacity(name_len + surname_index);
+        let mut initials: SmallString<[u8; 16]> = SmallString::with_capacity(surname_index);
 
-        let mut surname_index_in_names = surname_index;
-        let mut word_indices_in_initials = WordIndices::new();
-        let mut word_indices_in_text = WordIndices::new();
+        let mut locations = SmallVec::with_capacity(words.len() + surname_index);
+        let mut locations_in_initials: SmallVec<[Location; 4]> =
+            SmallVec::with_capacity(surname_index);
 
-        for (i, word) in words.iter().enumerate() {
-            if word.is_initials() && i < surname_index {
+        for word in &words[..surname_index] {
+            if word.is_initials() {
                 word.with_initials(|c| {
                     text.push(c);
                     text.push_str(". ");
 
                     initials.push(c);
                 });
-
-                surname_index_in_names -= 1;
             } else {
                 let prior_len = text.len();
                 word.with_namecased(|s| text.push_str(s));
-                word_indices_in_text.push(prior_len..text.len());
+                locations.push(Location::new(prior_len..text.len())?);
 
-                if i < last_word {
-                    text.push(' ');
+                let prior_len = initials.len();
+                word.with_initials(|c| initials.push(c));
+                locations_in_initials.push(Location::new(prior_len..initials.len())?);
 
-                    if i < surname_index {
-                        debug_assert!(word.is_namelike());
+                text.push(' ');
+            }
+        }
 
-                        let prior_len = initials.len();
-                        word.with_initials(|c| initials.push(c));
-                        word_indices_in_initials.push(prior_len..initials.len());
-                    }
-                }
+        let surname_words = &words[surname_index..];
+        for (i, word) in surname_words.iter().enumerate() {
+            let prior_len = text.len();
+            word.with_namecased(|s| text.push_str(s));
+            locations.push(Location::new(prior_len..text.len())?);
+
+            if i < surname_words.len() - 1 {
+                text.push(' ');
             }
         }
 
@@ -234,8 +233,12 @@ impl Name {
         debug_assert!(!initials.is_empty(), "Initials are empty!");
 
         let honorifics = {
-            let prefix = parsed.honorific_prefix().map(Cow::into_owned);
-            let suffix = parsed.honorific_suffix().map(Cow::into_owned);
+            let prefix = parsed
+                .honorific_prefix()
+                .map(|s| s.into_owned().into_boxed_str());
+            let suffix = parsed
+                .honorific_suffix()
+                .map(|s| s.into_owned().into_boxed_str());
 
             if prefix.is_some() || suffix.is_some() {
                 Some(Box::new(Honorifics { prefix, suffix }))
@@ -244,26 +247,32 @@ impl Name {
             }
         };
 
-        text.shrink_to_fit();
-        word_indices_in_text.shrink_to_fit();
-        initials.shrink_to_fit();
-        word_indices_in_initials.shrink_to_fit();
+        let surname_words = (locations.len() - locations_in_initials.len())
+            .try_into()
+            .ok()?;
+        let given_name_words = locations_in_initials.len().try_into().ok()?;
+        let initials_len = initials.len().try_into().ok()?;
 
-        Name {
+        text.push_str(&initials);
+        text.shrink_to_fit();
+
+        locations.extend_from_slice(&locations_in_initials);
+        locations.shrink_to_fit();
+
+        Some(Name {
             text,
-            word_indices_in_text,
-            surname_index: surname_index_in_names.try_into().unwrap(),
-            generation_from_suffix: parsed.generation,
-            initials,
-            word_indices_in_initials,
+            locations,
+            given_name_words,
+            surname_words,
+            initials_len,
             honorifics,
             hash: 0,
-        }
+        })
     }
 
     /// First initial (always present)
     pub fn first_initial(&self) -> char {
-        self.initials.chars().next().unwrap()
+        self.initials().chars().next().unwrap()
     }
 
     /// Given name as a string, if present
@@ -296,8 +305,8 @@ impl Name {
     /// assert!(name.goes_by_middle_name());
     /// ```
     pub fn goes_by_middle_name(&self) -> bool {
-        if let Some(&Range { start, .. }) = self.word_indices_in_initials.get(0) {
-            start > 0
+        if let Some(loc) = self.given_names_in_initials().get(0) {
+            loc.range().start > 0
         } else {
             false
         }
@@ -314,8 +323,9 @@ impl Name {
     /// let name = Name::parse("James T. Kirk").unwrap();
     /// assert_eq!("JT", name.initials());
     /// ```
+    #[inline]
     pub fn initials(&self) -> &str {
-        &self.initials
+        &self.text[self.byte_len()..]
     }
 
     /// Middle names as an array of words, if present
@@ -365,7 +375,7 @@ impl Name {
         self.initials()
             .char_indices()
             .nth(1)
-            .map(|(i, _)| &self.initials[i..])
+            .map(|(i, _)| &self.text[self.byte_len() + i..])
     }
 
     /// Surname as a slice of words (always present)
@@ -385,10 +395,9 @@ impl Name {
     /// assert_eq!("de la MacDonald", name.surname());
     /// ```
     pub fn surname(&self) -> &str {
-        let surname_indices = &self.word_indices_in_text[self.surname_index.into()..];
-        let start = surname_indices[0].start;
-        let end = surname_indices[surname_indices.len() - 1].end;
-        &self.text[start.into()..end.into()]
+        let start = self.surname_locations()[0].range().start;
+        let end = self.surname_end_in_text();
+        &self.text[start..end]
     }
 
     /// Generational suffix, if present
@@ -400,8 +409,11 @@ impl Name {
     /// assert_eq!(Some("Jr."), name.generational_suffix());
     /// ```
     pub fn generational_suffix(&self) -> Option<&str> {
-        self.generation_from_suffix
-            .map(suffix::display_generational_suffix)
+        if self.byte_len() > self.surname_end_in_text() {
+            Some(&self.text[self.surname_end_in_text() + ", ".len()..self.byte_len()])
+        } else {
+            None
+        }
     }
 
     /// Generational suffix, if present
@@ -455,11 +467,8 @@ impl Name {
     /// assert_eq!("J. de la MacDonald", name.display_initial_surname());
     /// ```
     pub fn display_initial_surname(&self) -> Cow<str> {
-        if self.surname_index == 0
-            && self.initials.len() == 1
-            && self.generation_from_suffix.is_none()
-        {
-            Cow::Borrowed(&self.text)
+        if self.given_name_words == 0 && self.initials_len == 1 {
+            Cow::Borrowed(&self.text[..self.surname_end_in_text()])
         } else {
             Cow::Owned(format!("{}. {}", self.first_initial(), self.surname()))
         }
@@ -484,11 +493,8 @@ impl Name {
     /// assert_eq!("John de la MacDonald", name.display_first_last());
     /// ```
     pub fn display_first_last(&self) -> Cow<str> {
-        if self.surname_index <= 1
-            && self.initials.len() == 1
-            && self.generation_from_suffix.is_none()
-        {
-            Cow::Borrowed(&self.text)
+        if self.given_name_words <= 1 && self.initials_len == 1 {
+            Cow::Borrowed(&self.text[..self.surname_end_in_text()])
         } else if let Some(ref name) = self.given_name() {
             Cow::Owned(format!("{} {}", name, self.surname()))
         } else {
@@ -499,7 +505,7 @@ impl Name {
     /// Number of bytes in the full name as UTF-8 in NFKD normal form, including
     /// spaces and punctuation.
     ///
-    /// Does not include honorifics.
+    /// Includes generational suffix, but does not include honorifics.
     ///
     /// ```
     /// use human_name::Name;
@@ -507,14 +513,15 @@ impl Name {
     /// let name = Name::parse("JOHN ALLEN Q DE LA MACDÖNALD JR").unwrap();
     /// assert_eq!("John Allen Q. de la MacDönald, Jr.".len(), name.byte_len());
     /// ```
+    #[inline]
     pub fn byte_len(&self) -> usize {
-        self.text.len()
+        self.text.len() - usize::from(self.initials_len)
     }
 
     /// The full name, or as much of it as was preserved from the input,
     /// including given name, middle names, surname and generational suffix.
     ///
-    /// Does not include honorifics.
+    /// Includes generational suffix, but does not include honorifics.
     ///
     /// ```
     /// use human_name::Name;
@@ -525,8 +532,9 @@ impl Name {
     /// let name = Name::parse("Air Chief Marshal Sir Harrieta ('Harry') Keōpūolani Nāhiʻenaʻena, GBE, KCB, ADC").unwrap();
     /// assert_eq!("Harrieta Keōpūolani Nāhiʻenaʻena", name.display_full());
     /// ```
+    #[inline]
     pub fn display_full(&self) -> &str {
-        &self.text
+        &self.text[..self.byte_len()]
     }
 
     /// The full name, or as much of it as was preserved from the input,
@@ -546,21 +554,21 @@ impl Name {
         if let Some(honorifics) = self.honorifics.as_ref() {
             let mut result = String::with_capacity(
                 honorifics.prefix.as_ref().map(|t| t.len() + 1).unwrap_or(0)
-                    + self.text.len()
+                    + self.byte_len()
                     + honorifics.suffix.as_ref().map(|t| t.len() + 1).unwrap_or(0),
             );
             if let Some(prefix) = &honorifics.prefix {
                 result.push_str(prefix);
                 result.push(' ');
             }
-            result.push_str(&self.text);
+            result.push_str(self.display_full());
             if let Some(suffix) = &honorifics.suffix {
                 result.push(' ');
                 result.push_str(suffix);
             }
             Cow::Owned(result)
         } else {
-            Cow::Borrowed(&self.text)
+            Cow::Borrowed(self.display_full())
         }
     }
 
@@ -597,32 +605,61 @@ impl Name {
     }
 
     #[inline]
-    fn surname_words(&self) -> usize {
-        self.word_indices_in_text.len() - usize::from(self.surname_index)
+    fn surname_end_in_text(&self) -> usize {
+        self.surname_locations()[usize::from(self.surname_words) - 1]
+            .range()
+            .end
     }
 
     #[inline]
-    fn surname_iter(&self) -> Words {
-        self.word_iter(self.surname_index.into()..self.word_indices_in_text.len())
+    fn surname_iter(
+        &self,
+    ) -> Words<impl Iterator<Item = Location> + DoubleEndedIterator + ExactSizeIterator + '_> {
+        self.word_iter(self.surname_locations())
     }
 
     #[inline]
-    fn middle_name_iter(&self) -> Option<Words> {
-        if self.surname_index > 1 {
-            Some(self.word_iter(1..self.surname_index.into()))
+    fn middle_name_iter(
+        &self,
+    ) -> Option<Words<impl Iterator<Item = Location> + DoubleEndedIterator + ExactSizeIterator + '_>>
+    {
+        if self.given_name_words > 1 {
+            Some(self.word_iter(&self.given_name_locations()[1..]))
         } else {
             None
         }
     }
 
     #[inline]
-    fn given_iter(&self) -> Words {
-        self.word_iter(0..self.surname_index.into())
+    fn given_iter(
+        &self,
+    ) -> Words<impl Iterator<Item = Location> + DoubleEndedIterator + ExactSizeIterator + '_> {
+        self.word_iter(self.given_name_locations())
     }
 
     #[inline]
-    fn word_iter(&self, range: Range<usize>) -> Words {
-        Words::new(&self.text, &self.word_indices_in_text[range])
+    fn word_iter<'a>(
+        &'a self,
+        locations: &'a [Location],
+    ) -> Words<'_, impl Iterator<Item = Location> + DoubleEndedIterator + ExactSizeIterator + '_>
+    {
+        Words::new(&self.text, locations.iter().copied())
+    }
+
+    #[inline]
+    fn given_name_locations(&self) -> &[Location] {
+        &self.locations[..self.given_name_words.into()]
+    }
+
+    #[inline]
+    fn surname_locations(&self) -> &[Location] {
+        &self.locations
+            [self.given_name_words.into()..(self.given_name_words + self.surname_words).into()]
+    }
+
+    #[inline]
+    fn given_names_in_initials(&self) -> &[Location] {
+        &self.locations[(self.given_name_words + self.surname_words).into()..]
     }
 }
 
@@ -637,7 +674,8 @@ mod tests {
     #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
     #[test]
     fn struct_size() {
-        assert_eq!(136, std::mem::size_of::<Name>());
+        assert_eq!(96, std::mem::size_of::<Name>());
+        assert_eq!(32, std::mem::size_of::<Honorifics>());
     }
 
     #[test]
@@ -691,7 +729,13 @@ mod tests {
     fn initialize_struct_initial_surname(b: &mut Bencher) {
         let name = "J. Doe";
         let parsed = parse::parse(&*name).unwrap();
-        b.iter(|| black_box(Name::initialize_struct(&parsed, name.len()).byte_len()))
+        b.iter(|| {
+            black_box(
+                Name::initialize_struct(&parsed, name.len())
+                    .unwrap()
+                    .byte_len(),
+            )
+        })
     }
 
     #[cfg(feature = "bench")]
@@ -699,7 +743,13 @@ mod tests {
     fn initialize_struct_first_last(b: &mut Bencher) {
         let name = "John Doe";
         let parsed = parse::parse(&*name).unwrap();
-        b.iter(|| black_box(Name::initialize_struct(&parsed, name.len()).byte_len()))
+        b.iter(|| {
+            black_box(
+                Name::initialize_struct(&parsed, name.len())
+                    .unwrap()
+                    .byte_len(),
+            )
+        })
     }
 
     #[cfg(feature = "bench")]
@@ -707,6 +757,12 @@ mod tests {
     fn initialize_struct_complex(b: &mut Bencher) {
         let name = "John Allen Q.R. de la MacDonald Jr.";
         let parsed = parse::parse(&*name).unwrap();
-        b.iter(|| black_box(Name::initialize_struct(&parsed, name.len()).byte_len()))
+        b.iter(|| {
+            black_box(
+                Name::initialize_struct(&parsed, name.len())
+                    .unwrap()
+                    .byte_len(),
+            )
+        })
     }
 }

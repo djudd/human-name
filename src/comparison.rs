@@ -1,12 +1,11 @@
 use super::case::*;
 use super::nickname::have_matching_variants;
 use super::transliterate;
-use super::{Name, Words};
+use super::{Location, Name};
 use std::borrow::Cow;
+use std::convert::TryInto;
 use std::iter;
 use std::ops::Range;
-use std::slice;
-use std::str::Chars;
 use unicode_segmentation::UnicodeSegmentation;
 
 pub const MIN_SURNAME_CHAR_MATCH: usize = 4;
@@ -76,7 +75,9 @@ impl Name {
             && self.suffix_consistent(other)
     }
 
-    #[inline]
+    // Not clear why we have to `always` here but the performance difference is detectable
+    // and there's only one caller (though we call this twice)
+    #[inline(always)]
     fn split_initials(&self) -> (char, usize) {
         let mut initials = self.initials().chars();
         let first = initials.next().unwrap();
@@ -110,11 +111,18 @@ impl Name {
     }
 
     #[inline]
-    fn given_names_or_initials(&self) -> GivenNamesOrInitials {
+    fn given_names_or_initials(
+        &self,
+    ) -> GivenNamesOrInitials<
+        impl Iterator<Item = (usize, char)> + '_,
+        impl Iterator<Item = (&str, Location)> + '_,
+    > {
         GivenNamesOrInitials {
-            initials: self.initials.chars().enumerate(),
-            known_names: self.given_iter(),
-            known_name_indices: self.word_indices_in_initials.iter().peekable(),
+            initials: self.initials().chars().enumerate(),
+            names_and_locations: self
+                .given_iter()
+                .zip(self.given_names_in_initials().iter().copied())
+                .peekable(),
         }
     }
 
@@ -126,7 +134,7 @@ impl Name {
         }
 
         // Unless both versions of the name have given or middle names, we're done
-        if self.surname_index == 0 || other.surname_index == 0 {
+        if self.given_name_words == 0 || other.given_name_words == 0 {
             return true;
         }
 
@@ -283,21 +291,17 @@ impl Name {
     }
 
     fn missing_given_name(&self) -> bool {
-        if let Some(&Range { start, .. }) = self.word_indices_in_initials.get(0) {
-            start > 0
+        if let Some(loc) = self.given_names_in_initials().get(0) {
+            loc.range().start > 0
         } else {
             true
         }
     }
 
     fn missing_any_name(&self) -> bool {
-        if self.surname_index == 0 {
-            return true;
-        }
-
         let mut prev = 0;
 
-        for &Range { start, end } in self.word_indices_in_initials.iter() {
+        for Range { start, end } in self.given_names_in_initials().iter().map(|loc| loc.range()) {
             if start > prev {
                 return true;
             } else {
@@ -305,25 +309,37 @@ impl Name {
             }
         }
 
-        self.surname_index > prev
+        // TODO: This is incorrect and should be `self.initials().len() > prev`
+        // but fixing this actually breaks a test. Related to our failure to handle
+        // PrefixOfSelf below?
+        usize::from(self.given_name_words) > prev
     }
 
     #[inline]
     fn surname_consistent(&self, other: &Name) -> bool {
-        if let Some(mine) = self.simple_surname() {
-            if let Some(theirs) = other.simple_surname() {
+        let mine = self.surname();
+        let theirs = other.surname();
+
+        if mine.is_ascii() && theirs.is_ascii() {
+            if self.surname_words == 1
+                && other.surname_words == 1
+                && mine.bytes().all(|b| b.is_ascii_alphabetic())
+                && theirs.bytes().all(|b| b.is_ascii_alphabetic())
+            {
                 return mine.eq_ignore_ascii_case(theirs);
             }
-        }
 
-        self.surname_consistent_slow(other)
+            let filter = { |c: char| c.is_ascii_alphanumeric() };
+            Self::surname_consistent_slow(mine.rmatches(filter), theirs.rmatches(filter))
+        } else {
+            Self::surname_consistent_slow(mine.unicode_words().rev(), theirs.unicode_words().rev())
+        }
     }
 
-    #[inline(never)]
-    fn surname_consistent_slow(&self, other: &Name) -> bool {
-        let mut my_words = self.surname_iter().flat_map(|w| w.unicode_words()).rev();
-        let mut their_words = other.surname_iter().flat_map(|w| w.unicode_words()).rev();
-
+    fn surname_consistent_slow<'a, I>(mut my_words: I, mut their_words: I) -> bool
+    where
+        I: Iterator<Item = &'a str>,
+    {
         let mut my_word = my_words.next();
         let mut their_word = their_words.next();
         let mut matching_chars = 0;
@@ -393,22 +409,11 @@ impl Name {
     }
 
     #[inline]
-    fn simple_surname(&self) -> Option<&str> {
-        if self.surname_words() == 1 {
-            let surname = self.surname();
-            if surname.is_ascii() && surname.bytes().all(|b| b.is_ascii_alphabetic()) {
-                return Some(surname);
-            }
-        }
-
-        None
-    }
-
-    #[inline]
     fn suffix_consistent(&self, other: &Name) -> bool {
-        self.generation_from_suffix.is_none()
-            || other.generation_from_suffix.is_none()
-            || self.generation_from_suffix == other.generation_from_suffix
+        match (self.generational_suffix(), other.generational_suffix()) {
+            (Some(mine), Some(theirs)) => mine == theirs,
+            _ => true,
+        }
     }
 }
 
@@ -512,44 +517,53 @@ impl<'a> NameWordOrInitial<'a> {
     #[inline]
     fn initials_count(&self) -> i32 {
         match *self {
-            NameWordOrInitial::Word(_, count) => count.into(),
+            NameWordOrInitial::Word(_, count) => count.try_into().unwrap(),
             NameWordOrInitial::Initial(_) => 1,
         }
     }
 }
 
-struct GivenNamesOrInitials<'a> {
-    initials: iter::Enumerate<Chars<'a>>,
-    known_names: Words<'a>,
-    known_name_indices: iter::Peekable<slice::Iter<'a, Range<u16>>>,
+struct GivenNamesOrInitials<'a, I, L>
+where
+    I: Iterator<Item = (usize, char)>,
+    L: Iterator<Item = (&'a str, Location)>,
+{
+    initials: I,
+    names_and_locations: iter::Peekable<L>,
 }
 
 #[derive(Debug)]
 enum NameWordOrInitial<'a> {
-    Word(&'a str, u16),
+    Word(&'a str, usize),
     Initial(char),
 }
 
-impl<'a> Iterator for GivenNamesOrInitials<'a> {
+impl<'a, I, L> Iterator for GivenNamesOrInitials<'a, I, L>
+where
+    I: Iterator<Item = (usize, char)>,
+    L: Iterator<Item = (&'a str, Location)>,
+{
     type Item = NameWordOrInitial<'a>;
 
     fn next(&mut self) -> Option<NameWordOrInitial<'a>> {
-        self.initials
-            .next()
-            .map(|(i, initial)| match self.known_name_indices.peek() {
-                Some(&&Range { start, end }) if usize::from(start) == i => {
-                    self.known_name_indices.next();
+        self.initials.next().map(|(i, initial)| {
+            match self.names_and_locations.peek().map(|(_, loc)| loc.range()) {
+                Some(Range { start, end }) if start == i => {
+                    let (word, _) = self.names_and_locations.next().unwrap();
 
                     // Handle case of hyphenated name for which we have 2+ initials
+                    //
+                    // When stabilized use `advance_by`: https://github.com/rust-lang/rust/issues/77404
                     let initials_for_word = end - start;
                     for _ in 1..initials_for_word {
                         self.initials.next();
                     }
 
-                    NameWordOrInitial::Word(self.known_names.next().unwrap(), initials_for_word)
+                    NameWordOrInitial::Word(word, initials_for_word)
                 }
                 _ => NameWordOrInitial::Initial(initial),
-            })
+            }
+        })
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {

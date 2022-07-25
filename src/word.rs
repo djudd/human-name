@@ -1,28 +1,53 @@
 use crate::SmallVec;
 use std::borrow::Cow;
 use std::convert::TryInto;
-use std::ops::{Deref, Range};
-use std::slice;
+use std::ops::Range;
 
-pub struct Words<'a> {
-    text: &'a str,
-
-    // Storing as u16 is sufficient because MAX_NAME_LEN is 1024.
-    //
-    // We could compress a bit further (especially given that the common case is much shorter)
-    // but it's not obviously worth the code complexity.
-    indices: slice::Iter<'a, Range<u16>>,
+#[derive(Clone, Copy, Debug)]
+pub struct Location {
+    start: u16,
+    end: u16,
 }
 
-impl<'a> Words<'a> {
+impl Location {
     #[inline]
-    pub fn new(text: &'a str, indices: &'a [Range<u16>]) -> Words<'a> {
-        Words {
-            text,
-            indices: indices.iter(),
+    pub fn range(&self) -> Range<usize> {
+        Range {
+            start: self.start.into(),
+            end: self.end.into(),
         }
     }
 
+    #[inline]
+    pub fn new(range: Range<usize>) -> Option<Self> {
+        let start = range.start.try_into().ok()?;
+        let end = range.end.try_into().ok()?;
+        Some(Self { start, end })
+    }
+}
+
+pub struct Words<'a, I>
+where
+    I: Iterator<Item = Location>,
+{
+    text: &'a str,
+    locations: I,
+}
+
+impl<'a, I> Words<'a, I>
+where
+    I: Iterator<Item = Location>,
+{
+    #[inline]
+    pub fn new(text: &'a str, locations: I) -> Words<'a, I> {
+        Words { text, locations }
+    }
+}
+
+impl<'a, I> Words<'a, I>
+where
+    I: Iterator<Item = Location> + ExactSizeIterator,
+{
     pub fn join(mut self) -> Cow<'a, str> {
         match self.len() {
             0 => Cow::Borrowed(""),
@@ -32,14 +57,15 @@ impl<'a> Words<'a> {
     }
 }
 
-impl<'a> Iterator for Words<'a> {
+impl<'a, I> Iterator for Words<'a, I>
+where
+    I: Iterator<Item = Location>,
+{
     type Item = &'a str;
 
     #[inline]
     fn next(&mut self) -> Option<&'a str> {
-        self.indices
-            .next()
-            .map(|&Range { start, end }| &self.text[start.into()..end.into()])
+        self.locations.next().map(|loc| &self.text[loc.range()])
     }
 
     #[inline]
@@ -47,56 +73,30 @@ impl<'a> Iterator for Words<'a> {
     where
         F: FnMut(B, Self::Item) -> B,
     {
-        let Self { indices, text } = self;
-        indices.fold(init, |acc, &Range { start, end }| {
-            let item = &text[start.into()..end.into()];
+        let Self { locations, text } = self;
+        locations.fold(init, |acc, loc| {
+            let item = &text[loc.range()];
             f(acc, item)
         })
     }
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        self.indices.size_hint()
+        self.locations.size_hint()
     }
 }
 
-impl<'a> DoubleEndedIterator for Words<'a> {
+impl<'a, I> DoubleEndedIterator for Words<'a, I>
+where
+    I: Iterator<Item = Location> + DoubleEndedIterator,
+{
     #[inline]
     fn next_back(&mut self) -> Option<&'a str> {
-        self.indices
+        self.locations
             .next_back()
-            .map(|&Range { start, end }| &self.text[start.into()..end.into()])
+            .map(|loc| &self.text[loc.range()])
     }
 }
 
-impl<'a> ExactSizeIterator for Words<'a> {}
-
-#[derive(Clone, Debug)]
-pub struct WordIndices(SmallVec<[Range<u16>; 4]>);
-
-impl WordIndices {
-    #[inline]
-    pub fn new() -> Self {
-        WordIndices(SmallVec::new())
-    }
-
-    #[inline]
-    pub fn push(&mut self, indices: Range<usize>) {
-        self.0
-            .push(indices.start.try_into().unwrap()..indices.end.try_into().unwrap())
-    }
-
-    #[inline]
-    pub fn shrink_to_fit(&mut self) {
-        self.0.shrink_to_fit();
-    }
-}
-
-impl Deref for WordIndices {
-    type Target = [Range<u16>];
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
+impl<'a, I> ExactSizeIterator for Words<'a, I> where I: Iterator<Item = Location> + ExactSizeIterator
+{}
