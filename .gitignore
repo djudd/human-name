@@ -12,6 +12,7 @@
 
 # Profiling
 callgrind.*
+flamegraph.svg
 
 # rustfmt
 *.rs.bk

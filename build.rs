@@ -17,6 +17,11 @@ struct TitleData {
     honorific_suffixes: HashMap<String, String>,
 }
 
+#[derive(Deserialize)]
+struct NameData {
+    two_letter_given_names: Vec<String>,
+}
+
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
 fn main() -> Result<()> {
@@ -61,6 +66,17 @@ fn main() -> Result<()> {
             .honorific_suffixes
             .iter()
             .map(|(k, v)| format!("map.insert(\"{}\", \"{}\");", k, v)),
+    )?;
+
+    let json = read_file(&input, "build/name_data.json")?;
+    let names: NameData = serde_json::from_str(&json)?;
+    write_data_file(
+        &output.join("two_letter_given_names.rs"),
+        names
+            .two_letter_given_names
+            .iter()
+            .flat_map(|n| [n.clone(), n.to_uppercase(), n.to_lowercase()])
+            .map(|n| format!("set.insert(\"{}\");", n)),
     )?;
 
     Ok(())
