@@ -21,7 +21,7 @@ struct TitleData {
 struct NameData {
     two_letter_given_names: Vec<String>,
     uncapitalized_particles: Vec<String>,
-    surname_prefixes: Vec<String>,
+    additional_surname_prefixes: Vec<String>,
 }
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
@@ -80,17 +80,26 @@ fn main() -> Result<()> {
             .flat_map(|n| [n.clone(), n.to_uppercase(), n.to_lowercase()])
             .map(|n| format!("set.insert(\"{}\");", n)),
     )?;
+    // Store capitalized versions because we check after doing the initial,
+    // naive capitalization; use a simple capitalization algorithm here
+    // because we know the data is all simple.
+    let capitalized_uncapitalized_particles = names
+        .uncapitalized_particles
+        .iter()
+        .map(|n| format!("{}{}", n[..1].to_uppercase(), &n[1..]))
+        .collect::<Vec<String>>();
     write_data_file(
-        &output.join("uncapitalized_particles.rs"),
-        names
-            .uncapitalized_particles
+        &output.join("capitalized_uncapitalized_particles.rs"),
+        capitalized_uncapitalized_particles
             .iter()
             .map(|n| format!("set.insert(\"{}\");", n)),
     )?;
+    let mut surname_prefixes = names.uncapitalized_particles.clone();
+    surname_prefixes.extend_from_slice(capitalized_uncapitalized_particles.as_slice());
+    surname_prefixes.extend_from_slice(names.additional_surname_prefixes.as_slice());
     write_data_file(
         &output.join("surname_prefixes.rs"),
-        names
-            .surname_prefixes
+        surname_prefixes
             .iter()
             .map(|n| format!("set.insert(\"{}\");", n)),
     )?;
