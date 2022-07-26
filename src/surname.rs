@@ -1,86 +1,16 @@
 use super::namepart::{Category, NamePart};
-use phf::phf_set;
+use ahash::AHashSet;
+use once_cell::sync::Lazy;
 
 static VOWELLESS_SURNAMES: [&str; 4] = ["Ng", "Lv", "Mtz", "Hdz"];
 
 static SINGLE_LETTER_CONJUNCTIONS: [&str; 4] = ["e", "y", "E", "Y"];
 
-// Uncapitalized list should match UNCAPITALIZED_PARTICLES in `namecase.rs`
-//
-// Unfortunately, the duplication between the lists is necessary because of the
-// way `phf_set!` works, and the duplication within this list is necessary
-// because we may or may not lowercase the particle as part of first-pass
-// namecasing, depending on whether the input is given with mixed case.
-static SURNAME_PREFIXES: phf::Set<&'static str> = phf_set! {
-    "af",
-    "av",
-    "da",
-    "das",
-    "dal",
-    "de",
-    "del",
-    "dela",
-    "dei",
-    "der",
-    "di",
-    "dí",
-    "do",
-    "dos",
-    "du",
-    "la",
-    "le",
-    "na",
-    "ter",
-    "van",
-    "vel",
-    "von",
-    "zu",
-    "zum",
-    "Abu",
-    "Abd",
-    "Af",
-    "Al",
-    "Ap",
-    "Av",
-    "Aw",
-    "Bar",
-    "Ben",
-    "Bon",
-    "Bin",
-    "Da",
-    "Das",
-    "Dal",
-    "De",
-    "Dei",
-    "Del",
-    "Dela",
-    "Della",
-    "Den",
-    "Der",
-    "Di",
-    "Dí",
-    "Do",
-    "Dos",
-    "Du",
-    "El",
-    "Ibn",
-    "La",
-    "Le",
-    "Lo",
-    "Na",
-    "Nic",
-    "San",
-    "Santa",
-    "St",
-    "Ste",
-    "Ter",
-    "Van",
-    "Vanden",
-    "Vel",
-    "Von",
-    "Zu",
-    "Zum",
-};
+static SURNAME_PREFIXES: Lazy<AHashSet<&'static str>> = Lazy::new(|| {
+    let mut set = AHashSet::new();
+    include!(concat!(env!("OUT_DIR"), "/surname_prefixes.rs"));
+    set
+});
 
 pub fn is_vowelless_surname(word: &str, use_capitalization: bool) -> bool {
     if use_capitalization {
