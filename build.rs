@@ -20,6 +20,7 @@ struct TitleData {
 #[derive(Deserialize)]
 struct NameData {
     two_letter_given_names: Vec<String>,
+    surname_prefixes: Vec<String>,
 }
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
@@ -76,6 +77,13 @@ fn main() -> Result<()> {
             .two_letter_given_names
             .iter()
             .flat_map(|n| [n.clone(), n.to_uppercase(), n.to_lowercase()])
+            .map(|n| format!("set.insert(\"{}\");", n)),
+    )?;
+    write_data_file(
+        &output.join("surname_prefixes.rs"),
+        names
+            .surname_prefixes
+            .iter()
             .map(|n| format!("set.insert(\"{}\");", n)),
     )?;
 
