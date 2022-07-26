@@ -17,7 +17,6 @@ unicode-segmentation = "1.9"
 unicode-normalization = "0.1"
 unicode-case-mapping = "0.3"
 unidecode = "0.3"
-phf = { features = ["macros"], version = "0.10" }
 libc = "0.2"
 serde = "1.0"
 serde_derive = "1.0"
