@@ -24,6 +24,11 @@ struct NameData {
     additional_surname_prefixes: Vec<String>,
 }
 
+#[derive(Deserialize)]
+struct GenerationData {
+    generation_by_suffix: HashMap<String, u8>,
+}
+
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
 fn main() -> Result<()> {
@@ -102,6 +107,16 @@ fn main() -> Result<()> {
         surname_prefixes
             .iter()
             .map(|n| format!("set.insert(\"{}\");", n)),
+    )?;
+
+    let json = read_file(&input, "build/generation_data.json")?;
+    let gens: GenerationData = serde_json::from_str(&json)?;
+    write_data_file(
+        &output.join("generation_by_suffix.rs"),
+        gens.generation_by_suffix
+            .iter()
+            .flat_map(|(k, v)| [(k.clone(), v), (k.to_uppercase(), v), (k.to_lowercase(), v)])
+            .map(|(k, v)| format!("map.insert(\"{}\", {});", k, v)),
     )?;
 
     Ok(())

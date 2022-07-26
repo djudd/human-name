@@ -5,7 +5,6 @@
 #![doc(html_root_url = "https://djudd.github.io/human-name/")]
 #![cfg_attr(feature = "bench", feature(test))]
 
-extern crate phf;
 extern crate smallstr;
 extern crate smallvec;
 extern crate unicode_normalization;
