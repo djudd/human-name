@@ -1,7 +1,6 @@
 use super::case::capitalize_word;
 use ahash::AHashSet;
 use once_cell::sync::Lazy;
-use phf::phf_set;
 
 static UNCAPITALIZED_PARTICLES: Lazy<AHashSet<&'static str>> = Lazy::new(|| {
     let mut set = AHashSet::new();
@@ -17,7 +16,7 @@ static UNCAPITALIZED_PARTICLES: Lazy<AHashSet<&'static str>> = Lazy::new(|| {
     set
 });
 
-static MAC_EXCEPTIONS: phf::Set<&'static str> = phf_set! {
+const MAC_EXCEPTIONS: [&str; 9] = [
     "Machin",
     "Machlin",
     "Machar",
@@ -27,7 +26,7 @@ static MAC_EXCEPTIONS: phf::Set<&'static str> = phf_set! {
     "Macevicius",
     "Maciulis",
     "Macias",
-};
+];
 
 #[allow(clippy::if_same_then_else)]
 fn capitalize_after_mac(word: &str) -> bool {
@@ -38,7 +37,7 @@ fn capitalize_after_mac(word: &str) -> bool {
     } else if ["a", "c", "i", "z", "j"].iter().any(|c| word.ends_with(c)) {
         false
     } else {
-        !MAC_EXCEPTIONS.contains(word)
+        !MAC_EXCEPTIONS.contains(&word)
     }
 }
 

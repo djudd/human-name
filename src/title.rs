@@ -6,7 +6,7 @@ use ahash::AHashMap;
 use once_cell::sync::Lazy;
 use std::cmp;
 
-static TWO_CHAR_TITLES: [&str; 4] = ["mr", "ms", "sr", "dr"];
+const TWO_CHAR_TITLES: [&str; 4] = ["mr", "ms", "sr", "dr"];
 
 static HONORIFIC_PREFIXES: Lazy<AHashMap<&'static str, &'static str>> = Lazy::new(|| {
     let mut map = AHashMap::new();

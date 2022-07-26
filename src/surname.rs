@@ -2,9 +2,9 @@ use super::namepart::{Category, NamePart};
 use ahash::AHashSet;
 use once_cell::sync::Lazy;
 
-static VOWELLESS_SURNAMES: [&str; 4] = ["Ng", "Lv", "Mtz", "Hdz"];
+const VOWELLESS_SURNAMES: [&str; 4] = ["Ng", "Lv", "Mtz", "Hdz"];
 
-static SINGLE_LETTER_CONJUNCTIONS: [&str; 4] = ["e", "y", "E", "Y"];
+const SINGLE_LETTER_CONJUNCTIONS: [&str; 4] = ["e", "y", "E", "Y"];
 
 static SURNAME_PREFIXES: Lazy<AHashSet<&'static str>> = Lazy::new(|| {
     let mut set = AHashSet::new();
