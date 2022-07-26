@@ -3,11 +3,17 @@ use ahash::AHashSet;
 use once_cell::sync::Lazy;
 use phf::phf_set;
 
-// Stores capitalized versions because we check after doing the initial,
-// naive capitalization
 static UNCAPITALIZED_PARTICLES: Lazy<AHashSet<&'static str>> = Lazy::new(|| {
     let mut set = AHashSet::new();
-    include!(concat!(env!("OUT_DIR"), "/uncapitalized_particles.rs"));
+    // Store capitalized versions because we check after doing the initial,
+    // naive capitalization
+    include!(concat!(
+        env!("OUT_DIR"),
+        "/capitalized_uncapitalized_particles.rs"
+    ));
+    // These are conjunctions not particles but we treat them similarly here
+    set.insert("E");
+    set.insert("Y");
     set
 });
 
