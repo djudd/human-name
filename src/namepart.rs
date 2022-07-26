@@ -342,28 +342,3 @@ mod tests {
         assert!(NamePart::from_word("AT", false, Location::Start).is_initials());
     }
 }
-
-#[cfg(feature = "bench")]
-mod bench {
-    use super::*;
-    use criterion::{black_box, criterion_group, Bencher, Criterion};
-
-    fn all_from_text(c: &mut Criterion) {
-        c.bench_function("first last", |b| {
-            b.iter(|| black_box(NamePart::all_from_text("John Doe", true, Location::Start).count()))
-        });
-        c.bench_function("initial surname", |b| {
-            b.iter(|| black_box(NamePart::all_from_text("J. Doe", true, Location::Start).count()))
-        });
-        c.bench_function("nonascii", |b| {
-            b.iter(|| black_box(NamePart::all_from_text("이용희", false, Location::Start).count()))
-        });
-        c.bench_function("all caps", |b| {
-            b.iter(|| {
-                black_box(NamePart::all_from_text("JOHN DOE", false, Location::Start).count())
-            })
-        });
-    }
-
-    criterion_group!(name_part, all_from_text);
-}

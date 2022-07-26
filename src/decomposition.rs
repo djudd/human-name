@@ -38,25 +38,3 @@ pub fn is_combining(c: char) -> bool {
 pub fn combining_chars(word: &str) -> usize {
     word.chars().filter(|c| is_combining(*c)).count()
 }
-
-#[cfg(feature = "bench")]
-mod tests {
-    use super::*;
-    use criterion::{black_box, criterion_group, Bencher, Criterion};
-
-    fn normalization() {
-        c.bench_function("ascii", |b| {
-            b.iter(|| black_box(normalize_nfkd_whitespace("James 'J' S. Brown MD").len()))
-        });
-
-        c.bench_function("nfkd non-ascii", |b| {
-            b.iter(|| black_box(normalize_nfkd_whitespace("James «J» S. Brown MD").len()))
-        });
-
-        c.bench_function("non-nfkd non-ascii", |b| {
-            b.iter(|| black_box(normalize_nfkd_whitespace("James 'J' S. Bröwn MD").len()))
-        });
-    }
-
-    criterion_group!(decomposition, normalization);
-}

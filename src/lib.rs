@@ -717,39 +717,26 @@ mod tests {
 }
 
 #[cfg(feature = "bench")]
-mod bench {
-    use super::*;
-    use criterion::{black_box, criterion_group, Bencher, Criterion};
+pub mod benchable {
+    use crate::*;
 
-    fn initialize_struct_initial_surname(c: &mut Criterion) {
-        let name = "J. Doe";
-        let parsed = parse::parse(&*name).unwrap();
-
-        c.bench_function("initial surname", |b| {
-            b.iter(|| black_box(Name::initialize_struct(&parsed, name.len()).byte_len()))
-        });
+    pub fn initialize_name_struct(parsed: &parse::Name, name_len: usize) -> Option<Name> {
+        Name::initialize_struct(parsed, name_len)
     }
 
-    fn initialize_struct_first_last(c: &mut Criterion) {
-        let name = "John Doe";
-        let parsed = parse::parse(&*name).unwrap();
-        c.bench_function("first last", |b| {
-            b.iter(|| black_box(Name::initialize_struct(&parsed, name.len()).byte_len()))
-        });
+    pub fn name_part_all_from_text(
+        text: &str,
+        trust_capitalization: bool,
+        location: namepart::Location,
+    ) -> namepart::NameParts {
+        namepart::NamePart::all_from_text(text, trust_capitalization, location)
     }
 
-    fn initialize_struct_complex(c: &mut Criterion) {
-        let name = "John Allen Q.R. de la MacDonald Jr.";
-        let parsed = parse::parse(&*name).unwrap();
-        c.bench_function("complex", |b| {
-            b.iter(|| black_box(Name::initialize_struct(&parsed, name.len()).byte_len()))
-        });
-    }
-
-    criterion_group!(
-        Name,
-        initialize_struct_initial_surname,
-        initialize_struct_first_last,
-        initialize_struct_complex
-    );
+    pub use case::capitalize_word;
+    pub use case::is_mixed_case;
+    pub use decomposition::normalize_nfkd_whitespace;
+    pub use namepart::Location;
+    pub use nickname::have_matching_variants;
+    pub use nickname::strip_nickname;
+    pub use parse::parse;
 }

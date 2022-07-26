@@ -226,31 +226,3 @@ mod tests {
         assert_eq!("Ss", capitalize_word("ß", false));
     }
 }
-
-#[cfg(feature = "bench")]
-mod bench {
-    use super::*;
-    use criterion::{black_box, criterion_group, Bencher, Criterion};
-
-    fn mixed_case(c: &mut Criterion) {
-        c.bench_function("not mixed", |b| {
-            b.iter(|| black_box(is_mixed_case("JOHN MACDONALD")))
-        });
-
-        c.bench_function("mixed", |b| {
-            b.iter(|| black_box(is_mixed_case("J. MacDonald")))
-        });
-    }
-
-    fn capitalize(c: &mut Criterion) {
-        c.bench_function("uppercase ascii", |b| {
-            b.iter(|| black_box(capitalize_word("JONATHAN", true)))
-        });
-
-        c.bench_function("complex", |b| {
-            b.iter(|| black_box(capitalize_word("föö-bar", false)))
-        });
-    }
-
-    criterion_group!(case, capitalize, mixed_case);
-}

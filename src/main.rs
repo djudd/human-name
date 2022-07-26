@@ -1,11 +1,5 @@
-#![cfg_attr(feature = "bench", feature(test))]
-
 extern crate human_name;
 extern crate serde_json;
-
-#[cfg(test)]
-#[cfg(feature = "bench")]
-extern crate test;
 
 use std::env;
 use std::io;

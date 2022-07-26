@@ -396,9 +396,6 @@ impl<'a> ParseOp<'a> {
 mod tests {
     use super::*;
 
-    #[cfg(feature = "bench")]
-    use test::{black_box, Bencher};
-
     #[test]
     fn first_last() {
         let Name {
@@ -542,30 +539,4 @@ mod tests {
         let name = parse("DR JANE DOE ET AL").unwrap();
         assert_eq!("et al.", name.honorific_suffix().unwrap());
     }
-}
-
-#[cfg(feature = "bench")]
-mod bench {
-    use super::*;
-    use criterion::{black_box, criterion_group, Bencher, Criterion};
-
-    fn parsing(c: &mut Criterion) {
-        c.bench_function("first last", |b| {
-            b.iter(|| black_box(parse("John Doe").is_some()))
-        });
-
-        c.bench_function("non-ascii", |b| {
-            b.iter(|| black_box(parse("이용희").is_some()))
-        });
-
-        c.bench_function("last, first", |b| {
-            b.iter(|| black_box(parse("Doe, John").is_some()))
-        });
-
-        c.bench_function("complex", |b| {
-            b.iter(|| black_box(parse("James S. Brown MD, FRCS, FDSRCS").is_some()))
-        });
-    }
-
-    criterion_group!(parse, parsing);
 }

@@ -54,3 +54,4 @@ crate-type = ["rlib", "dylib"]
 [[bench]]
 name = "human_name"
 harness = false
+required-features = ["bench"]
