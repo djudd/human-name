@@ -11,48 +11,81 @@ struct NickData {
     names_by_irregular_nick: HashMap<String, Vec<String>>,
 }
 
+#[derive(Deserialize)]
+struct TitleData {
+    honorific_prefixes: HashMap<String, String>,
+    honorific_suffixes: HashMap<String, String>,
+}
+
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
-const NICK_DATA_FILE: &str = "build/nick_data.json";
-
 fn main() -> Result<()> {
-    let input = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join(NICK_DATA_FILE);
+    let input = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let output = PathBuf::from(env::var("OUT_DIR").unwrap());
 
-    println!("cargo:rerun-if-changed={}", NICK_DATA_FILE);
+    let json = read_file(&input, "build/nick_data.json")?;
+    let nicks: NickData = serde_json::from_str(&json)?;
+    write_data_file(
+        &output.join("names_by_nick_prefix.rs"),
+        nicks.names_by_nick_prefix.iter().map(|(k, vs)| {
+            format!(
+                "map.insert(\"{}\", &[{}] as &[_]);",
+                k,
+                quoted_comma_separated(vs)
+            )
+        }),
+    )?;
+    write_data_file(
+        &output.join("names_by_irregular_nick.rs"),
+        nicks.names_by_irregular_nick.iter().map(|(k, vs)| {
+            format!(
+                "map.insert(\"{}\", &[{}] as &[_]);",
+                k,
+                quoted_comma_separated(vs)
+            )
+        }),
+    )?;
 
-    write_tables(&input, &output)?;
+    let json = read_file(&input, "build/title_data.json")?;
+    let titles: TitleData = serde_json::from_str(&json)?;
+    write_data_file(
+        &output.join("honorific_prefixes.rs"),
+        titles
+            .honorific_prefixes
+            .iter()
+            .map(|(k, v)| format!("map.insert(\"{}\", \"{}\");", k, v)),
+    )?;
+    write_data_file(
+        &output.join("honorific_suffixes.rs"),
+        titles
+            .honorific_suffixes
+            .iter()
+            .map(|(k, v)| format!("map.insert(\"{}\", \"{}\");", k, v)),
+    )?;
 
     Ok(())
 }
 
-fn write_tables(input: &Path, output: &Path) -> Result<()> {
-    let input = fs::read_to_string(input)?;
-    let data = serde_json::from_str::<NickData>(&input)?;
+fn read_file(input_dir: &Path, file_path: &str) -> Result<String> {
+    println!("cargo:rerun-if-changed={}", file_path);
+    let s = fs::read_to_string(input_dir.join(file_path))?;
+    Ok(s)
+}
 
-    let mut lines: Vec<String> = vec!["{".to_string()];
-    for (k, vs) in data.names_by_nick_prefix.iter() {
-        let vs = vs
-            .iter()
-            .map(|v| format!("\"{}\"", v))
-            .collect::<Vec<_>>()
-            .join(", ");
-        lines.push(format!("map.insert(\"{}\", &[{}] as &[_]);", k, vs));
-    }
+fn write_data_file<I>(output: &Path, data: I) -> Result<()>
+where
+    I: Iterator<Item = String>,
+{
+    let mut lines = vec!["{".to_string()];
+    lines.extend(data);
     lines.push("}".to_string());
-    fs::write(&output.join("names_by_nick_prefix.rs"), lines.join("\n"))?;
-
-    let mut lines: Vec<String> = vec!["{".to_string()];
-    for (k, vs) in data.names_by_irregular_nick.iter() {
-        let vs = vs
-            .iter()
-            .map(|v| format!("\"{}\"", v))
-            .collect::<Vec<_>>()
-            .join(", ");
-        lines.push(format!("map.insert(\"{}\", &[{}] as &[_]);", k, vs));
-    }
-    lines.push("}".to_string());
-    fs::write(&output.join("names_by_irregular_nick.rs"), lines.join("\n"))?;
-
+    fs::write(&output, lines.join("\n"))?;
     Ok(())
+}
+
+fn quoted_comma_separated(vs: &Vec<String>) -> String {
+    vs.iter()
+        .map(|v| format!("\"{}\"", v))
+        .collect::<Vec<_>>()
+        .join(", ")
 }
