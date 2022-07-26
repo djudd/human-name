@@ -124,7 +124,7 @@ where
     Ok(())
 }
 
-fn quoted_comma_separated(vs: &Vec<String>) -> String {
+fn quoted_comma_separated(vs: &[String]) -> String {
     vs.iter()
         .map(|v| format!("\"{}\"", v))
         .collect::<Vec<_>>()

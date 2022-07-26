@@ -71,7 +71,7 @@ static GENERATION_BY_SUFFIX: phf::Map<&'static str, u8> = phf_map! {
     "snr" => 1,
 };
 
-static SUFFIX_BY_GENERATION: [&str; 5] = ["Sr.", "Jr.", "III", "IV", "V"];
+const SUFFIX_BY_GENERATION: [&str; 5] = ["Sr.", "Jr.", "III", "IV", "V"];
 
 pub fn generation_from_suffix(part: &NamePart, might_be_initials: bool) -> Option<NonZeroU8> {
     match part.category {

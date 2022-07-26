@@ -1,7 +1,7 @@
 use super::transliterate;
 use crate::case::*;
 use crate::features::starts_with_consonant;
-use ahash::{AHashMap, AHashSet};
+use ahash::AHashMap;
 use once_cell::sync::Lazy;
 use std::borrow::Cow;
 use std::iter;
@@ -20,22 +20,11 @@ static NAMES_BY_IRREGULAR_NICK: Lazy<AHashMap<&'static str, &'static [&'static s
         map
     });
 
-static DIMINUTIVE_EXCEPTIONS: Lazy<AHashSet<&'static str>> = Lazy::new(|| {
-    let mut set = AHashSet::new();
-    set.insert("Mary");
-    set.insert("Joy");
-    set.insert("Roy");
-    set.insert("Guy");
-    set.insert("Amy");
-    set.insert("Troy");
-    set
-});
+const DIMINUTIVE_EXCEPTIONS: [&str; 6] = ["Mary", "Joy", "Roy", "Guy", "Amy", "Troy"];
 
-static FINAL_SYLLABLES_EXCEPTIONS: Lazy<AHashSet<&'static str>> = Lazy::new(|| {
-    let mut set = AHashSet::new();
-    set.insert("Nathan"); // Probably != Jonathan
-    set
-});
+const FINAL_SYLLABLES_EXCEPTIONS: [&str; 1] = [
+    "Nathan", // Probably != Jonathan
+];
 
 // Returns tuple (close_char, must_precede_whitespace)
 #[inline]
@@ -319,10 +308,10 @@ fn matches_without_ito(a: &str, b: &str) -> bool {
         && matches_after_removing_diminutive(a, b, 3)
 }
 
-#[inline]
+#[inline(never)]
 fn matches_after_removing_diminutive(a: &str, b: &str, diminutive_len: usize) -> bool {
     eq_casefolded_alpha_prefix(&a[0..a.len() - diminutive_len], b)
-        && !DIMINUTIVE_EXCEPTIONS.contains(a)
+        && !DIMINUTIVE_EXCEPTIONS.contains(&a)
 }
 
 #[inline]
@@ -338,7 +327,8 @@ fn is_final_syllables_of(needle: &str, haystack: &str) -> bool {
         || needle.starts_with("Ann")
         || haystack.starts_with("Mary")
     {
-        eq_casefolded_alpha_suffix(needle, haystack) && !FINAL_SYLLABLES_EXCEPTIONS.contains(needle)
+        eq_casefolded_alpha_suffix(needle, haystack)
+            && !FINAL_SYLLABLES_EXCEPTIONS.contains(&needle)
     } else {
         false
     }
