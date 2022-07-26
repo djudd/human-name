@@ -1,37 +1,15 @@
 use super::case::capitalize_word;
+use ahash::AHashSet;
+use once_cell::sync::Lazy;
 use phf::phf_set;
 
-// Store capitalized versions because we check after doing the initial,
+// Stores capitalized versions because we check after doing the initial,
 // naive capitalization
-
-static UNCAPITALIZED_PARTICLES: phf::Set<&'static str> = phf_set! {
-    "Af",
-    "Av",
-    "Da",
-    "Das",
-    "Dal",
-    "De",
-    "Del",
-    "Dela",
-    "Dei",
-    "Der",
-    "Di",
-    "Dí",
-    "Do",
-    "Dos",
-    "Du",
-    "La",
-    "Le",
-    "Na",
-    "Ter",
-    "Van",
-    "Vel",
-    "Von",
-    "Zu",
-    "Zum",
-    "E",
-    "Y",
-};
+static UNCAPITALIZED_PARTICLES: Lazy<AHashSet<&'static str>> = Lazy::new(|| {
+    let mut set = AHashSet::new();
+    include!(concat!(env!("OUT_DIR"), "/uncapitalized_particles.rs"));
+    set
+});
 
 static MAC_EXCEPTIONS: phf::Set<&'static str> = phf_set! {
     "Machin",
