@@ -20,6 +20,7 @@ struct TitleData {
 #[derive(Deserialize)]
 struct NameData {
     two_letter_given_names: Vec<String>,
+    uncapitalized_particles: Vec<String>,
     surname_prefixes: Vec<String>,
 }
 
@@ -77,6 +78,13 @@ fn main() -> Result<()> {
             .two_letter_given_names
             .iter()
             .flat_map(|n| [n.clone(), n.to_uppercase(), n.to_lowercase()])
+            .map(|n| format!("set.insert(\"{}\");", n)),
+    )?;
+    write_data_file(
+        &output.join("uncapitalized_particles.rs"),
+        names
+            .uncapitalized_particles
+            .iter()
             .map(|n| format!("set.insert(\"{}\");", n)),
     )?;
     write_data_file(
