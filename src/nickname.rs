@@ -232,9 +232,21 @@ impl<'a> Iterator for NameVariantIter<'a> {
 
 impl<'a> ExactSizeIterator for NameVariantIter<'a> {}
 
+fn transliterate_if_non_ascii(s: &str) -> Cow<str> {
+    if s.is_ascii() && s.bytes().all(|b| b.is_ascii_alphabetic()) {
+        // We were already titlecased by namecase::namecase,
+        // so we don't need to do anything
+        Cow::Borrowed(s)
+    } else {
+        transliterate::to_ascii_titlecase(s)
+            .map(Cow::Owned)
+            .unwrap_or(Cow::Borrowed(s))
+    }
+}
+
 pub fn have_matching_variants(original_a: &str, original_b: &str) -> bool {
-    let original_a = transliterate::to_ascii_titlecase(original_a);
-    let original_b = transliterate::to_ascii_titlecase(original_b);
+    let original_a = transliterate_if_non_ascii(original_a);
+    let original_b = transliterate_if_non_ascii(original_b);
 
     let a_variants = NameVariants::for_name(&original_a);
     let b_variants = NameVariants::for_name(&original_b);
@@ -395,6 +407,12 @@ mod tests {
         assert!(!have_matching_variants("John", "Nathan"));
         assert!(!have_matching_variants("Mary", "Margeret"));
         assert!(!have_matching_variants("Annette", "Johanna"));
+    }
+
+    #[test]
+    fn non_bmp_alphas() {
+        assert!(have_matching_variants("𐒴𐓘", "𐒴𐓘"));
+        assert!(!have_matching_variants("𐒴𐓘", "𐒴𐓙"));
     }
 
     #[test]

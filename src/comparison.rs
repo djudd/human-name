@@ -231,8 +231,8 @@ impl Name {
 
     #[inline]
     fn initials_consistent_with_less_complete(&self, other: &Name) -> bool {
-        let my_initials = &*self.transliterated_initials();
-        let their_initials = &*other.transliterated_initials();
+        let (my_first, my_initials) = self.transliterated_initials();
+        let (their_first, their_initials) = other.transliterated_initials();
 
         // Unless we have both given names, we require that the first initials
         // match (if we do have the names, we'll check for nicknames, etc,
@@ -248,16 +248,14 @@ impl Name {
                 // However, only check in this direction because we know `self`
                 // has more complete initials, so their initials won't contain
                 // ours unless they're equal.
-                if !my_initials.contains(&their_initials) {
+                if !my_initials.contains(&*their_initials) {
                     return false;
                 }
             } else {
                 // Normal case, given the absence of (true) given names
                 //
                 // Using byte offsets is ok because we already converted to ASCII
-                if my_initials.is_empty() || their_initials.is_empty() {
-                    return true;
-                } else if my_initials[..1] != their_initials[..1] {
+                if my_first != their_first {
                     return false;
                 }
             }
@@ -265,28 +263,28 @@ impl Name {
 
         // If we have middle initials, check their consistency alone before
         // looking at names (& we know "self" has the more complete initials).
-        //
-        // Using byte offsets is ok because we already converted to ASCII.
-        if my_initials.len() > 1
-            && their_initials.len() > 1
-            && !my_initials[1..].contains(&their_initials[1..])
-        {
-            return false;
-        }
-
-        true
+        (&my_initials[my_first.len_utf8()..]).contains(&their_initials[their_first.len_utf8()..])
     }
 
-    fn transliterated_initials(&self) -> Cow<str> {
-        if self.initials().is_ascii() {
-            Cow::Borrowed(self.initials())
+    fn transliterated_initials(&self) -> (char, Cow<str>) {
+        let initials = self.initials();
+        if initials.is_ascii() {
+            (initials.as_bytes()[0].into(), Cow::Borrowed(initials))
         } else {
-            Cow::Owned(
-                self.initials()
-                    .chars()
-                    .filter_map(transliterate::to_ascii_initial)
-                    .collect::<String>(),
-            )
+            let transliterated = self
+                .initials()
+                .chars()
+                .filter_map(transliterate::to_ascii_initial)
+                .collect::<String>();
+
+            if transliterated.is_empty() {
+                (initials.chars().next().unwrap(), Cow::Borrowed(initials))
+            } else {
+                (
+                    transliterated.as_bytes()[0].into(),
+                    Cow::Owned(transliterated),
+                )
+            }
         }
     }
 
@@ -351,12 +349,15 @@ impl Name {
             // both, or if the components that match are long enough
             if my_word.is_none() && their_word.is_none() {
                 return true;
-            } else if my_word.is_none() || their_word.is_none() {
-                return matching_chars >= MIN_SURNAME_CHAR_MATCH;
+            }
+            let my_chars = my_word.and_then(transliterate::to_ascii_casefolded_reversed);
+            let their_chars = their_word.and_then(transliterate::to_ascii_casefolded_reversed);
+            if my_chars.is_none() || their_chars.is_none() {
+                return matching_chars >= MIN_SURNAME_CHAR_MATCH || my_word == their_word;
             }
 
-            let mut my_chars = transliterate::to_ascii_casefolded_reversed(my_word.unwrap());
-            let mut their_chars = transliterate::to_ascii_casefolded_reversed(their_word.unwrap());
+            let mut my_chars = my_chars.unwrap();
+            let mut their_chars = their_chars.unwrap();
 
             let mut my_char = my_chars.next();
             let mut their_char = their_chars.next();
@@ -371,10 +372,12 @@ impl Name {
                     // My word is a suffix of their word, check my next word
                     // against the rest of their word
                     my_word = my_words.next();
-                    if let Some(word) = my_word {
+                    if let Some(chars) =
+                        my_word.and_then(transliterate::to_ascii_casefolded_reversed)
+                    {
                         // Continue the inner loop but incrementing through my
                         // next word
-                        my_chars = transliterate::to_ascii_casefolded_reversed(word);
+                        my_chars = chars;
                         my_char = my_chars.next();
                     } else {
                         // There is no next word, so this is a suffix-only match,
@@ -385,10 +388,12 @@ impl Name {
                     // Their word is a suffix of my word, check their next word
                     // against the rest of my_words
                     their_word = their_words.next();
-                    if let Some(word) = their_word {
+                    if let Some(chars) =
+                        their_word.and_then(transliterate::to_ascii_casefolded_reversed)
+                    {
                         // Continue the inner loop but incrementing through their
                         // next word
-                        their_chars = transliterate::to_ascii_casefolded_reversed(word);
+                        their_chars = chars;
                         their_char = their_chars.next();
                     } else {
                         // There is no next word, so this is a suffix-only match,
@@ -441,27 +446,37 @@ impl<'a> NameWordOrInitial<'a> {
         }
 
         #[inline]
-        fn fold_rest(c: char, word: &str) -> impl Iterator<Item = char> + '_ {
-            transliterate::to_ascii_casefolded(&word[c.len_utf8()..])
+        fn fold_rest(c: char, word: Option<&str>) -> Option<impl Iterator<Item = char> + '_> {
+            word.and_then(|w| transliterate::to_ascii_casefolded(&w[c.len_utf8()..]))
         }
 
         let (my_initial, their_initial) = (self.initial(), other.initial());
         if fold_initial(my_initial) != fold_initial(their_initial) {
-            return ComparisonResult::DifferentInitials;
+            if self.word().is_some() && other.word().is_some() {
+                return ComparisonResult::Inconsistent;
+            } else {
+                return ComparisonResult::DifferentInitials;
+            }
         }
 
-        let (my_word, their_word) = (self.word(), other.word());
-        if my_word.is_none() || their_word.is_none() {
-            return ComparisonResult::InitialsOnlyMatch;
-        }
-        let (my_word, their_word) = (my_word.unwrap(), their_word.unwrap());
+        let my_word = self.word();
+        let their_word = other.word();
 
         // We just checked the initial matches, so skip ahead
         let mut matched = 1;
-        let (mut my_chars, mut their_chars) = (
+
+        let (my_chars, their_chars) = (
             fold_rest(my_initial, my_word),
             fold_rest(their_initial, their_word),
         );
+        if my_chars.is_none() || their_chars.is_none() {
+            if my_word.is_some() && my_word == their_word {
+                return ComparisonResult::ExactMatch;
+            } else {
+                return ComparisonResult::InitialsOnlyMatch;
+            }
+        }
+        let (mut my_chars, mut their_chars) = (my_chars.unwrap(), their_chars.unwrap());
 
         loop {
             let my_char = my_chars.next();
@@ -487,7 +502,8 @@ impl<'a> NameWordOrInitial<'a> {
                 }
             } else if my_char != their_char {
                 // Failed match; abort, but first, maybe try nickname db
-                if allow_nicknames && have_matching_variants(my_word, their_word) {
+                if allow_nicknames && have_matching_variants(my_word.unwrap(), their_word.unwrap())
+                {
                     return ComparisonResult::NicknameMatch;
                 } else {
                     return ComparisonResult::Inconsistent;
@@ -574,6 +590,67 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn non_bmp_alphas_simple() {
+        let a = NameWordOrInitial::Word("𐒴𐓘", 1);
+        assert_eq!(ComparisonResult::ExactMatch, a.check_consistency(&a, false));
+        assert_eq!(ComparisonResult::ExactMatch, a.check_consistency(&a, true));
+
+        let b = NameWordOrInitial::Word("𐓊𐓙", 1);
+        assert_eq!(
+            ComparisonResult::Inconsistent,
+            a.check_consistency(&b, false)
+        );
+        assert_eq!(
+            ComparisonResult::Inconsistent,
+            a.check_consistency(&b, true)
+        );
+
+        assert!(Name::surname_consistent_slow(
+            "𐒴𐓘".unicode_words().rev(),
+            "𐒴𐓘".unicode_words().rev()
+        ));
+        assert!(!Name::surname_consistent_slow(
+            "𐒴𐓘".unicode_words().rev(),
+            "𐓊𐓙".unicode_words().rev()
+        ));
+
+        let a = Name::parse("𐒴𐓘 𐓊𐓙").unwrap();
+        let b = Name::parse("𐒴𐓘 𐓍𐓙").unwrap();
+        assert!(a.consistent_with(&a));
+        assert!(!a.consistent_with(&b));
+    }
+
+    #[test]
+    fn non_bmp_alphas_with_middle_initial() {
+        let a = NameWordOrInitial::Initial('𐒴');
+        assert_eq!(
+            ComparisonResult::InitialsOnlyMatch,
+            a.check_consistency(&a, false)
+        );
+        assert_eq!(
+            ComparisonResult::InitialsOnlyMatch,
+            a.check_consistency(&a, true)
+        );
+
+        let b = NameWordOrInitial::Initial('𐒵');
+        assert_eq!(
+            ComparisonResult::DifferentInitials,
+            a.check_consistency(&b, true)
+        );
+        assert_eq!(
+            ComparisonResult::DifferentInitials,
+            a.check_consistency(&b, false)
+        );
+
+        let a = Name::parse("𐒴𐓘 𐓊𐓙").unwrap();
+        let b = Name::parse("𐒴𐓘 𐒵 𐓊𐓙").unwrap();
+        let c = Name::parse("𐒴𐓘 𐓍 𐓊𐓙").unwrap();
+        assert!(a.consistent_with(&b));
+        assert!(a.consistent_with(&c));
+        assert!(!b.consistent_with(&c));
+    }
 
     #[test]
     fn bug() {
