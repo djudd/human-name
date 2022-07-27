@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::str::Chars;
 use unidecode::unidecode_char;
 
@@ -57,27 +56,21 @@ pub fn to_ascii_casefolded_reversed(text: &str) -> impl Iterator<Item = char> + 
         .filter_map(ascii_to_lower_if_alpha)
 }
 
-pub fn to_ascii_titlecase(s: &str) -> Cow<str> {
-    if s.is_ascii() && s.bytes().all(|b| b.is_ascii_alphabetic()) {
-        Cow::Borrowed(s)
-    } else {
-        let mut capitalized_any = false;
+pub fn to_ascii_titlecase(s: &str) -> String {
+    let mut capitalized_any = false;
 
-        Cow::Owned(
-            s.chars()
-                .flat_map(transliterate)
-                .filter_map(|c| {
-                    if !capitalized_any {
-                        let result = ascii_to_upper_if_alpha(c);
-                        if result.is_some() {
-                            capitalized_any = true;
-                        }
-                        result
-                    } else {
-                        ascii_to_lower_if_alpha(c)
-                    }
-                })
-                .collect(),
-        )
-    }
+    s.chars()
+        .flat_map(transliterate)
+        .filter_map(|c| {
+            if !capitalized_any {
+                let result = ascii_to_upper_if_alpha(c);
+                if result.is_some() {
+                    capitalized_any = true;
+                }
+                result
+            } else {
+                ascii_to_lower_if_alpha(c)
+            }
+        })
+        .collect()
 }
