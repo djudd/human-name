@@ -1,5 +1,8 @@
 use crate::decomposition::is_combining;
 
+#[cfg(debug_assertions)]
+use unicode_normalization::UnicodeNormalization;
+
 #[derive(Debug)]
 enum CaseMapping {
     Empty,
@@ -110,10 +113,8 @@ fn casefolded_alphas(
     text: &str,
 ) -> impl Iterator<Item = char> + std::iter::DoubleEndedIterator + '_ {
     // It would be more correct to use unicode case folding here,
-    // but the only crate I've found which doesn't allocate by default
-    // (operating on iterators rather than strings) is `caseless`,
-    // and it has the problems that (a) its iterator isn't double-ended
-    // and (b) it's slower.
+    // but unicode-case-mapping 0.4 only supports simple case folding
+    // and not multi-character folding, which isn't really better.
     text.chars().flat_map(|c| {
         let mapped = CaseMapping::lowercase(c);
         if !matches!(mapped, CaseMapping::Empty) {
@@ -146,6 +147,7 @@ pub fn capitalize_word(word: &str, simple: bool) -> String {
     const NONASCII_HYPHENS: &str = "\u{2010}‑‒–—―−－﹘﹣";
 
     debug_assert!(simple == word.chars().all(|c| c.is_ascii_alphabetic()));
+    debug_assert!(word.is_ascii() || word == word.nfkd().collect::<String>());
 
     if simple {
         let bytes = word.as_bytes();
@@ -227,6 +229,41 @@ mod tests {
         assert_eq!("Aa-Bb", capitalize_word("aa-bb", false));
         assert_eq!("Aa-Bb", capitalize_word("AA-BB", false));
         assert_eq!("Ss", capitalize_word("ß", false));
+        assert_eq!("ʥar", capitalize_word("ʥar", false));
+    }
+
+    #[test]
+    fn prefix() {
+        assert!(eq_casefolded_alpha_prefix("foo", "foo"));
+        assert!(eq_casefolded_alpha_prefix("foo", "FOObar"));
+        assert!(eq_casefolded_alpha_prefix("FOObar", "foo"));
+        assert!(!eq_casefolded_alpha_prefix("bar", "fooBAR"));
+        assert!(!eq_casefolded_alpha_prefix("fooBAR", "bar"));
+        // TODO Proper case-folding support should fix this
+        //assert!(eq_casefolded_alpha_prefix("fooß", "foossar"));
+        //assert!(eq_casefolded_alpha_prefix("foossar", "fooß"));
+        assert!(eq_casefolded_alpha_prefix("f😃o1", "f😰o2"));
+        assert!(eq_casefolded_alpha_prefix("fo😃1", "foobar"));
+        assert!(eq_casefolded_alpha_prefix("", ""));
+        assert!(eq_casefolded_alpha_prefix("", "foo"));
+        assert!(eq_casefolded_alpha_prefix("😃", "😰"));
+    }
+
+    #[test]
+    fn suffix() {
+        assert!(eq_casefolded_alpha_suffix("foo", "foo"));
+        assert!(eq_casefolded_alpha_suffix("bar", "fooBAR"));
+        assert!(eq_casefolded_alpha_suffix("fooBAR", "bar"));
+        assert!(!eq_casefolded_alpha_suffix("foo", "FOObar"));
+        assert!(!eq_casefolded_alpha_suffix("FOObar", "foo"));
+        // TODO Proper case-folding support should fix this
+        //assert!(eq_casefolded_alpha_suffix("fooß", "foossar"));
+        //assert!(eq_casefolded_alpha_suffix("foossar", "fooß"));
+        assert!(eq_casefolded_alpha_suffix("f😃o1", "f😰o2"));
+        assert!(eq_casefolded_alpha_suffix("ba😃r1", "foobar"));
+        assert!(eq_casefolded_alpha_suffix("", ""));
+        assert!(eq_casefolded_alpha_suffix("", "foo"));
+        assert!(eq_casefolded_alpha_suffix("😃", "😰"));
     }
 
     #[cfg(feature = "bench")]
