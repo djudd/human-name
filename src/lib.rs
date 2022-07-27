@@ -723,6 +723,62 @@ mod tests {
         assert!(a.consistent_with(&b));
     }
 
+    #[test]
+    fn digits() {
+        let a = Name::parse("111 222");
+        assert!(a.is_none());
+
+        let a = Name::parse("One-1 Ones").unwrap();
+        let b = Name::parse("One-2 Ones").unwrap();
+        assert!(a.consistent_with(&b));
+
+        let a = Name::parse("One Ones-1").unwrap();
+        let b = Name::parse("One Ones-2").unwrap();
+        assert!(a.consistent_with(&b));
+
+        let a = Name::parse("One Ones1").unwrap();
+        let b = Name::parse("One Ones2").unwrap();
+        assert!(a.consistent_with(&b));
+
+        let a = Name::parse("One1 Ones").unwrap();
+        let b = Name::parse("One2 Ones").unwrap();
+        assert!(a.consistent_with(&b));
+
+        let a = Name::parse("One 1 Ones").unwrap();
+        let b = Name::parse("One 2 Ones").unwrap();
+        assert!(a.consistent_with(&b));
+    }
+
+    #[test]
+    fn emojis() {
+        let a = Name::parse("😃 😃");
+        assert!(a.is_none());
+
+        let a = Name::parse("smile-😃 smiley").unwrap();
+        let b = Name::parse("smile-😰 smiley").unwrap();
+        assert!(a.consistent_with(&b));
+
+        let a = Name::parse("smile smiley-😃").unwrap();
+        let b = Name::parse("smile smiley-😰").unwrap();
+        assert!(a.consistent_with(&b));
+
+        let a = Name::parse("smile 😃 smiley").unwrap();
+        let b = Name::parse("smile 😰 smiley").unwrap();
+        assert!(a.consistent_with(&b));
+
+        let a = Name::parse("smile-😃 smiley").unwrap();
+        let b = Name::parse("smile-😰 smiley").unwrap();
+        assert!(a.consistent_with(&b));
+
+        let a = Name::parse("smile😃 smiley").unwrap();
+        let b = Name::parse("smile😰 smiley").unwrap();
+        assert!(a.consistent_with(&b));
+
+        let a = Name::parse("smile smiley😃").unwrap();
+        let b = Name::parse("smile smiley😰").unwrap();
+        assert!(a.consistent_with(&b));
+    }
+
     #[cfg(feature = "bench")]
     #[bench]
     fn initialize_struct_initial_surname(b: &mut Bencher) {
