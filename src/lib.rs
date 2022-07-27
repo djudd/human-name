@@ -750,6 +750,20 @@ mod tests {
     }
 
     #[test]
+    fn non_bmp_alphas() {
+        let a = Name::parse("𐒴𐓘 𐓊𐓙").unwrap();
+        let b = Name::parse("𐒴𐓘 𐒵 𐓊𐓙").unwrap();
+        assert!(a.consistent_with(&b));
+
+        let c = Name::parse("𐒴𐓘 𐒵𐓙").unwrap();
+        //assert!(!a.consistent_with(&c));
+
+        let d = Name::parse("𐒴𐓘 𐓍 𐓊𐓙").unwrap();
+        assert!(a.consistent_with(&d));
+        //assert!(!b.consistent_with(&d));
+    }
+
+    #[test]
     fn emojis() {
         let a = Name::parse("😃 😃");
         assert!(a.is_none());
