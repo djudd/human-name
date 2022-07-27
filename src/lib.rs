@@ -596,7 +596,11 @@ impl Name {
         for c in self
             .surname_iter()
             .rev()
-            .flat_map(transliterate::to_ascii_casefolded_reversed)
+            .flat_map(|word| {
+                transliterate::to_ascii_casefolded_reversed(word)
+                    .into_iter()
+                    .flatten()
+            })
             .take(comparison::MIN_SURNAME_CHAR_MATCH)
         {
             c.hash(state);
@@ -734,11 +738,11 @@ mod tests {
 
         let a = Name::parse("One Ones-1").unwrap();
         let b = Name::parse("One Ones-2").unwrap();
-        assert!(a.consistent_with(&b));
+        assert!(!a.consistent_with(&b));
 
         let a = Name::parse("One Ones1").unwrap();
         let b = Name::parse("One Ones2").unwrap();
-        assert!(a.consistent_with(&b));
+        assert!(!a.consistent_with(&b));
 
         let a = Name::parse("One1 Ones").unwrap();
         let b = Name::parse("One2 Ones").unwrap();
@@ -753,14 +757,18 @@ mod tests {
     fn non_bmp_alphas() {
         let a = Name::parse("𐒴𐓘 𐓊𐓙").unwrap();
         let b = Name::parse("𐒴𐓘 𐒵 𐓊𐓙").unwrap();
+        assert_eq!("𐒴𐓘 𐓊𐓙", a.display_first_last());
+        assert_eq!("𐒴𐓘 𐓊𐓙", b.display_first_last());
         assert!(a.consistent_with(&b));
 
         let c = Name::parse("𐒴𐓘 𐒵𐓙").unwrap();
-        //assert!(!a.consistent_with(&c));
+        assert_eq!("𐒴𐓘 𐒵𐓙", c.display_first_last());
+        assert!(!a.consistent_with(&c));
 
         let d = Name::parse("𐒴𐓘 𐓍 𐓊𐓙").unwrap();
+        assert_eq!("𐒴𐓘 𐓊𐓙", d.display_first_last());
         assert!(a.consistent_with(&d));
-        //assert!(!b.consistent_with(&d));
+        assert!(!b.consistent_with(&d));
     }
 
     #[test]

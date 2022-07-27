@@ -238,7 +238,9 @@ fn transliterate_if_non_ascii(s: &str) -> Cow<str> {
         // so we don't need to do anything
         Cow::Borrowed(s)
     } else {
-        Cow::Owned(transliterate::to_ascii_titlecase(s))
+        transliterate::to_ascii_titlecase(s)
+            .map(Cow::Owned)
+            .unwrap_or(Cow::Borrowed(s))
     }
 }
 
@@ -405,6 +407,18 @@ mod tests {
         assert!(!have_matching_variants("John", "Nathan"));
         assert!(!have_matching_variants("Mary", "Margeret"));
         assert!(!have_matching_variants("Annette", "Johanna"));
+    }
+
+    #[test]
+    fn non_bmp_alphas() {
+        assert!(have_matching_variants("𐒴𐓘", "𐒴𐓘"));
+        assert!(!have_matching_variants("𐒴𐓘", "𐒴𐓙"));
+    }
+
+    #[test]
+    fn emojis() {
+        //assert!(have_matching_variants("😃", "😃"));
+        //assert!(!have_matching_variants("😃", "😰"));
     }
 
     #[test]

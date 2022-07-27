@@ -351,12 +351,15 @@ impl Name {
             // both, or if the components that match are long enough
             if my_word.is_none() && their_word.is_none() {
                 return true;
-            } else if my_word.is_none() || their_word.is_none() {
+            }
+            let my_chars = my_word.and_then(transliterate::to_ascii_casefolded_reversed);
+            let their_chars = their_word.and_then(transliterate::to_ascii_casefolded_reversed);
+            if my_chars.is_none() || their_chars.is_none() {
                 return matching_chars >= MIN_SURNAME_CHAR_MATCH;
             }
 
-            let mut my_chars = transliterate::to_ascii_casefolded_reversed(my_word.unwrap());
-            let mut their_chars = transliterate::to_ascii_casefolded_reversed(their_word.unwrap());
+            let mut my_chars = my_chars.unwrap();
+            let mut their_chars = their_chars.unwrap();
 
             let mut my_char = my_chars.next();
             let mut their_char = their_chars.next();
@@ -371,10 +374,12 @@ impl Name {
                     // My word is a suffix of their word, check my next word
                     // against the rest of their word
                     my_word = my_words.next();
-                    if let Some(word) = my_word {
+                    if let Some(chars) =
+                        my_word.and_then(transliterate::to_ascii_casefolded_reversed)
+                    {
                         // Continue the inner loop but incrementing through my
                         // next word
-                        my_chars = transliterate::to_ascii_casefolded_reversed(word);
+                        my_chars = chars;
                         my_char = my_chars.next();
                     } else {
                         // There is no next word, so this is a suffix-only match,
@@ -385,10 +390,12 @@ impl Name {
                     // Their word is a suffix of my word, check their next word
                     // against the rest of my_words
                     their_word = their_words.next();
-                    if let Some(word) = their_word {
+                    if let Some(chars) =
+                        their_word.and_then(transliterate::to_ascii_casefolded_reversed)
+                    {
                         // Continue the inner loop but incrementing through their
                         // next word
-                        their_chars = transliterate::to_ascii_casefolded_reversed(word);
+                        their_chars = chars;
                         their_char = their_chars.next();
                     } else {
                         // There is no next word, so this is a suffix-only match,
@@ -441,8 +448,8 @@ impl<'a> NameWordOrInitial<'a> {
         }
 
         #[inline]
-        fn fold_rest(c: char, word: &str) -> impl Iterator<Item = char> + '_ {
-            transliterate::to_ascii_casefolded(&word[c.len_utf8()..])
+        fn fold_rest(c: char, word: Option<&str>) -> Option<impl Iterator<Item = char> + '_> {
+            word.and_then(|w| transliterate::to_ascii_casefolded(&w[c.len_utf8()..]))
         }
 
         let (my_initial, their_initial) = (self.initial(), other.initial());
@@ -450,18 +457,20 @@ impl<'a> NameWordOrInitial<'a> {
             return ComparisonResult::DifferentInitials;
         }
 
-        let (my_word, their_word) = (self.word(), other.word());
-        if my_word.is_none() || their_word.is_none() {
-            return ComparisonResult::InitialsOnlyMatch;
-        }
-        let (my_word, their_word) = (my_word.unwrap(), their_word.unwrap());
+        let my_word = self.word();
+        let their_word = other.word();
 
         // We just checked the initial matches, so skip ahead
         let mut matched = 1;
-        let (mut my_chars, mut their_chars) = (
+
+        let (my_chars, their_chars) = (
             fold_rest(my_initial, my_word),
             fold_rest(their_initial, their_word),
         );
+        if my_chars.is_none() || their_chars.is_none() {
+            return ComparisonResult::InitialsOnlyMatch;
+        }
+        let (mut my_chars, mut their_chars) = (my_chars.unwrap(), their_chars.unwrap());
 
         loop {
             let my_char = my_chars.next();
@@ -487,7 +496,8 @@ impl<'a> NameWordOrInitial<'a> {
                 }
             } else if my_char != their_char {
                 // Failed match; abort, but first, maybe try nickname db
-                if allow_nicknames && have_matching_variants(my_word, their_word) {
+                if allow_nicknames && have_matching_variants(my_word.unwrap(), their_word.unwrap())
+                {
                     return ComparisonResult::NicknameMatch;
                 } else {
                     return ComparisonResult::Inconsistent;
