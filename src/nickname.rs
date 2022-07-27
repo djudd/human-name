@@ -416,12 +416,6 @@ mod tests {
     }
 
     #[test]
-    fn emojis() {
-        //assert!(have_matching_variants("😃", "😃"));
-        //assert!(!have_matching_variants("😃", "😰"));
-    }
-
-    #[test]
     fn variants() {
         assert_eq!(
             vec!["Ada", "Adelaide", "Adele", "Adelina", "Adeline"],
