@@ -721,10 +721,10 @@ mod tests {
 
     #[test]
     fn eq_empty_transliterated_initials() {
-        // It would probably also be fine to fail to parse `b`, but we shouldn't panic
+        // It would probably also be fine to fail to parse `b` or find consistency, but we shouldn't panic
         let a = Name::parse("Ng\nmac").unwrap();
         let b = Name::parse("\u{65c}\nmac\n").unwrap();
-        assert!(a.consistent_with(&b));
+        assert!(!a.consistent_with(&b));
     }
 
     #[test]
