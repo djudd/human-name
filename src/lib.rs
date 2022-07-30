@@ -786,6 +786,14 @@ mod tests {
     }
 
     #[test]
+    fn stops_being_nfkd() {
+        // Some string split stops this from being NFKD after it's normalized, which is ~fine
+        // but at one point produced a panic on a debug assertion.
+        let input = "\u{5c4}((\0)\u{64f}()()\u{5c4}\u{64f}\u{612}";
+        assert!(Name::parse(input).is_none());
+    }
+
+    #[test]
     fn emojis() {
         let a = Name::parse("😃 😃");
         assert!(a.is_none());

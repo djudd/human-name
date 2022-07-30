@@ -1,8 +1,5 @@
 use crate::decomposition::is_combining;
 
-#[cfg(debug_assertions)]
-use unicode_normalization::UnicodeNormalization;
-
 #[derive(Debug)]
 enum CaseMapping {
     Empty,
@@ -146,9 +143,12 @@ pub fn eq_casefolded_alpha_suffix(a: &str, b: &str) -> bool {
 pub fn capitalize_word(word: &str, simple: bool) -> String {
     const NONASCII_HYPHENS: &str = "\u{2010}‑‒–—―−－﹘﹣";
 
-    debug_assert!(simple == word.chars().all(|c| c.is_ascii_alphabetic()));
-    #[cfg(debug_assertions)]
-    debug_assert!(word.is_ascii() || word == word.nfkd().collect::<String>());
+    debug_assert!(
+        simple == word.chars().all(|c| c.is_ascii_alphabetic()),
+        "{:?} did not match simple={}",
+        word,
+        simple
+    );
 
     if simple {
         let bytes = word.as_bytes();
