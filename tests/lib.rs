@@ -128,41 +128,38 @@ fn equality() {
         let b = parts[1];
         let expect = parts[2];
 
-        let parsed_a = human_name::Name::parse(a);
-        let parsed_b = human_name::Name::parse(b);
-
-        assert!(parsed_a.is_some(), "{} was not parsed", a);
-        assert!(parsed_b.is_some(), "{} was not parsed", b);
+        let parsed_a = human_name::Name::parse(a).expect(&format!("{} was not parsed", a));
+        let parsed_b = human_name::Name::parse(b).expect(&format!("{} was not parsed", b));
 
         if expect == "==" {
             assert!(
-                parsed_a == parsed_b,
-                "{} should be equal to {} but was not!",
+                parsed_a.consistent_with(&parsed_b),
+                "{} should be consistent with {} but was not!",
                 a,
                 b
             );
             assert!(
-                parsed_b == parsed_a,
-                "{} should be equal to {} but was not!",
+                parsed_b.consistent_with(&parsed_a),
+                "{} should be consistent with {} but was not!",
                 b,
                 a
             );
             assert!(
-                parsed_a.unwrap().hash == parsed_b.unwrap().hash,
+                parsed_a.hash == parsed_b.hash,
                 "{} should have the same hash as {} but did not!",
                 a,
                 b
             );
         } else {
             assert!(
-                parsed_a != parsed_b,
-                "{} should not be equal to {} but was!",
+                !parsed_a.consistent_with(&parsed_b),
+                "{} should not be consistent with {} but was!",
                 a,
                 b
             );
             assert!(
-                parsed_b != parsed_a,
-                "{} should not be equal to {} but was!",
+                !parsed_b.consistent_with(&parsed_a),
+                "{} should not be consistent with {} but was!",
                 b,
                 a
             );

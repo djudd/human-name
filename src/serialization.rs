@@ -1,5 +1,5 @@
 use super::Name;
-use serde::ser::{Serialize, Serializer};
+use serde::{Serialize, Serializer};
 use std::borrow::Cow;
 
 #[derive(Serialize)]

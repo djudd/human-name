@@ -1,6 +1,6 @@
 [package]
 name = "human_name"
-version = "1.4.0"
+version = "1.4.1"
 authors = ["David Judd <cargo@davidjudd.net>"]
 description = "A library for parsing and comparing human names"
 keywords = ["human", "name", "language", "nlp"]
@@ -18,9 +18,8 @@ unicode-case-mapping = "0.4"
 unidecode = "0.3"
 libc = "0.2"
 phf = "0.11"
-serde = "1.0"
-serde_derive = "1.0"
-serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"], optional = true }
+serde_json = { version = "1.0", optional = true }
 smallvec = { features = ["union"], version = "1.9" }
 smallstr = "0.3"
 
@@ -35,7 +34,7 @@ serde_json = "1.0"
 [features]
 default = ["name_eq_hash", "serialization"]
 name_eq_hash = []
-serialization = []
+serialization = ["serde", "serde_json"]
 bench = []
 
 [profile.release]
@@ -47,6 +46,7 @@ debug = true
 [[bin]]
 name = "human_name"
 doc = false
+required-features = ["serialization"]
 
 [lib]
 name = "human_name"
