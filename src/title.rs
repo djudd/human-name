@@ -2,23 +2,16 @@ use super::case::capitalize_word;
 use super::namepart::{Category, NamePart};
 use super::suffix;
 use crate::Cow;
-use ahash::AHashMap;
-use once_cell::sync::Lazy;
+
 use std::cmp;
 
 const TWO_CHAR_TITLES: [&str; 4] = ["mr", "ms", "sr", "dr"];
 
-static HONORIFIC_PREFIXES: Lazy<AHashMap<&'static str, &'static str>> = Lazy::new(|| {
-    let mut map = AHashMap::new();
+static HONORIFIC_PREFIXES: phf::Map<&'static str, &'static str> =
     include!(concat!(env!("OUT_DIR"), "/honorific_prefixes.rs"));
-    map
-});
 
-static HONORIFIC_SUFFIXES: Lazy<AHashMap<&'static str, &'static str>> = Lazy::new(|| {
-    let mut map = AHashMap::new();
+static HONORIFIC_SUFFIXES: phf::Map<&'static str, &'static str> =
     include!(concat!(env!("OUT_DIR"), "/honorific_suffixes.rs"));
-    map
-});
 
 fn might_be_title_part(word: &NamePart) -> bool {
     if word.counts.chars < 3 {

@@ -1,24 +1,15 @@
 use super::transliterate;
 use crate::case::*;
 use crate::features::starts_with_consonant;
-use ahash::AHashMap;
-use once_cell::sync::Lazy;
+
 use std::borrow::Cow;
 use std::iter;
 
-static NAMES_BY_NICK_PREFIX: Lazy<AHashMap<&'static str, &'static [&'static str]>> =
-    Lazy::new(|| {
-        let mut map = AHashMap::new();
-        include!(concat!(env!("OUT_DIR"), "/names_by_nick_prefix.rs"));
-        map
-    });
+static NAMES_BY_NICK_PREFIX: phf::Map<&'static str, &'static [&'static str]> =
+    include!(concat!(env!("OUT_DIR"), "/names_by_nick_prefix.rs"));
 
-static NAMES_BY_IRREGULAR_NICK: Lazy<AHashMap<&'static str, &'static [&'static str]>> =
-    Lazy::new(|| {
-        let mut map = AHashMap::new();
-        include!(concat!(env!("OUT_DIR"), "/names_by_irregular_nick.rs"));
-        map
-    });
+static NAMES_BY_IRREGULAR_NICK: phf::Map<&'static str, &'static [&'static str]> =
+    include!(concat!(env!("OUT_DIR"), "/names_by_irregular_nick.rs"));
 
 const DIMINUTIVE_EXCEPTIONS: [&str; 6] = ["Mary", "Joy", "Roy", "Guy", "Amy", "Troy"];
 

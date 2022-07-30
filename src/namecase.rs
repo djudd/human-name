@@ -1,20 +1,7 @@
 use super::case::capitalize_word;
-use ahash::AHashSet;
-use once_cell::sync::Lazy;
 
-static UNCAPITALIZED_PARTICLES: Lazy<AHashSet<&'static str>> = Lazy::new(|| {
-    let mut set = AHashSet::new();
-    // Store capitalized versions because we check after doing the initial,
-    // naive capitalization
-    include!(concat!(
-        env!("OUT_DIR"),
-        "/capitalized_uncapitalized_particles.rs"
-    ));
-    // These are conjunctions not particles but we treat them similarly here
-    set.insert("E");
-    set.insert("Y");
-    set
-});
+static UNCAPITALIZED_PARTICLES: phf::Set<&'static str> =
+    include!(concat!(env!("OUT_DIR"), "/particles_and_conjunctions.rs"));
 
 const MAC_EXCEPTIONS: [&str; 9] = [
     "Machin",
