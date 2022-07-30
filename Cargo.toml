@@ -39,8 +39,10 @@ serialization = []
 bench = []
 
 [profile.release]
-debug = true
 lto = "thin"
+
+[profile.bench]
+debug = true
 
 [[bin]]
 name = "human_name"
