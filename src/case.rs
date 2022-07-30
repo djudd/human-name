@@ -147,6 +147,7 @@ pub fn capitalize_word(word: &str, simple: bool) -> String {
     const NONASCII_HYPHENS: &str = "\u{2010}‑‒–—―−－﹘﹣";
 
     debug_assert!(simple == word.chars().all(|c| c.is_ascii_alphabetic()));
+    #[cfg(debug_assertions)]
     debug_assert!(word.is_ascii() || word == word.nfkd().collect::<String>());
 
     if simple {
