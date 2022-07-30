@@ -1,13 +1,9 @@
 use crate::namepart::{Category, NamePart};
-use ahash::AHashMap;
-use once_cell::sync::Lazy;
+
 use std::num::NonZeroU8;
 
-static GENERATION_BY_SUFFIX: Lazy<AHashMap<&'static str, u8>> = Lazy::new(|| {
-    let mut map = AHashMap::new();
+static GENERATION_BY_SUFFIX: phf::Map<&'static str, u8> =
     include!(concat!(env!("OUT_DIR"), "/generation_by_suffix.rs"));
-    map
-});
 
 const SUFFIX_BY_GENERATION: [&str; 5] = ["Sr.", "Jr.", "III", "IV", "V"];
 

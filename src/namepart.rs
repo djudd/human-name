@@ -3,16 +3,12 @@ use super::namecase;
 use super::segment::{Segment, Segments};
 use super::surname;
 use crate::decomposition::combining_chars;
-use ahash::AHashSet;
-use once_cell::sync::Lazy;
+
 use std::borrow::Cow;
 use std::iter::Peekable;
 
-static TWO_LETTER_GIVEN_NAMES: Lazy<AHashSet<&'static str>> = Lazy::new(|| {
-    let mut set = AHashSet::new();
+static TWO_LETTER_GIVEN_NAMES: phf::Set<&'static str> =
     include!(concat!(env!("OUT_DIR"), "/two_letter_given_names.rs"));
-    set
-});
 
 #[derive(Eq, PartialEq, Debug, Clone, Copy)]
 pub enum Location {

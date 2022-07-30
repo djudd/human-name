@@ -1,16 +1,11 @@
 use super::namepart::{Category, NamePart};
-use ahash::AHashSet;
-use once_cell::sync::Lazy;
 
 const VOWELLESS_SURNAMES: [&str; 4] = ["Ng", "Lv", "Mtz", "Hdz"];
 
 const SINGLE_LETTER_CONJUNCTIONS: [&str; 4] = ["e", "y", "E", "Y"];
 
-static SURNAME_PREFIXES: Lazy<AHashSet<&'static str>> = Lazy::new(|| {
-    let mut set = AHashSet::new();
+static SURNAME_PREFIXES: phf::Set<&'static str> =
     include!(concat!(env!("OUT_DIR"), "/surname_prefixes.rs"));
-    set
-});
 
 pub fn is_vowelless_surname(word: &str, use_capitalization: bool) -> bool {
     if use_capitalization {
