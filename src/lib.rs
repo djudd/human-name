@@ -15,11 +15,6 @@ extern crate unidecode;
 #[cfg(feature = "bench")]
 extern crate test;
 
-#[cfg(feature = "serialization")]
-extern crate serde;
-#[cfg(feature = "serialization")]
-#[macro_use]
-extern crate serde_derive;
 #[cfg(test)]
 extern crate alloc_counter;
 

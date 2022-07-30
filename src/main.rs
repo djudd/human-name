@@ -52,18 +52,20 @@ fn equality_mode(args: &[String]) {
             writeln!(&mut std::io::stderr(), "parse failed!").ok();
             process::exit(1);
         }
+        let parsed_a = parsed_a.unwrap();
 
         let reader = BufReader::new(io::stdin());
         for line in reader.lines() {
             match line.ok() {
                 Some(input) => {
-                    let parsed_b = human_name::Name::parse(&input);
-                    if parsed_a == parsed_b {
-                        let result = writeln!(&mut io::stdout(), "{}", input.trim());
-                        if result.is_err() {
-                            break;
-                        }
-                    };
+                    if let Some(parsed_b) = human_name::Name::parse(&input) {
+                        if parsed_a.consistent_with(&parsed_b) {
+                            let result = writeln!(&mut io::stdout(), "{}", input.trim());
+                            if result.is_err() {
+                                break;
+                            }
+                        };
+                    }
                 }
                 None => {
                     break;
@@ -76,7 +78,7 @@ fn equality_mode(args: &[String]) {
         if parsed_a.is_none() || parsed_b.is_none() {
             writeln!(&mut std::io::stdout(), "parse failed!").ok();
             process::exit(1);
-        } else if parsed_a.unwrap() != parsed_b.unwrap() {
+        } else if parsed_a.unwrap().consistent_with(&parsed_b.unwrap()) {
             writeln!(&mut std::io::stdout(), "n").ok();
             process::exit(1);
         } else {
