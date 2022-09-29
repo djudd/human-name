@@ -27,13 +27,15 @@ jobs:
         run: cargo test --verbose
       - name: Run clippy
         run: cargo clippy --verbose
+        if: matrix.os == ubuntu-latest
       - name: Run rustfmt
         run: cargo fmt --check --verbose
+        if: matrix.os == ubuntu-latest
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: libhuman_name-${{ matrix.os }}-amd64
-          path: target/release/libhuman_name.[dylib,so]
+          path: target/release/libhuman_name.dylib
           if-no-files-found: error
 
   msrv:
