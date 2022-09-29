@@ -34,11 +34,11 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
       - run: |
          if [ "$RUNNER_OS" == "Linux" ]; then
-            echo "artifactExt=so" >> $GITHUB_ENV
+            echo "artifactName=libhuman_name.so" >> $GITHUB_ENV
          elif [ "$RUNNER_OS" == "Windows" ]; then
-            echo "artifactExt=dll" >> $GITHUB_ENV
-         elif [ "RUNNER_OS" == "MacOS" ]; then
-            echo "artifactExt=dylib" >> $GITHUB_ENV
+            echo "artifactName=human_name.dll" >> $GITHUB_ENV
+         elif [ "RUNNER_OS" == "macOS" ]; then
+            echo "artifactName=libhuman_name.dylib" >> $GITHUB_ENV
          fi
         shell: bash
       - run: |
@@ -48,8 +48,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: libhuman_name.${{ runner.os }}-amd64.${{ env.artifactExt }}
-          path: target/release/libhuman_name.${{ env.artifactExt }}
+          name: ${{ env.artifactName }}
+          path: target/release/${{ env.artifactName }}
           if-no-files-found: error
 
   msrv:
