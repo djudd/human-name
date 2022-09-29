@@ -50,7 +50,7 @@ jobs:
         with:
           name: libhuman_name.${{ runner.os }}-amd64.${{ env.artifactExt }}
           path: target/release/libhuman_name.${{ env.artifactExt }}
-        if-no-files-found: error
+          if-no-files-found: error
 
   msrv:
 
