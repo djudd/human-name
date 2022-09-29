@@ -37,15 +37,20 @@ jobs:
             echo "artifactExt=so" >> $GITHUB_ENV
          elif [ "$RUNNER_OS" == "Windows" ]; then
             echo "artifactExt=dll" >> $GITHUB_ENV
-         elif [ "RUNNER_OS" == "macOS" ]; then
+         elif [ "RUNNER_OS" == "MacOS" ]; then
             echo "artifactExt=dylib" >> $GITHUB_ENV
          fi
+        shell: bash
+      - run: |
+          echo "$RUNNER_OS"
+          ls target/release
         shell: bash
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: libhuman_name.${{ runner.os }}-amd64.${{ env.artifactExt }}
           path: target/release/libhuman_name.${{ env.artifactExt }}
+        if-no-files-found: error
 
   msrv:
 
