@@ -28,14 +28,24 @@ jobs:
         run: cargo test --verbose
       - name: Run clippy
         run: cargo clippy --verbose
+        if: matrix.os == 'ubuntu-latest'
       - name: Run rustfmt
         run: cargo fmt --check --verbose
+        if: matrix.os == 'ubuntu-latest'
+      - run: |
+         if [ "$RUNNER_OS" == "Linux" ]; then
+            echo "artifactExt=so" >> $GITHUB_ENV
+         elif [ "$RUNNER_OS" == "Windows" ]; then
+            echo "artifactExt=dll" >> $GITHUB_ENV
+         elif [ "RUNNER_OS" == "macOS" ]; then
+            echo "artifactExt=dylib" >> $GITHUB_ENV
+         fi
+        shell: bash
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: libhuman_name-${{ matrix.os }}-amd64
-          path: target/release/libhuman_name.dylib
-          if-no-files-found: error
+          name: libhuman_name.${{ runner.os }}-amd64.${{ env.artifactExt }}
+          path: target/release/libhuman_name.${{ env.artifactExt }}
 
   msrv:
 

@@ -50,4 +50,4 @@ required-features = ["serialization"]
 
 [lib]
 name = "human_name"
-crate-type = ["rlib", "dylib"]
+crate-type = ["rlib", "cdylib"]
