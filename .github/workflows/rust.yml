@@ -7,8 +7,10 @@ env:
 
 jobs:
   stable:
-
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
@@ -27,6 +29,12 @@ jobs:
         run: cargo clippy --verbose
       - name: Run rustfmt
         run: cargo fmt --check --verbose
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: libhuman_name-${{ matrix.os }}-amd64
+          path: target/release/libhuman_name.[dylib,so]
+          if-no-files-found: error
 
   msrv:
 
