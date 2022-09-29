@@ -263,7 +263,7 @@ impl Name {
 
         // If we have middle initials, check their consistency alone before
         // looking at names (& we know "self" has the more complete initials).
-        (&my_initials[my_first.len_utf8()..]).contains(&their_initials[their_first.len_utf8()..])
+        my_initials[my_first.len_utf8()..].contains(&their_initials[their_first.len_utf8()..])
     }
 
     fn transliterated_initials(&self) -> (char, Cow<str>) {
