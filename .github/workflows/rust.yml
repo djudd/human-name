@@ -7,8 +7,11 @@ env:
 
 jobs:
   stable:
-
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
@@ -20,13 +23,37 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
       - name: Build
-        run: cargo build --verbose
+        run: cargo build --verbose --release
       - name: Run tests
         run: cargo test --verbose
       - name: Run clippy
         run: cargo clippy --verbose
+        if: matrix.os == 'ubuntu-latest'
       - name: Run rustfmt
         run: cargo fmt --check --verbose
+        if: matrix.os == 'ubuntu-latest'
+      - run: |
+         if [ "$RUNNER_OS" == "Linux" ]; then
+            echo "artifactName=libhuman_name.so" >> $GITHUB_ENV
+         elif [ "$RUNNER_OS" == "Windows" ]; then
+            echo "artifactName=human_name.dll" >> $GITHUB_ENV
+         elif [ "$RUNNER_OS" == "macOS" ]; then
+            echo "artifactName=libhuman_name.dylib" >> $GITHUB_ENV
+         else
+            echo "Unrecognized OS: $RUNNER_OS"
+            exit 1
+         fi
+        shell: bash
+      - run: |
+          echo "$RUNNER_OS"
+          ls target/release
+        shell: bash
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.artifactName }}
+          path: target/release/${{ env.artifactName }}
+          if-no-files-found: error
 
   msrv:
 
