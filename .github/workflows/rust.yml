@@ -27,10 +27,8 @@ jobs:
         run: cargo test --verbose
       - name: Run clippy
         run: cargo clippy --verbose
-        if: matrix.os == ubuntu-latest
       - name: Run rustfmt
         run: cargo fmt --check --verbose
-        if: matrix.os == ubuntu-latest
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
