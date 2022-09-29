@@ -37,7 +37,7 @@ jobs:
             echo "artifactName=libhuman_name.so" >> $GITHUB_ENV
          elif [ "$RUNNER_OS" == "Windows" ]; then
             echo "artifactName=human_name.dll" >> $GITHUB_ENV
-         elif [ "RUNNER_OS" == "macOS" ]; then
+         elif [ "$RUNNER_OS" == "macOS" ]; then
             echo "artifactName=libhuman_name.dylib" >> $GITHUB_ENV
          else
             echo "Unrecognized OS: $RUNNER_OS"
