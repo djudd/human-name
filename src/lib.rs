@@ -5,6 +5,7 @@
 #![doc(html_root_url = "https://djudd.github.io/human-name/")]
 #![cfg_attr(feature = "bench", feature(test))]
 
+extern crate crossbeam_utils;
 extern crate smallstr;
 extern crate smallvec;
 extern crate unicode_normalization;
@@ -44,6 +45,7 @@ mod serialization;
 
 use crate::decomposition::normalize_nfkd_whitespace;
 use crate::word::{Location, Words};
+use crossbeam_utils::atomic::AtomicCell;
 use smallstr::SmallString;
 use smallvec::SmallVec;
 use std::borrow::Cow;
@@ -79,7 +81,7 @@ pub const MAX_SEGMENTS: usize = parse::MAX_WORDS;
 /// Once you have a Name, you may extract is components, convert it to JSON,
 /// or compare it with another Name to see if they are consistent with representing
 /// the same person (see docs on `consistent_with` for details).
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Name {
     text: SmallString<[u8; 32]>, // stores concatenation of display_full() and initials()
     locations: SmallVec<[Location; 6]>, // stores concatenation of word locations in full text and given name locations in initials
@@ -87,13 +89,27 @@ pub struct Name {
     surname_words: u8,                  // support no more than 256
     initials_len: u8,                   // support no more than 256
     honorifics: Option<Box<Honorifics>>,
-    pub hash: u64, // surname hash
+    surname_hash: AtomicCell<Option<u32>>,
 }
 
 #[derive(Clone, Debug)]
 struct Honorifics {
     prefix: Option<Box<str>>,
     suffix: Option<Box<str>>,
+}
+
+impl Clone for Name {
+    fn clone(&self) -> Self {
+        Name {
+            text: self.text.clone(),
+            locations: self.locations.clone(),
+            given_name_words: self.given_name_words,
+            surname_words: self.surname_words,
+            initials_len: self.initials_len,
+            honorifics: self.honorifics.clone(),
+            surname_hash: Default::default(),
+        }
+    }
 }
 
 impl Name {
@@ -166,13 +182,7 @@ impl Name {
         let name = nickname::strip_nickname(&name);
         let parsed = parse::parse(&name)?;
 
-        let mut name = Name::initialize_struct(&parsed, name.len())?;
-
-        let mut s = DefaultHasher::new();
-        name.surname_hash(&mut s);
-        name.hash = s.finish();
-
-        Some(name)
+        Name::initialize_struct(&parsed, name.len())
     }
 
     fn initialize_struct(parsed: &parse::Name, name_len: usize) -> Option<Name> {
@@ -260,7 +270,7 @@ impl Name {
             surname_words,
             initials_len,
             honorifics,
-            hash: 0,
+            surname_hash: Default::default(),
         })
     }
 
@@ -574,8 +584,9 @@ impl Name {
     /// This hash function is prone to collisions!
     ///
     /// We can only use the last four alphabetical characters of the surname,
-    /// because that's all we're guaranteed to use in the consistency test. That
-    /// means if names are ASCII, we only have 19 bits of variability.
+    /// because that's all we're guaranteed to use in the consistency test,
+    /// and we attempt to convert to lowercase ASCII, giving us only have 19
+    /// bits of variability.
     ///
     /// That means if you are working with a lot of names and you expect surnames
     /// to be similar or identical, you might be better off avoiding hash-based
@@ -587,7 +598,22 @@ impl Name {
     ///
     /// We can't use the first initial because we might ignore it if someone goes
     /// by a middle name or nickname, or due to transliteration.
-    pub fn surname_hash<H: Hasher>(&self, state: &mut H) {
+    pub fn surname_hash(&self) -> u64 {
+        if let Some(hash) = self.surname_hash.load() {
+            return hash.into();
+        }
+
+        let mut s = DefaultHasher::new();
+        self.hash_surname(&mut s);
+
+        // Since we only have ~19 bits of input (per above),
+        // there's no point keeping a longer hash.
+        let hash = s.finish() as u32;
+        self.surname_hash.store(Some(hash));
+        hash.into()
+    }
+
+    fn hash_surname<H: Hasher>(&self, state: &mut H) {
         for c in self
             .surname_iter()
             .rev()

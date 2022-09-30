@@ -51,7 +51,7 @@ pub unsafe extern "C" fn human_name_consistent_with(a: &Name, b: &Name) -> bool 
 
 #[no_mangle]
 pub unsafe extern "C" fn human_name_hash(name: &Name) -> u64 {
-    name.hash
+    name.surname_hash()
 }
 
 #[no_mangle]

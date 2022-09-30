@@ -12,6 +12,7 @@ rust-version = "1.52"
 edition = "2018"
 
 [dependencies]
+crossbeam-utils = "0.8"
 unicode-segmentation = "1.9"
 unicode-normalization = "0.1"
 unicode-case-mapping = "0.4"

@@ -28,6 +28,6 @@ impl PartialEq for Name {
 ///
 impl Hash for Name {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.surname_hash(state);
+        self.hash_surname(state);
     }
 }

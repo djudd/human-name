@@ -145,7 +145,7 @@ fn equality() {
                 a
             );
             assert!(
-                parsed_a.hash == parsed_b.hash,
+                parsed_a.surname_hash() == parsed_b.surname_hash(),
                 "{} should have the same hash as {} but did not!",
                 a,
                 b

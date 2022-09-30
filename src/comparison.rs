@@ -64,7 +64,7 @@ impl Name {
     /// in the list of authors of a co-authored paper.
     pub fn consistent_with(&self, other: &Name) -> bool {
         // Fast path
-        if self.hash != other.hash {
+        if self.surname_hash() != other.surname_hash() {
             return false;
         }
 
