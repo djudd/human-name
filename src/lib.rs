@@ -32,7 +32,6 @@ mod suffix;
 mod surname;
 mod title;
 mod transliterate;
-mod web_match;
 mod word;
 
 pub mod external;
