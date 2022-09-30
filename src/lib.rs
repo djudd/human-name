@@ -419,12 +419,6 @@ impl Name {
         }
     }
 
-    /// Generational suffix, if present
-    #[deprecated(since = "1.1.0", note = "Use `generational_suffix` instead")]
-    pub fn suffix(&self) -> Option<&str> {
-        self.generational_suffix()
-    }
-
     /// Honorific prefix(es), if present
     ///
     /// ```
