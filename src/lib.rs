@@ -51,6 +51,7 @@ use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
 use std::convert::TryInto;
 use std::hash::{Hash, Hasher};
+use std::num::NonZeroU8;
 
 #[cfg(test)]
 use alloc_counter::AllocCounterSystem;
@@ -87,6 +88,7 @@ pub struct Name {
     given_name_words: u8,               // support no more than 256
     surname_words: u8,                  // support no more than 256
     initials_len: u8,                   // support no more than 256
+    generation: Option<NonZeroU8>,
     honorifics: Option<Box<Honorifics>>,
     surname_hash: AtomicCell<Option<u32>>,
 }
@@ -105,6 +107,7 @@ impl Clone for Name {
             given_name_words: self.given_name_words,
             surname_words: self.surname_words,
             initials_len: self.initials_len,
+            generation: self.generation,
             honorifics: self.honorifics.clone(),
             surname_hash: Default::default(),
         }
@@ -227,14 +230,10 @@ impl Name {
             }
         }
 
-        if let Some(generation) = parsed.generation {
-            text.push_str(", ");
-            text.push_str(suffix::display_generational_suffix(generation));
-        }
-
         debug_assert!(!text.is_empty(), "Names are empty!");
         debug_assert!(!initials.is_empty(), "Initials are empty!");
 
+        let generation = parsed.generation;
         let honorifics = {
             let prefix = parsed
                 .honorific_prefix()
@@ -268,6 +267,7 @@ impl Name {
             given_name_words,
             surname_words,
             initials_len,
+            generation,
             honorifics,
             surname_hash: Default::default(),
         })
@@ -328,7 +328,7 @@ impl Name {
     /// ```
     #[inline]
     pub fn initials(&self) -> &str {
-        &self.text[self.byte_len()..]
+        &self.text[self.name_bytes()..]
     }
 
     /// Middle names as an array of words, if present
@@ -378,7 +378,7 @@ impl Name {
         self.initials()
             .char_indices()
             .nth(1)
-            .map(|(i, _)| &self.text[self.byte_len() + i..])
+            .map(|(i, _)| &self.text[self.name_bytes() + i..])
     }
 
     /// Surname as a slice of words (always present)
@@ -412,11 +412,7 @@ impl Name {
     /// assert_eq!(Some("Jr."), name.generational_suffix());
     /// ```
     pub fn generational_suffix(&self) -> Option<&str> {
-        if self.byte_len() > self.surname_end_in_text() {
-            Some(&self.text[self.surname_end_in_text() + ", ".len()..self.byte_len()])
-        } else {
-            None
-        }
+        self.generation.map(suffix::display_generational_suffix)
     }
 
     /// Honorific prefix(es), if present
@@ -512,6 +508,17 @@ impl Name {
     /// ```
     #[inline]
     pub fn byte_len(&self) -> usize {
+        const SEPARATOR_LEN: usize = ", ".len();
+
+        self.name_bytes()
+            + self
+                .generational_suffix()
+                .map(|g| g.len() + SEPARATOR_LEN)
+                .unwrap_or(0)
+    }
+
+    #[inline]
+    fn name_bytes(&self) -> usize {
         self.text.len() - usize::from(self.initials_len)
     }
 
@@ -530,8 +537,16 @@ impl Name {
     /// assert_eq!("Harrieta Keōpūolani Nāhiʻenaʻena", name.display_full());
     /// ```
     #[inline]
-    pub fn display_full(&self) -> &str {
-        &self.text[..self.byte_len()]
+    pub fn display_full(&self) -> Cow<str> {
+        let name = &self.text[..self.name_bytes()];
+        if let Some(suffix) = self.generational_suffix() {
+            let mut result = name.to_string();
+            result.push_str(", ");
+            result.push_str(suffix);
+            Cow::Owned(result)
+        } else {
+            Cow::Borrowed(name)
+        }
     }
 
     /// The full name, or as much of it as was preserved from the input,
@@ -558,14 +573,14 @@ impl Name {
                 result.push_str(prefix);
                 result.push(' ');
             }
-            result.push_str(self.display_full());
+            result.push_str(&self.display_full());
             if let Some(suffix) = &honorifics.suffix {
                 result.push(' ');
                 result.push_str(suffix);
             }
             Cow::Owned(result)
         } else {
-            Cow::Borrowed(self.display_full())
+            self.display_full()
         }
     }
 
