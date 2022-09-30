@@ -85,20 +85,6 @@ pub unsafe extern "C" fn human_name_goes_by_middle_name(name: &Name) -> bool {
 }
 
 #[no_mangle]
-#[deprecated(
-    since = "1.1.1",
-    note = "This functionality is incomplete and unsupported, and retained only for backwards compatibility"
-)]
-#[allow(deprecated)]
-pub unsafe extern "C" fn human_name_matches_slug_or_localpart(
-    name: &Name,
-    input: *const libc::c_char,
-) -> bool {
-    let s = CStr::from_ptr(input).to_string_lossy();
-    name.matches_slug_or_localpart(&s)
-}
-
-#[no_mangle]
 pub unsafe extern "C" fn human_name_middle_names(name: &Name) -> *const c_char {
     option_str_to_char_star!(name.middle_name().map(|n| n.into_owned()))
 }
