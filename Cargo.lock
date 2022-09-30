@@ -40,7 +40,7 @@ dependencies = [
 
 [[package]]
 name = "human_name"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "alloc_counter",
  "crossbeam-utils",
