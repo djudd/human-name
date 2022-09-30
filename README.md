@@ -108,8 +108,7 @@ Jay Smith
 
 # Optional Features
 
-The following features are enabled by default, but can be turned off when `human_name`
-is being used as a library.
+The following features are optional and off by default:
 
 ## name_eq_hash
 
@@ -132,6 +131,8 @@ Ruby bindings using the `ffi` gem are available at [github.com/djudd/human-name-
 
 Python bindings using the `ctypes` module are available at [github.com/djudd/human-name-py](https://github.com/djudd/human-name-py)
 
+Elixir bindings (third party) are available at [https://github.com/amokan/human_name](https://github.com/amokan/human_name)
+
 # Versioning
 
 This library follows [semver](https://semver.org/) with respect to its programmatic API.
@@ -140,10 +141,10 @@ and will typically come with a minor version bump.
 
 # Performance
 
-As of version 1.0, the fast path (roughly, two space-separated, titlecase ASCII
-words) for name parsing takes ~250ns and does not heap-allocate. Comparing two
-simple names for consistency takes ~100ns if the surname hash matches, and ~1ns
-otherwise. Pathological cases for either can take an order of magnitude longer.
+As of version 2.0, the fast path (roughly, two space-separated, titlecase ASCII
+words) for name parsing takes ~200ns on my M1 Macbook and does not heap-allocate.
+Comparing two simple names for consistency takes ~100ns if the surname hash matches,
+and ~1ns otherwise. Pathological cases for either can take an order of magnitude longer.
 
 # Contributing
 
