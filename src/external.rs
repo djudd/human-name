@@ -116,7 +116,7 @@ pub unsafe extern "C" fn human_name_display_initial_surname(name: &Name) -> *con
 
 #[no_mangle]
 pub unsafe extern "C" fn human_name_display_full(name: &Name) -> *const c_char {
-    str_to_char_star!(name.display_full())
+    str_to_char_star!(name.display_full().into_owned())
 }
 
 #[no_mangle]
