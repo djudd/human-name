@@ -436,7 +436,7 @@ impl Name {
     /// use human_name::Name;
     ///
     /// let name = Name::parse("Stephen Strange, MD").unwrap();
-    /// assert_eq!(Some("M.D."), name.honorific_suffix());
+    /// assert_eq!(Some("MD"), name.honorific_suffix());
     /// ```
     pub fn honorific_suffix(&self) -> Option<&str> {
         self.honorifics

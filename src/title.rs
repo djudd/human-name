@@ -134,28 +134,15 @@ pub fn canonicalize_suffix<'a>(title: &'a NamePart<'a>) -> Cow<'a, str> {
                     return Cow::Borrowed(canonical);
                 }
             }
-
             // Assume unrecognized honorifics are acronyms (given that we previously
-            // categorized as initials). For length two or less, format with periods
-            // (e.g. "M.D."), but skip periods for longer acronyms (e.g. "LCSW").
-            if title.word.len() <= 2 {
-                let mut result = String::with_capacity((title.counts.alpha * 2).into());
-                title.with_initials(|c| {
-                    for u in c.to_uppercase() {
-                        result.push(u);
-                    }
-                    result.push('.');
-                });
-                Cow::Owned(result)
-            } else {
-                let mut result = String::with_capacity((title.counts.alpha).into());
-                title.with_initials(|c| {
-                    for u in c.to_uppercase() {
-                        result.push(u);
-                    }
-                });
-                Cow::Owned(result)
-            }
+            // categorized as initials).
+            let mut result = String::with_capacity((title.counts.alpha).into());
+            title.with_initials(|c| {
+                for u in c.to_uppercase() {
+                    result.push(u);
+                }
+            });
+            Cow::Owned(result)
         }
         Category::Abbreviation | Category::Other => Cow::Borrowed(title.word),
     }
@@ -384,15 +371,15 @@ mod tests {
     #[test]
     fn canonicalize_md_suffix() {
         assert_eq!(
-            "M.D.",
+            "MD",
             canonicalize_suffix(&NamePart::from_word("MD", true, Location::End))
         );
         assert_eq!(
-            "M.D.",
+            "MD",
             canonicalize_suffix(&NamePart::from_word("Md", true, Location::End))
         );
         assert_eq!(
-            "M.D.",
+            "MD",
             canonicalize_suffix(&NamePart::from_word("md", true, Location::End))
         );
         assert_eq!(
@@ -445,15 +432,15 @@ mod tests {
         );
 
         assert_eq!(
-            "X.X.",
+            "XX",
             canonicalize_suffix(&NamePart::from_word("XX", true, Location::End))
         );
         assert_eq!(
-            "X.X.",
+            "XX",
             canonicalize_suffix(&NamePart::from_word("Xx", true, Location::End))
         );
         assert_eq!(
-            "X.X.",
+            "XX",
             canonicalize_suffix(&NamePart::from_word("xx", true, Location::End))
         );
         assert_eq!(

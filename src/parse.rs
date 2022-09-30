@@ -512,23 +512,23 @@ mod tests {
     fn honorifics() {
         let name = parse("Lt Col Sir John Doe, X, YY, ZZZ").unwrap();
         assert_eq!("Lt. Col. Sir", name.honorific_prefix().unwrap());
-        assert_eq!("X. Y.Y. ZZZ", name.honorific_suffix().unwrap());
+        assert_eq!("X YY ZZZ", name.honorific_suffix().unwrap());
 
         let name = parse("Doe, Lt Col Sir John, X, YY, ZZZ").unwrap();
         assert_eq!("Lt. Col. Sir", name.honorific_prefix().unwrap());
-        assert_eq!("X. Y.Y. ZZZ", name.honorific_suffix().unwrap());
+        assert_eq!("X YY ZZZ", name.honorific_suffix().unwrap());
 
         let name = parse("Air Chief Marshal Sir Stuart William Peach, GBE, KCB, ADC, DL").unwrap();
         assert_eq!("Air Chief Marshal Sir", name.honorific_prefix().unwrap());
-        assert_eq!("GBE KCB ADC D.L.", name.honorific_suffix().unwrap());
+        assert_eq!("GBE KCB ADC DL", name.honorific_suffix().unwrap());
 
         let name = parse("Air Chief Marshal Sir Stuart William Peach GBE KCB ADC DL").unwrap();
         assert_eq!("Air Chief Marshal Sir", name.honorific_prefix().unwrap());
-        assert_eq!("GBE KCB ADC D.L.", name.honorific_suffix().unwrap());
+        assert_eq!("GBE KCB ADC DL", name.honorific_suffix().unwrap());
 
         let name = parse("Peach, Air Chief Marshal Sir Stuart William, GBE KCB ADC DL").unwrap();
         assert_eq!("Air Chief Marshal Sir", name.honorific_prefix().unwrap());
-        assert_eq!("GBE KCB ADC D.L.", name.honorific_suffix().unwrap());
+        assert_eq!("GBE KCB ADC DL", name.honorific_suffix().unwrap());
     }
 
     // Treating this as an honorific suffix isn't really right, but it does produce
