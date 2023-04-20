@@ -17,7 +17,7 @@ unicode-segmentation = "1.9"
 unicode-normalization = "0.1"
 unicode-case-mapping = "0.4"
 unidecode = "0.3"
-libc = "0.2"
+libc = { version = "0.2", optional = true }
 phf = "0.11"
 serde = { version = "1.0", features = ["derive"], optional = true }
 serde_json = { version = "1.0", optional = true }
@@ -37,6 +37,7 @@ default = []
 name_eq_hash = []
 serialization = ["serde", "serde_json"]
 bench = []
+ffi = ["libc"]
 
 [profile.release]
 lto = "thin"
