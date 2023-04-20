@@ -34,6 +34,7 @@ mod title;
 mod transliterate;
 mod word;
 
+#[cfg(feature = "ffi")]
 pub mod external;
 
 #[cfg(feature = "name_eq_hash")]
