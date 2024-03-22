@@ -6,7 +6,6 @@
 #![cfg_attr(feature = "bench", feature(test))]
 
 extern crate crossbeam_utils;
-extern crate smallstr;
 extern crate smallvec;
 extern crate unicode_normalization;
 extern crate unicode_segmentation;
@@ -45,8 +44,8 @@ mod serialization;
 
 use crate::decomposition::normalize_nfkd_whitespace;
 use crate::word::{Location, Words};
+use compact_str::CompactString;
 use crossbeam_utils::atomic::AtomicCell;
-use smallstr::SmallString;
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
@@ -84,7 +83,7 @@ pub const MAX_SEGMENTS: usize = parse::MAX_WORDS;
 /// the same person (see docs on `consistent_with` for details).
 #[derive(Debug)]
 pub struct Name {
-    text: SmallString<[u8; 32]>, // stores concatenation of display_full() and initials()
+    text: CompactString, // stores concatenation of display_full() and initials()
     locations: SmallVec<[Location; 6]>, // stores concatenation of word locations in full text and given name locations in initials
     given_name_words: u8,               // support no more than 256
     surname_words: u8,                  // support no more than 256
@@ -192,8 +191,8 @@ impl Name {
         let words = parsed.words();
         let surname_index = parsed.surname_index;
 
-        let mut text = SmallString::with_capacity(name_len + surname_index);
-        let mut initials: SmallString<[u8; 16]> = SmallString::with_capacity(surname_index);
+        let mut text = CompactString::with_capacity(name_len + surname_index);
+        let mut initials = CompactString::with_capacity(surname_index);
 
         let mut locations = SmallVec::with_capacity(words.len() + surname_index);
         let mut locations_in_initials: SmallVec<[Location; 4]> =
@@ -707,7 +706,7 @@ mod tests {
     #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
     #[test]
     fn struct_size() {
-        assert_eq!(96, std::mem::size_of::<Name>());
+        assert_eq!(80, std::mem::size_of::<Name>());
         assert_eq!(32, std::mem::size_of::<Honorifics>());
     }
 
