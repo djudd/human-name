@@ -106,9 +106,7 @@ impl DoubleEndedIterator for CaseMapping {
 
 impl ExactSizeIterator for CaseMapping {}
 
-fn casefolded_alphas(
-    text: &str,
-) -> impl Iterator<Item = char> + std::iter::DoubleEndedIterator + '_ {
+fn casefolded_alphas(text: &str) -> impl std::iter::DoubleEndedIterator<Item = char> + '_ {
     // It would be more correct to use unicode case folding here,
     // but unicode-case-mapping 0.4 only supports simple case folding
     // and not multi-character folding, which isn't really better.

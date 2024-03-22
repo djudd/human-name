@@ -289,7 +289,7 @@ impl Name {
     }
 
     fn missing_given_name(&self) -> bool {
-        if let Some(loc) = self.given_names_in_initials().get(0) {
+        if let Some(loc) = self.given_names_in_initials().first() {
             loc.range().start > 0
         } else {
             true

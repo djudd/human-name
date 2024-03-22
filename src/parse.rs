@@ -25,7 +25,7 @@ impl<'a> Name<'a> {
             0 => None,
             1 => self
                 .reversed_prefixes
-                .get(0)
+                .first()
                 .map(title::canonicalize_prefix),
             _ => Some(Cow::Owned(
                 self.reversed_prefixes
@@ -43,7 +43,7 @@ impl<'a> Name<'a> {
             0 => None,
             1 => self
                 .honorific_suffixes
-                .get(0)
+                .first()
                 .map(title::canonicalize_suffix),
             _ => Some(Cow::Owned(
                 self.honorific_suffixes
@@ -311,8 +311,7 @@ impl<'a> ParseOp<'a> {
             self.surname_index = given_middle_or_postfix_words.len();
 
             self.words.reserve(given_middle_or_postfix_words.len());
-            self.words
-                .insert_many(0, given_middle_or_postfix_words.into_iter());
+            self.words.insert_many(0, given_middle_or_postfix_words);
         }
     }
 
