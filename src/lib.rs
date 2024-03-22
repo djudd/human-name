@@ -308,7 +308,7 @@ impl Name {
     /// assert!(name.goes_by_middle_name());
     /// ```
     pub fn goes_by_middle_name(&self) -> bool {
-        if let Some(loc) = self.given_names_in_initials().get(0) {
+        if let Some(loc) = self.given_names_in_initials().first() {
             loc.range().start > 0
         } else {
             false

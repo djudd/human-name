@@ -117,7 +117,7 @@ where
     for (k, v) in map {
         builder.entry(k.to_string(), &transform(v));
     }
-    fs::write(&output, format!("{}", builder.build()))?;
+    fs::write(output, format!("{}", builder.build()))?;
     Ok(())
 }
 
@@ -126,7 +126,7 @@ fn write_set(output: &Path, set: &[String]) -> Result<()> {
     for v in set {
         builder.entry(v);
     }
-    fs::write(&output, format!("{}", builder.build()))?;
+    fs::write(output, format!("{}", builder.build()))?;
     Ok(())
 }
 

@@ -4,7 +4,7 @@ use unidecode::unidecode_char;
 #[inline]
 fn transliterate(c: char) -> Chars<'static> {
     let s = unidecode_char(c);
-    if s.is_empty() {}
+    if s.is_empty() {};
     // We should maybe use unicode case folding here as an initial pass,
     // but without a concrete motivating case (yet) it doesn't seem worth
     // the cost.

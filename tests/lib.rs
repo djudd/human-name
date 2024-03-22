@@ -128,8 +128,8 @@ fn equality() {
         let b = parts[1];
         let expect = parts[2];
 
-        let parsed_a = human_name::Name::parse(a).expect(&format!("{} was not parsed", a));
-        let parsed_b = human_name::Name::parse(b).expect(&format!("{} was not parsed", b));
+        let parsed_a = human_name::Name::parse(a).unwrap_or_else(|| panic!("{} was not parsed", a));
+        let parsed_b = human_name::Name::parse(b).unwrap_or_else(|| panic!("{} was not parsed", b));
 
         if expect == "==" {
             assert!(
