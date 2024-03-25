@@ -6,10 +6,10 @@
 #![cfg_attr(feature = "bench", feature(test))]
 
 extern crate crossbeam_utils;
+extern crate deunicode;
 extern crate smallvec;
 extern crate unicode_normalization;
 extern crate unicode_segmentation;
-extern crate unidecode;
 
 #[cfg(test)]
 #[cfg(feature = "bench")]

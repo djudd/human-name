@@ -1,14 +1,12 @@
+use deunicode::deunicode_char;
 use std::str::Chars;
-use unidecode::unidecode_char;
 
 #[inline]
-fn transliterate(c: char) -> Chars<'static> {
-    let s = unidecode_char(c);
-    if s.is_empty() {};
+fn transliterate(c: char) -> Option<Chars<'static>> {
     // We should maybe use unicode case folding here as an initial pass,
     // but without a concrete motivating case (yet) it doesn't seem worth
     // the cost.
-    unidecode_char(c).chars()
+    deunicode_char(c).map(|s| s.chars())
 }
 
 #[inline]
@@ -41,14 +39,15 @@ fn ascii_to_upper_if_alpha(c: char) -> Option<char> {
 pub fn to_ascii_initial(c: char) -> Option<char> {
     match c {
         'A'..='Z' => Some(c),
-        _ => transliterate(c).find_map(ascii_to_upper_if_alpha),
+        _ => transliterate(c)?.find_map(ascii_to_upper_if_alpha),
     }
 }
 
 pub fn to_ascii_casefolded(text: &str) -> Option<impl Iterator<Item = char> + '_> {
     let mut result = text
         .chars()
-        .flat_map(transliterate)
+        .filter_map(transliterate)
+        .flatten()
         .filter_map(ascii_to_lower_if_alpha)
         .peekable();
 
@@ -63,7 +62,8 @@ pub fn to_ascii_casefolded(text: &str) -> Option<impl Iterator<Item = char> + '_
 pub fn to_ascii_casefolded_reversed(text: &str) -> Option<impl Iterator<Item = char> + '_> {
     let mut result = text
         .chars()
-        .flat_map(transliterate)
+        .filter_map(transliterate)
+        .flatten()
         .rev()
         .filter_map(ascii_to_lower_if_alpha)
         .peekable();
@@ -79,7 +79,8 @@ pub fn to_ascii_casefolded_reversed(text: &str) -> Option<impl Iterator<Item = c
 pub fn to_ascii_titlecase(s: &str) -> Option<String> {
     let mut result = s
         .chars()
-        .flat_map(transliterate)
+        .filter_map(transliterate)
+        .flatten()
         .filter_map(ascii_to_lower_if_alpha);
 
     result.next().map(|initial| {

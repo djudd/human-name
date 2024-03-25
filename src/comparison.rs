@@ -43,7 +43,7 @@ impl Name {
     /// names and/or suffixes are present in both names, they must match as well.
     ///
     /// Transliterates everything to ASCII before comparison using the naive
-    /// algorithm of [unidecode](https://github.com/chowdhurya/rust-unidecode/)
+    /// algorithm of [deunicode](https://github.com/kornelski/deunicode/blob/main/README.md)
     /// (which ignores context), and ignores case, accents and combining marks.
     ///
     /// In the case of given and middle names, allows one name to be a prefix of
