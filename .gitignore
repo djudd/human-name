@@ -19,3 +19,7 @@ flamegraph.svg
 
 # vim
 *.swp
+
+# Fuzzing
+.DS_Store
+fuzz/.DS_Store
